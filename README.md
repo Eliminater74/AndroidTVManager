@@ -4,11 +4,11 @@ Android TV Manager is a Windows-first Android TV / Google TV device management t
 
 This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database, userdata, and compatibility features are intentionally out of scope.
 
-## Beta 1
+## Beta 2
 
-Current product version: **1.0.0-B1**
+Current product version: **1.0.0-B2**
 
-Beta 1 provides the application shell, local data foundation, managed Google Platform-Tools bootstrap, asynchronous ADB infrastructure, live device tracking, connection history, native navigation, dashboard, and Windows tray behavior. Device actions and the script/undo foundation are being expanded through the remaining MVP milestones.
+Beta 2 adds evidence-backed Device Status inspection, cached snapshots, complete package inventory, package role detection, conservative debloat previews, guarded package mutations, package preferences/notes, and the ADB Command Center.
 
 ## Requirements
 
@@ -53,6 +53,33 @@ Mutable data is stored under `%LOCALAPPDATA%\AndroidTVManager\`:
 - `Scripts\`, `Snapshots\`, `Screenshots\`, `Recordings\`, and `Temp\`
 
 These files are runtime data and are intentionally excluded from Git.
+
+## Device intelligence and safety
+
+Device Status runs standard ADB diagnostics asynchronously and records command evidence,
+including partial failures. A value shown as `Unknown` is intentionally not inferred from
+an absent package or a vendor-specific property. Expert diagnostics can inspect the source
+command for each section.
+
+Debloat always targets one captured serial, creates a preview, prefers disabling for User 0,
+and rechecks package state before execution. Critical, active-role, and Unknown packages are
+never automatically selected. Aggressive mode is still only a preview until the user confirms
+it. Restore uses the existing script transaction journal; a device build or package-state drift
+invalidates the plan.
+
+Android TV Manager installs APKs through ADB. It does not patch, disable, uninstall, spoof, or
+bypass Android Developer Verification or any waiting period used by manual on-device installs.
+Manual installation guidance is device/version dependent and must be completed in Android Settings
+when required.
+
+## First hardware-test checklist
+
+1. Connect one disposable or recoverable Android TV target and confirm its serial in the header.
+2. Run Device Status and verify the Overview, security, installation, package, and service sections.
+3. Refresh Applications and test only read-only package details first.
+4. Use a non-critical test package to verify Disable, Enable, Restore, and Undo behavior.
+5. Create a Simple debloat preview; do not execute Medium/Aggressive until every selected item is reviewed.
+6. Confirm the ADB installer reports the real package-manager error if a policy blocks an install.
 
 ## Product direction
 

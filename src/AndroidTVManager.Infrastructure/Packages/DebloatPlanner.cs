@@ -11,15 +11,18 @@ public sealed class DebloatPlanner : IDebloatPlanner
     private readonly IPackageInventoryService _inventory;
     private readonly IPackageClassifier _classifier;
     private readonly IDeviceSnapshotRepository _snapshots;
+    private readonly IPackagePreferenceRepository _preferences;
 
     public DebloatPlanner(
         IPackageInventoryService inventory,
         IPackageClassifier classifier,
-        IDeviceSnapshotRepository snapshots)
+        IDeviceSnapshotRepository snapshots,
+        IPackagePreferenceRepository preferences)
     {
         _inventory = inventory;
         _classifier = classifier;
         _snapshots = snapshots;
+        _preferences = preferences;
     }
 
     public async Task<DebloatPlan> CreatePlanAsync(
@@ -28,6 +31,7 @@ public sealed class DebloatPlanner : IDebloatPlanner
         CancellationToken cancellationToken = default)
     {
         var inventory = await _inventory.GetInventoryAsync(serial, cancellationToken);
+        var overrides = await _preferences.GetOverridesAsync(serial, cancellationToken);
         var inspection = await _snapshots.GetLatestAsync(serial, cancellationToken);
         var device = inspection?.Overview.Value ?? new AndroidDevice
         {
@@ -46,7 +50,9 @@ public sealed class DebloatPlanner : IDebloatPlanner
                 .ToHashSet(StringComparer.OrdinalIgnoreCase));
 
         var items = inventory.Packages
-            .Select(package => BuildItem(package, _classifier.Classify(package, context), preset))
+            .Select(package => BuildItem(package, ApplyOverride(
+                _classifier.Classify(package, context),
+                overrides.GetValueOrDefault(package.PackageName)), preset))
             .ToArray();
         var selected = items.Count(item => item.Selected);
         var warnings = new List<string>
@@ -74,18 +80,28 @@ public sealed class DebloatPlanner : IDebloatPlanner
             warnings);
     }
 
+    private static PackageAssessment ApplyOverride(PackageAssessment assessment, PackageOverride value)
+        => value switch
+        {
+            PackageOverride.AlwaysKeep or PackageOverride.NeverSuggest
+                => assessment with { Override = value, IsProtected = true },
+            PackageOverride.UserApproved => assessment with { Override = value },
+            _ => assessment
+        };
+
     private static DebloatPlanItem BuildItem(
         PackageInventoryEntry package,
         PackageAssessment assessment,
         DebloatPreset preset)
     {
-        var allowed = assessment.Risk switch
-        {
-            PackageRiskLevel.Safe => true,
-            PackageRiskLevel.Caution => preset is DebloatPreset.Medium or DebloatPreset.Aggressive,
-            PackageRiskLevel.HighRisk => preset == DebloatPreset.Aggressive,
-            _ => false
-        };
+        var allowed = assessment.Override == PackageOverride.UserApproved
+            || (assessment.Risk switch
+            {
+                PackageRiskLevel.Safe => true,
+                PackageRiskLevel.Caution => preset is DebloatPreset.Medium or DebloatPreset.Aggressive,
+                PackageRiskLevel.HighRisk => preset == DebloatPreset.Aggressive,
+                _ => false
+            });
         var protectedPackage = assessment.IsProtected || assessment.Risk is PackageRiskLevel.Critical or PackageRiskLevel.Unknown;
         var selected = allowed && !protectedPackage && package.IsInstalled;
         var reason = selected

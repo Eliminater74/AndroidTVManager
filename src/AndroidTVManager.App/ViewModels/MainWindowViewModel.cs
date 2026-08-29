@@ -34,6 +34,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDebloatExecutionService _debloatExecutionService;
     private readonly IAdbCommandService _commandService;
     private readonly IPackageInventoryService _packageInventoryService;
+    private readonly IPackagePreferenceRepository _packagePreferences;
     private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
@@ -60,7 +61,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDebloatExecutionService debloatExecutionService,
         IAdbCommandService commandService,
         IPackageInventoryService packageInventoryService,
-        IDeveloperVerificationPolicyProvider verificationPolicy)
+        IDeveloperVerificationPolicyProvider verificationPolicy,
+        IPackagePreferenceRepository packagePreferences)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -79,6 +81,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _debloatExecutionService = debloatExecutionService;
         _commandService = commandService;
         _packageInventoryService = packageInventoryService;
+        _packagePreferences = packagePreferences;
         _verificationPolicy = verificationPolicy;
         Navigation = new ObservableCollection<NavigationEntry>
         {
@@ -114,7 +117,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
-        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _confirmation),
+        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packagePreferences, _confirmation),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
@@ -679,15 +682,18 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 {
     private readonly IPackageManager _packageManager;
     private readonly IPackageInventoryService _inventoryService;
+    private readonly IPackagePreferenceRepository _preferences;
     private readonly IConfirmationService _confirmation;
 
     public ApplicationsPageViewModel(
         IPackageManager packageManager,
         IPackageInventoryService inventoryService,
+        IPackagePreferenceRepository preferences,
         IConfirmationService confirmation) : base("Applications")
     {
         _packageManager = packageManager;
         _inventoryService = inventoryService;
+        _preferences = preferences;
         _confirmation = confirmation;
     }
 
@@ -711,6 +717,15 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _permission = string.Empty;
+
+    [ObservableProperty]
+    private string _note = string.Empty;
+
+    public IReadOnlyList<PackageOverride> OverrideOptions { get; } =
+        [PackageOverride.AlwaysKeep, PackageOverride.NeverSuggest, PackageOverride.UserApproved, PackageOverride.None];
+
+    [ObservableProperty]
+    private PackageOverride _selectedOverride = PackageOverride.None;
 
     public IEnumerable<PackageInventoryEntry> FilteredPackages =>
         Packages.Where(package => string.IsNullOrWhiteSpace(Search)
@@ -789,6 +804,32 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
             ? "Package details were unavailable."
             : $"{details.PackageName} · {details.VersionName ?? "version unknown"} · " +
               $"{details.ApkPaths.Count} APK path(s) · installed={details.IsInstalled}, enabled={details.IsEnabled}";
+    }
+
+    [RelayCommand]
+    private async Task SaveOverrideAsync()
+    {
+        if (SelectedPackage is null || string.IsNullOrWhiteSpace(TargetSerial))
+        {
+            Message = "Select a package and enter a target serial.";
+            return;
+        }
+        await _preferences.SetOverrideAsync(TargetSerial.Trim(), SelectedPackage.PackageName, SelectedOverride, Note);
+        Message = SelectedOverride == PackageOverride.None
+            ? "Package override cleared."
+            : $"Package preference saved: {SelectedOverride}.";
+    }
+
+    [RelayCommand]
+    private async Task SaveNoteAsync()
+    {
+        if (SelectedPackage is null || string.IsNullOrWhiteSpace(TargetSerial) || string.IsNullOrWhiteSpace(Note))
+        {
+            Message = "Select a package, target, and enter a note.";
+            return;
+        }
+        await _preferences.SetNoteAsync(TargetSerial.Trim(), SelectedPackage.PackageName, Note.Trim());
+        Message = "Package note saved.";
     }
 
     [RelayCommand]

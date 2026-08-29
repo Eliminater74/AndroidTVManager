@@ -691,6 +691,16 @@
                             <Button Content="Revoke" Style="{StaticResource GhostButtonStyle}"
                                     Command="{Binding RevokePermissionCommand}" Margin="6,0,0,0"/>
                         </StackPanel>
+                        <TextBlock Text="PACKAGE PREFERENCE" FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource VioletAccent}" Margin="0,12,0,4"/>
+                        <ComboBox ItemsSource="{Binding OverrideOptions}" SelectedItem="{Binding SelectedOverride}"/>
+                        <Button Content="Save preference" Style="{StaticResource GhostButtonStyle}"
+                                Command="{Binding SaveOverrideCommand}" Margin="0,6,0,0"/>
+                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="42"
+                                 ToolTip="Optional package note" Margin="0,6,0,0"/>
+                        <Button Content="Save note" Style="{StaticResource GhostButtonStyle}"
+                                Command="{Binding SaveNoteCommand}" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding Message}" Foreground="{StaticResource TextSecondary}"
                                    TextWrapping="Wrap" Margin="0,14,0,0"/>
                     </StackPanel>

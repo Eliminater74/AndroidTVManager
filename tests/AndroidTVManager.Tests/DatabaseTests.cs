@@ -105,6 +105,30 @@ public sealed class DatabaseTests
         }
     }
 
+    [Fact]
+    public async Task Persists_package_preferences_and_notes_per_device()
+    {
+        var paths = new TestPaths();
+        try
+        {
+            var database = new SqliteDatabase(paths);
+            var preferences = new PackagePreferenceRepository(database);
+
+            await preferences.SetOverrideAsync("tv-pref", "com.example.app", PackageOverride.NeverSuggest, "Keep this.");
+            await preferences.SetNoteAsync("tv-pref", "com.example.app", "Needed for the remote.");
+
+            (await preferences.GetOverridesAsync("tv-pref"))["com.example.app"]
+                .Should().Be(PackageOverride.NeverSuggest);
+            (await preferences.GetNoteAsync("tv-pref", "com.example.app"))
+                .Should().Be("Needed for the remote.");
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            Directory.Delete(paths.Root, recursive: true);
+        }
+    }
+
     private sealed class TestPaths : ILocalAppDataPaths
     {
         public TestPaths()

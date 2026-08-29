@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IDeviceInspectionService, DeviceInspectionService>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
         services.AddSingleton<IPackageInventoryRepository, PackageInventoryRepository>();
+        services.AddSingleton<IPackagePreferenceRepository, PackagePreferenceRepository>();
         services.AddSingleton<IAdbCommandService, AdbCommandService>();
         services.AddSingleton<IPackageClassifier, PackageClassifier>();
         services.AddSingleton<IDebloatPlanner, DebloatPlanner>();

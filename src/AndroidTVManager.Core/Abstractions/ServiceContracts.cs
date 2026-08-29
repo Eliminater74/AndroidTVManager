@@ -142,6 +142,28 @@ public interface IPackageInventoryRepository
     Task<PackageInventoryResult?> GetLatestAsync(string serial, CancellationToken cancellationToken = default);
 }
 
+public interface IPackagePreferenceRepository
+{
+    Task<IReadOnlyDictionary<string, PackageOverride>> GetOverridesAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+    Task SetOverrideAsync(
+        string serial,
+        string packageName,
+        PackageOverride value,
+        string? note = null,
+        CancellationToken cancellationToken = default);
+    Task<string?> GetNoteAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default);
+    Task SetNoteAsync(
+        string serial,
+        string packageName,
+        string note,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed record PackageClassificationContext(
     AndroidDevice Device,
     string? ActiveLauncherPackage,
