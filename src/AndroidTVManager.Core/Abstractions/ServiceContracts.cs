@@ -43,6 +43,52 @@ public interface IAdbDeviceTracker : IAsyncDisposable
     Task StopAsync(CancellationToken cancellationToken = default);
 }
 
+public interface IAdbConnectionService
+{
+    Task<AdbCommandResult> ConnectAsync(
+        string endpoint,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> DisconnectAsync(
+        string endpoint,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> PairAsync(
+        string endpoint,
+        string pairingCode,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IApkInstaller
+{
+    Task<AdbCommandResult> InstallAsync(
+        string serial,
+        string apkPath,
+        bool reinstall = true,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IPackageManager
+{
+    Task<IReadOnlyList<PackageInfo>> ListAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> LaunchAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> ForceStopAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> EnableAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> DisableAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> UninstallForUserAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> ClearDataAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+}
+
+public interface IDeviceToolsService
+{
+    Task<AdbCommandResult> RebootAsync(string serial, string mode = "", CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> ShellAsync(string serial, string command, CancellationToken cancellationToken = default);
+    Task<string> CaptureScreenshotAsync(string serial, string friendlyName, CancellationToken cancellationToken = default);
+}
+
 public sealed record AdbDownloadProgress(long BytesReceived, long? TotalBytes, string Status);
 
 public interface IDeviceRepository

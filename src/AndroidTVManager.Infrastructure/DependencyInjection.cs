@@ -14,6 +14,10 @@ public static class DependencyInjection
         services.AddSingleton<IAdbToolsManager, AdbToolsManager>();
         services.AddSingleton<IAdbProcessRunner, AdbProcessRunner>();
         services.AddSingleton<IAdbDeviceTracker, AdbDeviceTracker>();
+        services.AddSingleton<IAdbConnectionService, AdbConnectionService>();
+        services.AddSingleton<IApkInstaller, ApkInstaller>();
+        services.AddSingleton<IPackageManager, PackageManager>();
+        services.AddSingleton<IDeviceToolsService, DeviceToolsService>();
         services.AddSingleton<SqliteDatabase>();
         services.AddSingleton<IDeviceRepository, DeviceRepository>();
         services.AddSingleton<IConnectionHistoryRepository, ConnectionHistoryRepository>();

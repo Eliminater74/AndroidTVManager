@@ -23,10 +23,13 @@ public partial class App : System.Windows.Application
         var window = _services.GetRequiredService<MainWindow>();
         MainWindow = window;
         window.Show();
+        _ = window.ViewModel.InitializeRuntimeAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        if (_services?.GetService<AndroidTVManager.Core.Abstractions.IAdbDeviceTracker>() is { } tracker)
+            _ = tracker.StopAsync();
         _services?.Dispose();
         base.OnExit(e);
     }
