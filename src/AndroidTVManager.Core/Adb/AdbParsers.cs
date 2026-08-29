@@ -1,0 +1,111 @@
+using System.Net;
+using System.Text.RegularExpressions;
+using AndroidTVManager.Core.Models;
+
+namespace AndroidTVManager.Core.Adb;
+
+public static partial class AdbParsers
+{
+    public static IReadOnlyList<AndroidDevice> ParseTrackedDevices(string text)
+    {
+        var devices = new List<AndroidDevice>();
+
+        foreach (var rawLine in text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var line = rawLine.Trim();
+            if (line.Length == 0 || line.StartsWith("List of devices", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var columns = line.Split('\t', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (columns.Length < 2)
+                continue;
+
+            var serial = columns[0];
+            var state = ParseState(columns[1]);
+            var attributes = columns.Skip(2)
+                .Select(ParseAttribute)
+                .Where(pair => pair.HasValue)
+                .Select(pair => pair!.Value)
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+
+            devices.Add(new AndroidDevice
+            {
+                Serial = serial,
+                Endpoint = ParseEndpoint(serial),
+                State = state,
+                ConnectionType = ParseConnectionType(serial),
+                Model = attributes.GetValueOrDefault("model")?.Replace('_', ' '),
+                Product = attributes.GetValueOrDefault("product"),
+                SeenAtUtc = DateTimeOffset.UtcNow
+            });
+        }
+
+        return devices;
+    }
+
+    public static DeviceState ParseState(string value) => value.Trim().ToLowerInvariant() switch
+    {
+        "device" => DeviceState.Device,
+        "offline" => DeviceState.Offline,
+        "unauthorized" => DeviceState.Unauthorized,
+        "no permissions" => DeviceState.NoPermissions,
+        _ => DeviceState.Unknown
+    };
+
+    public static ConnectionType ParseConnectionType(string serial)
+        => serial.Contains(':') ? ConnectionType.Network : ConnectionType.Usb;
+
+    public static string? ParseEndpoint(string serial)
+    {
+        if (!serial.Contains(':'))
+            return null;
+
+        if (serial.StartsWith("[", StringComparison.Ordinal))
+        {
+            var end = serial.IndexOf(']');
+            return end > 0 ? serial[1..end] : serial;
+        }
+
+        return serial;
+    }
+
+    public static bool TryParseEndpoint(string host, string portText, out string endpoint, out string error)
+    {
+        endpoint = string.Empty;
+        error = string.Empty;
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            error = "Enter an IP address or hostname.";
+            return false;
+        }
+
+        if (!int.TryParse(portText, out var port) || port is < 1 or > 65535)
+        {
+            error = "Port must be a number from 1 to 65535.";
+            return false;
+        }
+
+        var normalizedHost = host.Trim();
+        if (IPAddress.TryParse(normalizedHost, out var address) && address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            endpoint = $"[{normalizedHost}]:{port}";
+        else
+            endpoint = $"{normalizedHost}:{port}";
+
+        return true;
+    }
+
+    public static string? ParseAdbVersion(string output)
+    {
+        var match = VersionRegex().Match(output);
+        return match.Success ? match.Groups["version"].Value : null;
+    }
+
+    private static KeyValuePair<string, string>? ParseAttribute(string column)
+    {
+        var separator = column.IndexOf(':');
+        return separator <= 0 ? null : new(column[..separator], column[(separator + 1)..]);
+    }
+
+    [GeneratedRegex(@"Android Debug Bridge version (?<version>[0-9]+(?:\.[0-9]+){1,3})", RegexOptions.IgnoreCase)]
+    private static partial Regex VersionRegex();
+}
