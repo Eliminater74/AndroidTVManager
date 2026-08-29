@@ -28,6 +28,11 @@ public sealed class DatabaseTests
 
             var saved = await repository.GetSavedDevicesAsync();
             database.SchemaVersion.Should().Be(3);
+            await database.InitializeAsync();
+            await using var connection = await database.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'DebloatPlans';";
+            Convert.ToInt32(await command.ExecuteScalarAsync()).Should().Be(1);
             id.Should().BeGreaterThan(0);
             saved.Should().ContainSingle(device => device.FriendlyName == "Living Room TV");
         }

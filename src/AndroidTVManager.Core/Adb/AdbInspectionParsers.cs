@@ -169,8 +169,8 @@ public static class AdbInspectionParsers
         var addresses = Regex.Matches(output, @"inet6?\s+(?<address>[0-9a-fA-F:.]+)")
             .Select(match => match.Groups["address"].Value).Distinct().ToArray();
         var interfaces = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Where(line => !char.IsWhiteSpace(line.FirstOrDefault()) && line.Contains(':'))
-            .Select(line => line[..line.IndexOf(':')]).Distinct().ToArray();
+            .Select(line => Regex.Match(line, @"^\d+:\s*(?<name>[^:]+):").Groups["name"].Value)
+            .Where(name => name.Length > 0).Distinct().ToArray();
         return new(addresses, interfaces, hostname.Trim(), null, [], null);
     }
 
@@ -220,13 +220,25 @@ public static class AdbInspectionParsers
     private static long ParseBytes(string value, long multiplier = 1)
     {
         var parts = value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var number)
-            ? (long)(number * multiplier * UnitMultiplier(parts.ElementAtOrDefault(1)))
+        var numberText = parts[0];
+        var suffix = parts.Length > 1
+            ? parts[1]
+            : numberText.TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.');
+        if (parts.Length == 1)
+            numberText = numberText[..(numberText.Length - suffix.Length)];
+        return double.TryParse(numberText, NumberStyles.Float, CultureInfo.InvariantCulture, out var number)
+            ? (long)(number * multiplier * UnitMultiplier(suffix))
             : 0;
     }
 
     private static long UnitMultiplier(string? unit)
-        => unit?.ToUpperInvariant() switch { "KB" => 1024, "MB" => 1024 * 1024, "GB" => 1024L * 1024 * 1024, _ => 1 };
+        => unit?.ToUpperInvariant() switch
+        {
+            "K" or "KB" or "KIB" => 1024,
+            "M" or "MB" or "MIB" => 1024 * 1024,
+            "G" or "GB" or "GIB" => 1024L * 1024 * 1024,
+            _ => 1
+        };
 
     private static string? MatchValue(string value, string pattern)
         => Regex.Match(value, pattern, RegexOptions.IgnoreCase).Groups["value"].Value is { Length: > 0 } result

@@ -8,10 +8,17 @@ public sealed class PackageInventoryService : IPackageInventoryService
 {
     private static readonly TimeSpan InventoryTimeout = TimeSpan.FromMinutes(2);
     private readonly IAdbProcessRunner _runner;
+    private readonly IPackageInventoryRepository _repository;
+    private readonly IAppLogger _logger;
 
-    public PackageInventoryService(IAdbProcessRunner runner)
+    public PackageInventoryService(
+        IAdbProcessRunner runner,
+        IPackageInventoryRepository repository,
+        IAppLogger logger)
     {
         _runner = runner;
+        _repository = repository;
+        _logger = logger;
     }
 
     public async Task<PackageInventoryResult> GetInventoryAsync(
@@ -106,7 +113,16 @@ public sealed class PackageInventoryService : IPackageInventoryService
             : string.IsNullOrWhiteSpace(results["all"].StandardError)
                 ? "Package inventory was unavailable."
                 : results["all"].StandardError.Trim();
-        return new(serial, DateTimeOffset.UtcNow, packages, evidence, error);
+        var inventory = new PackageInventoryResult(serial, DateTimeOffset.UtcNow, packages, evidence, error);
+        try
+        {
+            await _repository.SaveAsync(inventory, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            _logger.Warning("PackageInventory", $"Could not cache inventory for {serial}: {exception.Message}");
+        }
+        return inventory;
     }
 
     private static string? ExtractPackage(string output)

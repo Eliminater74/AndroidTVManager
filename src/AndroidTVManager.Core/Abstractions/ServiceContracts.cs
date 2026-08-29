@@ -129,6 +129,12 @@ public interface IPackageInventoryService
         CancellationToken cancellationToken = default);
 }
 
+public interface IPackageInventoryRepository
+{
+    Task<long> SaveAsync(PackageInventoryResult inventory, CancellationToken cancellationToken = default);
+    Task<PackageInventoryResult?> GetLatestAsync(string serial, CancellationToken cancellationToken = default);
+}
+
 public sealed record PackageClassificationContext(
     AndroidDevice Device,
     string? ActiveLauncherPackage,
