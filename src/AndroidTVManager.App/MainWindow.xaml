@@ -173,6 +173,210 @@
                 </Border>
             </Grid>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DeviceStatusPageViewModel}">
+            <Grid Margin="34,26,34,28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="DEVICE STATUS" Style="{StaticResource SectionLabelStyle}"/>
+                    <TextBlock Text="Device intelligence" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                    <TextBlock Text="Inspect what Android exposes, with evidence for every important capability."
+                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                </StackPanel>
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,24,0,18">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Inspect device" Style="{StaticResource AccentButtonStyle}"
+                                    Command="{Binding InspectCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Cancel" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding CancelInspectionCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                            <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                      DisplayMemberPath="Serial" Width="280" Margin="0,8,0,0"/>
+                            <TextBlock Text="{Binding ProgressText}" Foreground="{StaticResource TextSecondary}"
+                                       Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="OVERVIEW" Style="{StaticResource SectionLabelStyle}"/>
+                                <UniformGrid Columns="4" Margin="0,14,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="MODEL" Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Inspection.Overview.Value.Model}" FontWeight="SemiBold" Margin="0,4,8,0"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="ANDROID" Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Inspection.Overview.Value.AndroidVersion}" FontWeight="SemiBold" Margin="0,4,8,0"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="API LEVEL" Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Inspection.Overview.Value.ApiLevel}" FontWeight="SemiBold" Margin="0,4,8,0"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="SERIAL" Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Inspection.Serial}" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <TextBlock Text="{Binding Inspection.Overview.Value.BuildFingerprint}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Expander Header="WHAT THIS DEVICE CAN DO" IsExpanded="True" Margin="0,14,0,0">
+                            <ItemsControl ItemsSource="{Binding Inspection.Capabilities}" Margin="0,10,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
+                                                Padding="12" Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="220"/>
+                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="{StaticResource CyanAccent}"
+                                                           FontWeight="Bold"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Summary}" Foreground="{StaticResource TextSecondary}"
+                                                           TextWrapping="Wrap"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="HARDWARE AND PERFORMANCE" IsExpanded="True" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.Architecture, StringFormat=Architecture: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.LogicalCoreCount, StringFormat=Logical cores: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Memory.Value.TotalBytes, StringFormat=RAM bytes: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Display.Value.CurrentResolution, StringFormat=Display: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Storage.Value.Volumes.Count, StringFormat=Storage volumes: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="SECURITY AND INSTALLATION" IsExpanded="True" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Security.Value.SelinuxState, StringFormat=SELinux: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Security.Value.VerifiedBootState, StringFormat=Verified Boot: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Security.Value.AdbRoot, StringFormat=ADB root: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.DeveloperVerification.Value.VerifierPresent, StringFormat=Developer Verifier: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="ADB installation: Supported; manual verification state: Check on device."
+                                               Foreground="{StaticResource GreenAccent}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="10"
+                                Padding="16" Margin="0,14,0,0">
+                            <StackPanel>
+                                <TextBlock Text="ANDROID APP INSTALLATION" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock Text="ADB installation is supported and is not subject to Android's manual unverified-developer waiting period."
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding GuideText}" Foreground="{StaticResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <Button Content="Unverified App Installation Guide" Style="{StaticResource GhostButtonStyle}"
+                                        HorizontalAlignment="Left" Command="{Binding ShowUnverifiedInstallGuideCommand}"
+                                        Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DebloatPageViewModel}">
+            <Grid Margin="34,26,34,28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="DEBLOAT" Style="{StaticResource SectionLabelStyle}"/>
+                    <TextBlock Text="Guided package cleanup" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                    <TextBlock Text="Preview every device-specific change. Unknown and critical packages stay protected."
+                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                </StackPanel>
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,24,0,18">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Create preview" Style="{StaticResource AccentButtonStyle}"
+                                    Command="{Binding CreatePlanCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Run selected" Style="{StaticResource DangerButtonStyle}"
+                                    Command="{Binding ExecutePlanCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Restore last" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding RestoreLastCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                          DisplayMemberPath="Serial" Width="250" Margin="0,8,16,0"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="PRESET" Style="{StaticResource SectionLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
+                                          Width="140" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
+                        <ItemsControl ItemsSource="{Binding Plan.Warnings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#332B14" CornerRadius="7" Padding="10" Margin="0,0,0,5">
+                                        <TextBlock Text="{Binding}" Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+                            <StackPanel>
+                                <TextBlock Text="PLAN ITEMS" Style="{StaticResource SectionLabelStyle}"/>
+                                <ItemsControl ItemsSource="{Binding Plan.Items}" Margin="0,12,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
+                                                    Padding="12" Margin="0,0,0,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="250"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Package.PackageName}" FontWeight="SemiBold"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Assessment.Risk}"
+                                                               Foreground="{StaticResource AmberAccent}"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding SelectionBlockReason}"
+                                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:AboutPageViewModel}">
             <Grid Margin="34,26,34,28">
                 <StackPanel>
@@ -351,6 +555,17 @@
                                        Foreground="{StaticResource VioletAccent}"/>
                             <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="0,10,0,18"/>
+                            <Border Background="#102C2F" CornerRadius="8" Padding="12" Margin="0,0,0,18">
+                                <StackPanel>
+                                    <TextBlock Text="APK INSTALLATION METHOD: ADB" FontWeight="Bold"
+                                               Foreground="{StaticResource GreenAccent}"/>
+                                    <TextBlock Text="{Binding InstallationInfo}" Foreground="{StaticResource TextSecondary}"
+                                               TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                    <Button Content="Learn more" Style="{StaticResource GhostButtonStyle}"
+                                            HorizontalAlignment="Left" Command="{Binding ShowVerificationGuideCommand}"
+                                            Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
                             <TextBlock Text="APK FILE PATH" FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource VioletAccent}"/>
                             <Grid Margin="0,10,0,18">
@@ -453,6 +668,8 @@
                         <StackPanel>
                             <TextBlock Text="TARGET SERIAL" FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource VioletAccent}"/>
+                            <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                      DisplayMemberPath="Serial" Margin="0,10,0,6"/>
                             <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,18"/>
                             <TextBlock Text="ADB SHELL" FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource VioletAccent}"/>
@@ -465,6 +682,12 @@
                                 <Button Grid.Column="1" Content="Run shell" Style="{StaticResource AccentButtonStyle}"
                                         Command="{Binding RunShellCommand}"/>
                             </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
+                                          Width="190" ToolTip="Safe command preset"/>
+                                <Button Content="Cancel" Style="{StaticResource GhostButtonStyle}"
+                                        Command="{Binding CancelShellCommand}" Margin="8,0,0,0"/>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Screenshot" Style="{StaticResource GhostButtonStyle}"
                                         Command="{Binding ScreenshotCommand}" Margin="0,0,8,0"/>
@@ -475,6 +698,15 @@
                                 <TextBlock Text="{Binding Output}" Foreground="{StaticResource TextSecondary}"
                                            TextWrapping="Wrap"/>
                             </Border>
+                            <TextBlock Text="RECENT COMMANDS" Style="{StaticResource SectionLabelStyle}" Margin="0,18,0,8"/>
+                            <ItemsControl ItemsSource="{Binding History}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Command}" Foreground="{StaticResource TextSecondary}"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
                 </StackPanel>

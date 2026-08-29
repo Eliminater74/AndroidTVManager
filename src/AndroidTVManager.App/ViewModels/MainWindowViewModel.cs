@@ -29,6 +29,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IConfirmationService _confirmation;
     private readonly ISettingsStore _settingsStore;
     private readonly IScriptExecutionService _scriptExecutionService;
+    private readonly IDeviceInspectionService _inspectionService;
+    private readonly IDebloatPlanner _debloatPlanner;
+    private readonly IDebloatExecutionService _debloatExecutionService;
+    private readonly IAdbCommandService _commandService;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -48,7 +52,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ILocalAppDataPaths paths,
         IConfirmationService confirmation,
         ISettingsStore settingsStore,
-        IScriptExecutionService scriptExecutionService)
+        IScriptExecutionService scriptExecutionService,
+        IDeviceInspectionService inspectionService,
+        IDebloatPlanner debloatPlanner,
+        IDebloatExecutionService debloatExecutionService,
+        IAdbCommandService commandService)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -62,13 +70,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _confirmation = confirmation;
         _settingsStore = settingsStore;
         _scriptExecutionService = scriptExecutionService;
+        _inspectionService = inspectionService;
+        _debloatPlanner = debloatPlanner;
+        _debloatExecutionService = debloatExecutionService;
+        _commandService = commandService;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
             new("Devices", "◉"),
+            new("Device Status", "◈"),
             new("Connections", "↔"),
             new("Install APK", "＋"),
             new("Applications", "▦"),
+            new("Debloat", "◌"),
             new("Scripts", "◇"),
             new("Tools", "⚙"),
             new("Settings", "☷"),
@@ -83,19 +97,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     public ObservableCollection<NavigationEntry> Navigation { get; }
-    public IEnumerable<NavigationEntry> MainNavigation => Navigation.Take(7);
-    public IEnumerable<NavigationEntry> SecondaryNavigation => Navigation.Skip(7);
+    public IEnumerable<NavigationEntry> MainNavigation => Navigation.Take(9);
+    public IEnumerable<NavigationEntry> SecondaryNavigation => Navigation.Skip(9);
     public ObservableCollection<AndroidDevice> Devices { get; }
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
     {
         "Dashboard" => new DashboardPageViewModel(Devices),
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository),
+        "Device Status" => new DeviceStatusPageViewModel(_inspectionService, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _confirmation),
+        "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
-        "Tools" => new ToolsPageViewModel(_toolsService),
+        "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
         "Settings" => new SettingsPageViewModel(_toolsManager, _paths, _settingsStore),
         "About" => new AboutPageViewModel(),
         _ => new PageViewModel(entry.Label)
@@ -135,9 +151,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         "Dashboard" => "Your connected Android TV and Google TV devices, at a glance.",
         "Devices" => "Connected and saved Android devices.",
+        "Device Status" => "Evidence-backed hardware, Android, security, and capability information.",
         "Connections" => "Connect over network or pair Android Wireless Debugging.",
         "Install APK" => "Install applications on the selected device.",
         "Applications" => "Inspect and manage installed packages.",
+        "Debloat" => "Preview conservative, device-specific package changes.",
         "Scripts" => "Preview safe, structured ADB automation.",
         "Tools" => "Targeted device utilities and diagnostics.",
         "Settings" => "Configure Android TV Manager and managed ADB.",
@@ -236,6 +254,208 @@ public sealed class DashboardPageViewModel : PageViewModel
 
     public ObservableCollection<AndroidDevice> Devices { get; }
     public bool HasDevices => Devices.Count > 0;
+}
+
+public sealed partial class DeviceStatusPageViewModel : PageViewModel
+{
+    private readonly IDeviceInspectionService _inspectionService;
+    private CancellationTokenSource? _scanSource;
+
+    public DeviceStatusPageViewModel(
+        IDeviceInspectionService inspectionService,
+        ObservableCollection<AndroidDevice> devices) : base("Device Status")
+    {
+        _inspectionService = inspectionService;
+        Devices = devices;
+    }
+
+    public ObservableCollection<AndroidDevice> Devices { get; }
+
+    [ObservableProperty]
+    private AndroidDevice? _selectedDevice;
+
+    [ObservableProperty]
+    private DeviceInspectionResult? _inspection;
+
+    [ObservableProperty]
+    private string _progressText = "Select a connected device and inspect it.";
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    [ObservableProperty]
+    private string _guideText = string.Empty;
+
+    partial void OnSelectedDeviceChanged(AndroidDevice? value)
+    {
+        if (value is null)
+            Inspection = null;
+        ProgressText = value is null
+            ? "Select a connected device and inspect it."
+            : $"Ready to inspect {value.Serial}.";
+    }
+
+    [RelayCommand]
+    private async Task InspectAsync()
+    {
+        if (SelectedDevice is null)
+        {
+            ProgressText = "Select a connected device before inspecting.";
+            return;
+        }
+
+        _scanSource?.Cancel();
+        _scanSource?.Dispose();
+        _scanSource = new CancellationTokenSource();
+        IsBusy = true;
+        GuideText = string.Empty;
+        var serial = SelectedDevice.Serial;
+        try
+        {
+            var progress = new Progress<DeviceInspectionProgress>(value =>
+                ProgressText = $"{value.Category}: {value.State} ({value.CompletedCategories}/{value.TotalCategories})");
+            Inspection = await _inspectionService.InspectAsync(serial, progress, _scanSource.Token);
+            ProgressText = $"Inspection completed at {Inspection.CapturedUtc.LocalDateTime:g}.";
+        }
+        catch (OperationCanceledException)
+        {
+            ProgressText = "Inspection canceled.";
+        }
+        catch (Exception exception)
+        {
+            ProgressText = $"Inspection failed: {exception.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelInspection() => _scanSource?.Cancel();
+
+    [RelayCommand]
+    private void ShowUnverifiedInstallGuide()
+    {
+        GuideText = """
+            Android TV Manager installs APKs through ADB, so normal ADB installation does not require
+            Android's manual unverified-developer Advanced Flow or its waiting period.
+
+            For manual, on-device installation: open Android Settings, open Developer Options, locate
+            the unverified-apps option if your build provides one, and follow the authentication and
+            security instructions shown on the device. Menu names and availability vary by TV and
+            Android version. Android may impose a one-time waiting period and may later offer a
+            temporary or longer activation. Android TV Manager does not bypass this process.
+            """;
+    }
+}
+
+public sealed partial class DebloatPageViewModel : PageViewModel
+{
+    private readonly IDebloatPlanner _planner;
+    private readonly IDebloatExecutionService _execution;
+    private readonly IConfirmationService _confirmation;
+    private long? _lastExecutionId;
+
+    public DebloatPageViewModel(
+        IDebloatPlanner planner,
+        IDebloatExecutionService execution,
+        IConfirmationService confirmation,
+        ObservableCollection<AndroidDevice> devices) : base("Debloat")
+    {
+        _planner = planner;
+        _execution = execution;
+        _confirmation = confirmation;
+        Devices = devices;
+    }
+
+    public ObservableCollection<AndroidDevice> Devices { get; }
+    public IReadOnlyList<DebloatPreset> Presets { get; } = Enum.GetValues<DebloatPreset>();
+
+    [ObservableProperty]
+    private AndroidDevice? _selectedDevice;
+
+    [ObservableProperty]
+    private DebloatPreset _selectedPreset = DebloatPreset.Simple;
+
+    [ObservableProperty]
+    private DebloatPlan? _plan;
+
+    [ObservableProperty]
+    private string _status = "Generate a preview before changing anything.";
+
+    partial void OnSelectedDeviceChanged(AndroidDevice? value)
+    {
+        Plan = null;
+        Status = value is null ? "Select a connected device." : $"Ready to analyze {value.Serial}.";
+    }
+
+    [RelayCommand]
+    private async Task CreatePlanAsync()
+    {
+        if (SelectedDevice is null)
+        {
+            Status = "Select a connected device before creating a plan.";
+            return;
+        }
+        try
+        {
+            Status = $"Analyzing packages on {SelectedDevice.Serial}…";
+            Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset);
+            Status = $"{Plan.Items.Count(item => item.Selected)} package(s) selected; review the plan before execution.";
+        }
+        catch (Exception exception)
+        {
+            Status = $"Plan failed: {exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExecutePlanAsync()
+    {
+        if (Plan is null || SelectedDevice is null)
+        {
+            Status = "Create a plan and select its target first.";
+            return;
+        }
+        var selected = Plan.Items.Count(item => item.Selected);
+        if (!_confirmation.Confirm(
+                $"Run {Plan.Preset} debloat",
+                $"This will disable {selected} package(s) on target:\n{Plan.Serial}\n\nUnknown and critical packages are excluded. Continue?"))
+        {
+            Status = "Debloat canceled.";
+            return;
+        }
+        try
+        {
+            var result = await _execution.ExecuteAsync(Plan);
+            _lastExecutionId = result.ExecutionId;
+            Status = $"Debloat {result.Status.ToLowerInvariant()}: {result.SuccessfulActions} succeeded, {result.FailedActions} failed.";
+        }
+        catch (Exception exception)
+        {
+            Status = $"Debloat failed: {exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RestoreLastAsync()
+    {
+        if (_lastExecutionId is not { } executionId || SelectedDevice is null)
+        {
+            Status = "No debloat execution is available to restore.";
+            return;
+        }
+        try
+        {
+            var result = await _execution.RestoreAsync(executionId, SelectedDevice.Serial);
+            Status = $"Restore {result.Status.ToLowerInvariant()}: {result.RestoredActions} restored, {result.FailedActions} failed.";
+        }
+        catch (Exception exception)
+        {
+            Status = $"Restore failed: {exception.Message}";
+        }
+    }
 }
 
 public sealed partial class DevicesPageViewModel : ObservableObject
@@ -396,6 +616,9 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
     [ObservableProperty]
     private string _output = "Select an APK and enter the target device serial.";
 
+    [ObservableProperty]
+    private string _installationInfo = "ADB installs are not subject to Android's manual 24-hour Advanced Flow delay.";
+
     [RelayCommand]
     private void BrowseApk()
     {
@@ -407,6 +630,17 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
         };
         if (dialog.ShowDialog() == true)
             ApkPath = string.Join(Environment.NewLine, dialog.FileNames);
+    }
+
+    [RelayCommand]
+    private void ShowVerificationGuide()
+    {
+        InstallationInfo = """
+            Android TV Manager uses Android Debug Bridge (ADB), so normal ADB APK installation does not
+            require the manual unverified-developer Advanced Flow waiting period. Manual on-device
+            installation may require Developer Options and device-specific authentication. Check the
+            instructions shown in Android Settings; Android TV manufacturers may use different menu names.
+            """;
     }
 
     [RelayCommand]
@@ -533,11 +767,29 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 public sealed partial class ToolsPageViewModel : PageViewModel
 {
     private readonly IDeviceToolsService _toolsService;
+    private readonly IAdbCommandService _commandService;
+    private CancellationTokenSource? _commandSource;
 
-    public ToolsPageViewModel(IDeviceToolsService toolsService) : base("Tools")
+    public ToolsPageViewModel(
+        IDeviceToolsService toolsService,
+        IAdbCommandService commandService,
+        ObservableCollection<AndroidDevice> devices) : base("Tools")
     {
         _toolsService = toolsService;
+        _commandService = commandService;
+        Devices = devices;
     }
+
+    public ObservableCollection<AndroidDevice> Devices { get; }
+    public IReadOnlyList<string> Presets { get; } =
+        ["Get Properties", "CPU Info", "Memory Info", "Disk Usage", "Package List", "Disabled Packages",
+         "Features", "Display Info", "Network Info", "Running Services", "Process List"];
+
+    [ObservableProperty]
+    private AndroidDevice? _selectedDevice;
+
+    [ObservableProperty]
+    private string _selectedPreset = "Get Properties";
 
     [ObservableProperty]
     private string _targetSerial = string.Empty;
@@ -548,14 +800,66 @@ public sealed partial class ToolsPageViewModel : PageViewModel
     [ObservableProperty]
     private string _output = "Targeted tools keep every operation explicit.";
 
+    partial void OnSelectedDeviceChanged(AndroidDevice? value)
+    {
+        if (value is not null)
+            TargetSerial = value.Serial;
+    }
+
+    partial void OnSelectedPresetChanged(string value)
+    {
+        ShellCommand = value switch
+        {
+            "Get Properties" => "getprop",
+            "CPU Info" => "cat /proc/cpuinfo",
+            "Memory Info" => "cat /proc/meminfo",
+            "Disk Usage" => "df -h",
+            "Package List" => "pm list packages",
+            "Disabled Packages" => "pm list packages -d",
+            "Features" => "pm list features",
+            "Display Info" => "dumpsys display",
+            "Network Info" => "ip addr",
+            "Running Services" => "dumpsys activity services",
+            "Process List" => "ps -A",
+            _ => ShellCommand
+        };
+    }
+
     [RelayCommand]
     private async Task RunShellAsync()
     {
         if (!HasTarget())
             return;
-        var result = await _toolsService.ShellAsync(TargetSerial.Trim(), ShellCommand);
-        Output = result.IsSuccess ? result.StandardOutput.Trim() : result.StandardError.Trim();
+        _commandSource?.Cancel();
+        _commandSource?.Dispose();
+        _commandSource = new CancellationTokenSource();
+        var serial = TargetSerial.Trim();
+        var command = ShellCommand.Trim();
+        if (command.Length == 0)
+        {
+            Output = "Enter a shell command.";
+            return;
+        }
+        Output = $"Running on {serial}…";
+        try
+        {
+            var result = await _commandService.ExecuteAsync(serial, ["shell", command],
+                TimeSpan.FromMinutes(5), _commandSource.Token);
+            Output = result.IsSuccess ? result.StandardOutput.Trim() : result.StandardError.Trim();
+            History.Insert(0, new(serial, command, result, DateTimeOffset.UtcNow));
+            if (History.Count > 20)
+                History.RemoveAt(History.Count - 1);
+        }
+        catch (OperationCanceledException)
+        {
+            Output = "Command canceled.";
+        }
     }
+
+    public ObservableCollection<AdbCommandHistoryItem> History { get; } = [];
+
+    [RelayCommand]
+    private void CancelShell() => _commandSource?.Cancel();
 
     [RelayCommand]
     private async Task RebootAsync()
