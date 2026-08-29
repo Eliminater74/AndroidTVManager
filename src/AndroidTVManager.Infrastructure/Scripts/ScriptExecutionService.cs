@@ -41,9 +41,6 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var previous = await CapturePreviousStateAsync(target.Serial, action, cancellationToken);
-                var result = await ExecuteActionAsync(target.Serial, action, cancellationToken);
-                var reversible = result.IsSuccess && action.Reversible && previous is not null
-                    && IsUndoSupported(action.Type);
                 var actionId = await _store.AddActionAsync(executionId, new ScriptActionRecord(
                     0,
                     index,
@@ -51,11 +48,19 @@ public sealed class ScriptExecutionService : IScriptExecutionService
                     ActionTarget(action),
                     previous,
                     action.Value ?? action.Package,
-                    result.IsSuccess ? "completed" : "unchanged",
-                    RedactOutput(result.StandardOutput, result.StandardError),
-                    result.IsSuccess,
-                    reversible,
+                    null,
+                    "Action pending.",
+                    false,
+                    false,
                     null), cancellationToken);
+                var result = await ExecuteActionAsync(target.Serial, action, cancellationToken);
+                var reversible = result.IsSuccess && action.Reversible && previous is not null
+                    && IsUndoSupported(action.Type);
+                var resulting = result.IsSuccess
+                    ? await CapturePreviousStateAsync(target.Serial, action, cancellationToken)
+                    : null;
+                await _store.UpdateActionAsync(actionId, result.IsSuccess, reversible, resulting,
+                    RedactOutput(result.StandardOutput, result.StandardError), cancellationToken);
 
                 if (result.IsSuccess)
                 {
@@ -65,8 +70,6 @@ public sealed class ScriptExecutionService : IScriptExecutionService
                 else
                 {
                     failed++;
-                    if (actionId < 0)
-                        break;
                     await _store.CompleteAsync(executionId, "Failed", cancellationToken);
                     return new(executionId, "Failed", succeeded, failed, canUndo);
                 }
@@ -145,12 +148,14 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         if (action.Type.Equals("uninstallUser", StringComparison.OrdinalIgnoreCase)
             || action.Type.Equals("restorePackage", StringComparison.OrdinalIgnoreCase))
         {
-            var packages = await _runner.RunForDeviceAsync(serial, ["shell", "pm", "list", "packages", "-u"],
+            var packages = await _runner.RunForDeviceAsync(serial, ["shell", "dumpsys", "package", action.Package!],
                 TimeSpan.FromSeconds(30), cancellationToken);
             return packages.IsSuccess
-                ? packages.StandardOutput.Contains($"package:{action.Package}", StringComparison.OrdinalIgnoreCase)
+                ? packages.StandardOutput.Contains("installed=true", StringComparison.OrdinalIgnoreCase)
                     ? "installed"
-                    : "missing"
+                    : packages.StandardOutput.Contains("installed=false", StringComparison.OrdinalIgnoreCase)
+                        ? "missing"
+                        : null
                 : null;
         }
 
