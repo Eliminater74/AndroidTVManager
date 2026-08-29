@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using Microsoft.Win32;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
@@ -21,6 +23,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IApkInstaller _apkInstaller;
     private readonly IPackageManager _packageManager;
     private readonly IDeviceToolsService _toolsService;
+    private readonly IDeviceRepository _deviceRepository;
+    private readonly ILocalAppDataPaths _paths;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -34,7 +38,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IAdbConnectionService connectionService,
         IApkInstaller apkInstaller,
         IPackageManager packageManager,
-        IDeviceToolsService toolsService)
+        IDeviceToolsService toolsService,
+        IDeviceRepository deviceRepository,
+        ILocalAppDataPaths paths)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -43,6 +49,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _apkInstaller = apkInstaller;
         _packageManager = packageManager;
         _toolsService = toolsService;
+        _deviceRepository = deviceRepository;
+        _paths = paths;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -68,12 +76,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
     {
-        "Devices" => new DevicesPageViewModel(Devices),
+        "Devices" => new DevicesPageViewModel(Devices, _deviceRepository),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller),
         "Applications" => new ApplicationsPageViewModel(_packageManager),
         "Scripts" => new ScriptsPageViewModel(),
         "Tools" => new ToolsPageViewModel(_toolsService),
+        "Settings" => new SettingsPageViewModel(_toolsManager, _paths),
         "About" => new AboutPageViewModel(),
         _ => new PageViewModel(entry.Label)
     };
@@ -170,10 +179,51 @@ public class PageViewModel : ObservableObject
         : $"Manage your Android TV workflow from {Title.ToLowerInvariant()}.";
 }
 
-public sealed class DevicesPageViewModel(ObservableCollection<AndroidDevice> devices) : ObservableObject
+public sealed partial class DevicesPageViewModel : ObservableObject
 {
-    public ObservableCollection<AndroidDevice> Devices { get; } = devices;
-    public AndroidDevice? SelectedDevice { get; set; }
+    private readonly IDeviceRepository _repository;
+
+    public DevicesPageViewModel(
+        ObservableCollection<AndroidDevice> devices,
+        IDeviceRepository repository)
+    {
+        Devices = devices;
+        _repository = repository;
+    }
+
+    public ObservableCollection<AndroidDevice> Devices { get; }
+
+    [ObservableProperty]
+    private AndroidDevice? _selectedDevice;
+
+    [ObservableProperty]
+    private string _friendlyName = string.Empty;
+
+    [ObservableProperty]
+    private string _saveMessage = "Select a live device to save it for later.";
+
+    [RelayCommand]
+    private async Task SaveDeviceAsync()
+    {
+        if (SelectedDevice is null)
+        {
+            SaveMessage = "Select a live device first.";
+            return;
+        }
+        var savedName = string.IsNullOrWhiteSpace(FriendlyName)
+            ? SelectedDevice.Model ?? SelectedDevice.Serial
+            : FriendlyName.Trim();
+        await _repository.UpsertAsync(new SavedDevice
+        {
+            FriendlyName = savedName,
+            Manufacturer = SelectedDevice.Manufacturer,
+            Model = SelectedDevice.Model,
+            LastKnownSerial = SelectedDevice.Serial,
+            LastKnownEndpoint = SelectedDevice.Endpoint,
+            IsFavorite = true
+        });
+        SaveMessage = $"{savedName} saved to your device list.";
+    }
 }
 
 public sealed class AboutPageViewModel : PageViewModel
@@ -289,6 +339,19 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
     private string _output = "Select an APK and enter the target device serial.";
 
     [RelayCommand]
+    private void BrowseApk()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Android packages (*.apk)|*.apk|All files (*.*)|*.*",
+            Multiselect = true,
+            Title = "Select APK package(s)"
+        };
+        if (dialog.ShowDialog() == true)
+            ApkPath = string.Join(Environment.NewLine, dialog.FileNames);
+    }
+
+    [RelayCommand]
     private async Task InstallAsync()
     {
         if (string.IsNullOrWhiteSpace(TargetSerial) || string.IsNullOrWhiteSpace(ApkPath))
@@ -296,15 +359,23 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
             Output = "Target serial and APK path are required.";
             return;
         }
-        if (!File.Exists(ApkPath))
+        var paths = ApkPath.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (paths.Any(path => !File.Exists(path)))
         {
-            Output = "The selected APK file does not exist.";
+            Output = "One or more selected APK files do not exist.";
             return;
         }
 
-        Output = $"Installing {Path.GetFileName(ApkPath)}…";
-        var result = await _installer.InstallAsync(TargetSerial.Trim(), ApkPath.Trim());
-        Output = result.IsSuccess ? "APK installed successfully." : result.StandardError.Trim();
+        var results = new List<string>();
+        for (var index = 0; index < paths.Length; index++)
+        {
+            Output = $"Installing {index + 1} of {paths.Length} · {Path.GetFileName(paths[index])}…";
+            var result = await _installer.InstallAsync(TargetSerial.Trim(), paths[index]);
+            results.Add(result.IsSuccess
+                ? $"✓ {Path.GetFileName(paths[index])}"
+                : $"✕ {Path.GetFileName(paths[index])}: {result.StandardError.Trim()}");
+        }
+        Output = string.Join(Environment.NewLine, results);
     }
 }
 
@@ -488,5 +559,56 @@ public sealed partial class ScriptsPageViewModel : PageViewModel
         {
             Preview = $"Validation failed\n\n{exception.Message}";
         }
+    }
+}
+
+public sealed partial class SettingsPageViewModel : PageViewModel
+{
+    private readonly IAdbToolsManager _toolsManager;
+    private readonly ILocalAppDataPaths _paths;
+
+    public SettingsPageViewModel(IAdbToolsManager toolsManager, ILocalAppDataPaths paths) : base("Settings")
+    {
+        _toolsManager = toolsManager;
+        _paths = paths;
+        _paths.EnsureCreated();
+    }
+
+    public string DataPath => Path.GetDirectoryName(_paths.DatabasePath) ?? _paths.Root;
+    public string ToolsPath => _paths.ToolsPath;
+    public string LogsPath => _paths.LogsPath;
+
+    [ObservableProperty]
+    private string _status = "Platform-Tools status is checked on startup.";
+
+    [RelayCommand]
+    private async Task RepairPlatformToolsAsync()
+    {
+        Status = "Downloading official Google Platform-Tools…";
+        var result = await _toolsManager.InstallOrRepairAsync();
+        Status = result.IsReady
+            ? $"Platform-Tools {result.Version} ready."
+            : $"Platform-Tools repair failed: {result.ErrorMessage}";
+    }
+
+    [RelayCommand]
+    private void OpenDataFolder()
+    {
+        _paths.EnsureCreated();
+        Process.Start(new ProcessStartInfo { FileName = DataPath, UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void OpenToolsFolder()
+    {
+        _paths.EnsureCreated();
+        Process.Start(new ProcessStartInfo { FileName = ToolsPath, UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void OpenLogsFolder()
+    {
+        _paths.EnsureCreated();
+        Process.Start(new ProcessStartInfo { FileName = LogsPath, UseShellExecute = true });
     }
 }
