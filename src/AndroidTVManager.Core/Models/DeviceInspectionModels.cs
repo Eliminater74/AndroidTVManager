@@ -159,6 +159,14 @@ public sealed record RuntimeInfo(
     string? RunningProcesses,
     string? RunningServices);
 
+public sealed record PackageSummaryInfo(
+    int? TotalPackages,
+    string? PackageListSummary);
+
+public sealed record ServiceSummaryInfo(
+    int? RunningServiceCount,
+    string? ServiceListSummary);
+
 public enum AdvancedFlowAvailability
 {
     Available,
@@ -207,6 +215,8 @@ public sealed record DeviceInspectionResult(
     InspectionSection<NetworkInfo> Network,
     InspectionSection<RuntimeInfo> Runtime,
     InspectionSection<IReadOnlyList<string>> Features,
+    InspectionSection<PackageSummaryInfo> Packages,
+    InspectionSection<ServiceSummaryInfo> Services,
     InspectionSection<DeveloperVerificationInfo> DeveloperVerification,
     IReadOnlyDictionary<string, string> RawProperties,
     IReadOnlyList<DeviceCapability> Capabilities,

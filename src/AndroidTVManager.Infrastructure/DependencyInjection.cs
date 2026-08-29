@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddSingleton<IPackageClassifier, PackageClassifier>();
         services.AddSingleton<IDebloatPlanner, DebloatPlanner>();
         services.AddSingleton<IDebloatExecutionService, DebloatExecutionService>();
+        services.AddSingleton<IDeveloperVerificationPolicyProvider, DeveloperVerificationPolicyProvider>();
         services.AddSingleton<IScriptExecutionStore, ScriptExecutionStore>();
         services.AddSingleton<IScriptExecutionService, ScriptExecutionService>();
         services.AddSingleton<IAdbToolsManager, AdbToolsManager>();

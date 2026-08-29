@@ -34,6 +34,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDebloatExecutionService _debloatExecutionService;
     private readonly IAdbCommandService _commandService;
     private readonly IPackageInventoryService _packageInventoryService;
+    private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -58,7 +59,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDebloatPlanner debloatPlanner,
         IDebloatExecutionService debloatExecutionService,
         IAdbCommandService commandService,
-        IPackageInventoryService packageInventoryService)
+        IPackageInventoryService packageInventoryService,
+        IDeveloperVerificationPolicyProvider verificationPolicy)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -77,6 +79,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _debloatExecutionService = debloatExecutionService;
         _commandService = commandService;
         _packageInventoryService = packageInventoryService;
+        _verificationPolicy = verificationPolicy;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -108,9 +111,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         "Dashboard" => new DashboardPageViewModel(Devices),
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository),
-        "Device Status" => new DeviceStatusPageViewModel(_inspectionService, Devices),
+        "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
-        "Install APK" => new InstallApkPageViewModel(_apkInstaller),
+        "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _confirmation),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
@@ -262,14 +265,18 @@ public sealed class DashboardPageViewModel : PageViewModel
 public sealed partial class DeviceStatusPageViewModel : PageViewModel
 {
     private readonly IDeviceInspectionService _inspectionService;
+    private readonly IDeveloperVerificationPolicyProvider _policyProvider;
     private CancellationTokenSource? _scanSource;
 
     public DeviceStatusPageViewModel(
         IDeviceInspectionService inspectionService,
+        IDeveloperVerificationPolicyProvider policyProvider,
         ObservableCollection<AndroidDevice> devices) : base("Device Status")
     {
         _inspectionService = inspectionService;
+        _policyProvider = policyProvider;
         Devices = devices;
+        InstallationPolicy = policyProvider.GetPolicy(null).ManualInstallGuidance;
     }
 
     public ObservableCollection<AndroidDevice> Devices { get; }
@@ -288,6 +295,9 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _guideText = string.Empty;
+
+    [ObservableProperty]
+    private string _installationPolicy;
 
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
@@ -340,16 +350,7 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
     [RelayCommand]
     private void ShowUnverifiedInstallGuide()
     {
-        GuideText = """
-            Android TV Manager installs APKs through ADB, so normal ADB installation does not require
-            Android's manual unverified-developer Advanced Flow or its waiting period.
-
-            For manual, on-device installation: open Android Settings, open Developer Options, locate
-            the unverified-apps option if your build provides one, and follow the authentication and
-            security instructions shown on the device. Menu names and availability vary by TV and
-            Android version. Android may impose a one-time waiting period and may later offer a
-            temporary or longer activation. Android TV Manager does not bypass this process.
-            """;
+        GuideText = _policyProvider.GetPolicy(SelectedDevice).ManualInstallGuidance;
     }
 }
 
@@ -604,10 +605,15 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
 public sealed partial class InstallApkPageViewModel : PageViewModel
 {
     private readonly IApkInstaller _installer;
+    private readonly IDeveloperVerificationPolicyProvider _policyProvider;
 
-    public InstallApkPageViewModel(IApkInstaller installer) : base("Install APK")
+    public InstallApkPageViewModel(
+        IApkInstaller installer,
+        IDeveloperVerificationPolicyProvider policyProvider) : base("Install APK")
     {
         _installer = installer;
+        _policyProvider = policyProvider;
+        InstallationInfo = "ADB installation is independent from Android's manual unverified-developer flow.";
     }
 
     [ObservableProperty]
@@ -620,7 +626,7 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
     private string _output = "Select an APK and enter the target device serial.";
 
     [ObservableProperty]
-    private string _installationInfo = "ADB installs are not subject to Android's manual 24-hour Advanced Flow delay.";
+    private string _installationInfo;
 
     [RelayCommand]
     private void BrowseApk()
@@ -638,12 +644,7 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
     [RelayCommand]
     private void ShowVerificationGuide()
     {
-        InstallationInfo = """
-            Android TV Manager uses Android Debug Bridge (ADB), so normal ADB APK installation does not
-            require the manual unverified-developer Advanced Flow waiting period. Manual on-device
-            installation may require Developer Options and device-specific authentication. Check the
-            instructions shown in Android Settings; Android TV manufacturers may use different menu names.
-            """;
+        InstallationInfo = _policyProvider.GetPolicy(null).ManualInstallGuidance;
     }
 
     [RelayCommand]
@@ -708,6 +709,9 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     [ObservableProperty]
     private string _selectedFilter = "All";
 
+    [ObservableProperty]
+    private string _permission = string.Empty;
+
     public IEnumerable<PackageInventoryEntry> FilteredPackages =>
         Packages.Where(package => string.IsNullOrWhiteSpace(Search)
             || package.PackageName.Contains(Search, StringComparison.OrdinalIgnoreCase)
@@ -760,7 +764,51 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     private Task UninstallAsync() => RunActionAsync("Uninstall for user", (serial, package) => _packageManager.UninstallForUserAsync(serial, package), true);
 
     [RelayCommand]
+    private Task RestoreAsync() => RunActionAsync("Restore package", (serial, package) => _packageManager.RestoreAsync(serial, package));
+
+    [RelayCommand]
     private Task ClearDataAsync() => RunActionAsync("Clear data", (serial, package) => _packageManager.ClearDataAsync(serial, package), true);
+
+    [RelayCommand]
+    private Task ClearCacheAsync() => RunActionAsync("Clear cache", (serial, package) => _packageManager.ClearCacheAsync(serial, package), true);
+
+    [RelayCommand]
+    private Task OpenAppSettingsAsync() => RunActionAsync("Open app settings", (serial, package) =>
+        _packageManager.OpenAppSettingsAsync(serial, package));
+
+    [RelayCommand]
+    private async Task ViewDetailsAsync()
+    {
+        if (SelectedPackage is null || string.IsNullOrWhiteSpace(TargetSerial))
+        {
+            Message = "Select a package and enter a target serial.";
+            return;
+        }
+        var details = await _inventoryService.GetDetailsAsync(TargetSerial.Trim(), SelectedPackage.PackageName);
+        Message = details is null
+            ? "Package details were unavailable."
+            : $"{details.PackageName} · {details.VersionName ?? "version unknown"} · " +
+              $"{details.ApkPaths.Count} APK path(s) · installed={details.IsInstalled}, enabled={details.IsEnabled}";
+    }
+
+    [RelayCommand]
+    private Task GrantPermissionAsync() => RunPermissionActionAsync("Grant permission",
+        (serial, package, permission) => _packageManager.GrantPermissionAsync(serial, package, permission));
+
+    [RelayCommand]
+    private Task RevokePermissionAsync() => RunPermissionActionAsync("Revoke permission",
+        (serial, package, permission) => _packageManager.RevokePermissionAsync(serial, package, permission));
+
+    [RelayCommand]
+    private Task FullUninstallAsync()
+    {
+        if (SelectedPackage?.IsSystem == true)
+        {
+            Message = "Full uninstall is blocked for system packages. Use Disable or Uninstall for user 0.";
+            return Task.CompletedTask;
+        }
+        return RunActionAsync("Full uninstall", (serial, package) => _packageManager.FullUninstallAsync(serial, package), true);
+    }
 
     private async Task RunActionAsync(
         string action,
@@ -783,6 +831,33 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         }
         Message = $"{action} · {packageName}…";
         var result = await operation(serial, packageName);
+        Message = result.IsSuccess ? $"{action} completed." : result.StandardError.Trim();
+    }
+
+    private async Task RunPermissionActionAsync(
+        string action,
+        Func<string, string, string, Task<AdbCommandResult>> operation)
+    {
+        if (string.IsNullOrWhiteSpace(Permission))
+        {
+            Message = "Enter an Android permission name.";
+            return;
+        }
+        if (SelectedPackage is null || string.IsNullOrWhiteSpace(TargetSerial))
+        {
+            Message = "Select a package and enter a target serial.";
+            return;
+        }
+        var serial = TargetSerial.Trim();
+        var package = SelectedPackage.PackageName;
+        var permission = Permission.Trim();
+        if (!_confirmation.Confirm($"{action} · confirm target",
+                $"{action} applies to:\n\n{package}\n{permission}\n\nTarget device:\n{serial}\n\nContinue?"))
+        {
+            Message = "Operation canceled.";
+            return;
+        }
+        var result = await operation(serial, package, permission);
         Message = result.IsSuccess ? $"{action} completed." : result.StandardError.Trim();
     }
 }

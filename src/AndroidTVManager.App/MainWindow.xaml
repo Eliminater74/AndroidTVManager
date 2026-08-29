@@ -254,6 +254,22 @@
                             </ItemsControl>
                         </Expander>
                         <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="PACKAGES" IsExpanded="True" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.TotalPackages, StringFormat=Visible packages: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.State, StringFormat=Scan state: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="SERVICES" IsExpanded="False" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Services.Value.RunningServiceCount, StringFormat=Running services: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Services.State, StringFormat=Scan state: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
                             <Expander Header="HARDWARE AND PERFORMANCE" IsExpanded="True" Margin="0,0,7,0">
                                 <StackPanel Margin="0,10,0,0">
                                     <TextBlock Text="{Binding Inspection.Cpu.Value.Architecture, StringFormat=Architecture: {0}}"/>
@@ -285,7 +301,7 @@
                                 Padding="16" Margin="0,14,0,0">
                             <StackPanel>
                                 <TextBlock Text="ANDROID APP INSTALLATION" Style="{StaticResource SectionLabelStyle}"/>
-                                <TextBlock Text="ADB installation is supported and is not subject to Android's manual unverified-developer waiting period."
+                                <TextBlock Text="{Binding InstallationPolicy}"
                                            TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 <TextBlock Text="{Binding GuideText}" Foreground="{StaticResource TextSecondary}"
                                            TextWrapping="Wrap" Margin="0,8,0,0"/>
@@ -625,7 +641,10 @@
                     </Grid.ColumnDefinitions>
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
                             BorderThickness="1" CornerRadius="12" Padding="12">
-                        <ListBox ItemsSource="{Binding FilteredPackages}" SelectedItem="{Binding SelectedPackage}">
+                        <ListBox ItemsSource="{Binding FilteredPackages}" SelectedItem="{Binding SelectedPackage}"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                 ScrollViewer.CanContentScroll="True">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Margin="8,7">
@@ -650,8 +669,28 @@
                                 Command="{Binding EnableCommand}"/>
                         <Button Content="Uninstall for user 0" Style="{StaticResource GhostButtonStyle}" Margin="0,4"
                                 Command="{Binding UninstallCommand}"/>
+                        <Button Content="Restore package" Style="{StaticResource GhostButtonStyle}" Margin="0,4"
+                                Command="{Binding RestoreCommand}"/>
                         <Button Content="Clear data" Style="{StaticResource GhostButtonStyle}" Margin="0,4"
                                 Command="{Binding ClearDataCommand}"/>
+                        <Button Content="Clear cache" Style="{StaticResource GhostButtonStyle}" Margin="0,4"
+                                Command="{Binding ClearCacheCommand}"/>
+                        <Button Content="View package details" Style="{StaticResource GhostButtonStyle}" Margin="0,4"
+                                Command="{Binding ViewDetailsCommand}"/>
+                        <Button Content="Open app settings" Style="{StaticResource GhostButtonStyle}" Margin="0,4"
+                                Command="{Binding OpenAppSettingsCommand}"/>
+                        <Button Content="Full uninstall" Style="{StaticResource DangerButtonStyle}" Margin="0,4"
+                                Command="{Binding FullUninstallCommand}"/>
+                        <TextBlock Text="PERMISSION" FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource VioletAccent}" Margin="0,12,0,4"/>
+                        <TextBox Text="{Binding Permission, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="android.permission.*"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button Content="Grant" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding GrantPermissionCommand}"/>
+                            <Button Content="Revoke" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding RevokePermissionCommand}" Margin="6,0,0,0"/>
+                        </StackPanel>
                         <TextBlock Text="{Binding Message}" Foreground="{StaticResource TextSecondary}"
                                    TextWrapping="Wrap" Margin="0,14,0,0"/>
                     </StackPanel>

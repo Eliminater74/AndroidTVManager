@@ -117,6 +117,14 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 new RuntimeInfo(Output(results, "uptime"), Summarize(Output(results, "battery")), null, null,
                     Summarize(Output(results, "services")))),
             Section("Features", results, ["features"], AdbInspectionParsers.ParseFeatures(Output(results, "features"))),
+            Section("Packages", results, ["packages"],
+                new PackageSummaryInfo(
+                    CountLines(Output(results, "packages"), "package:"),
+                    "All packages visible to the connected ADB user.")),
+            Section("Services", results, ["services"],
+                new ServiceSummaryInfo(
+                    CountLines(Output(results, "services"), "ServiceRecord{"),
+                    Summarize(Output(results, "services")))),
             Section("Developer Verification", results, ["verifier", "verifier-details"], verifier),
             props,
             BuildCapabilities(device, cpu, security, boot, gsi, verifier, Output(results, "features")),
@@ -212,12 +220,19 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 gsi.Evidence),
             new("ADB Root", security.AdbRoot, "ADB root is separate from root binary availability.", security.Evidence),
             new("Android Developer Verifier", verifier.VerifierPresent is true ? CapabilityState.Supported
-                : verifier.VerifierPresent is false ? CapabilityState.Unsupported : CapabilityState.Unknown,
-                verifier.VerifierPresent is true ? "Installed" : "Not detected",
+                : CapabilityState.Unknown,
+                verifier.VerifierPresent is true ? "Verifier evidence detected" : "Verifier state is not proven",
+                verifier.Evidence),
+            new("Advanced Installation Flow", verifier.AdvancedFlowAvailability == AdvancedFlowAvailability.Available
+                ? CapabilityState.Supported : CapabilityState.Unknown,
+                "Availability is device and Android-version dependent.",
                 verifier.Evidence),
             new("Manual Unverified Install Flow", CapabilityState.Unknown,
                 "Check the device settings; this state is not reliably exposed through standard ADB.",
-                [new("Device settings", null, "Manual Developer Verification state is vendor/version dependent.", EvidenceConfidence.Low)])
+                [new("Device settings", null, "Manual Developer Verification state is vendor/version dependent.", EvidenceConfidence.Low)]),
+            new("On-device setup required", CapabilityState.Unknown,
+                "ADB installation does not require manual setup; manual-install setup must be checked on device.",
+                [new("Device settings", null, "No standard ADB property proves this policy state.", EvidenceConfidence.Low)])
         ];
 
     private static IReadOnlyDictionary<string, string> Properties(
@@ -239,4 +254,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
 
     private static string? Summarize(string output)
         => string.IsNullOrWhiteSpace(output) ? null : output.Trim().Length > 1000 ? output.Trim()[..1000] : output.Trim();
+
+    private static int CountLines(string output, string token)
+        => output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Count(line => line.Contains(token, StringComparison.OrdinalIgnoreCase));
 }

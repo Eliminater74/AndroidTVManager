@@ -80,7 +80,14 @@ public interface IPackageManager
     Task<AdbCommandResult> EnableAsync(string serial, string packageName, CancellationToken cancellationToken = default);
     Task<AdbCommandResult> DisableAsync(string serial, string packageName, CancellationToken cancellationToken = default);
     Task<AdbCommandResult> UninstallForUserAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> RestoreAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> FullUninstallAsync(string serial, string packageName, CancellationToken cancellationToken = default);
     Task<AdbCommandResult> ClearDataAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> ClearCacheAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> GrantPermissionAsync(string serial, string packageName, string permission, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> RevokePermissionAsync(string serial, string packageName, string permission, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> OpenAppSettingsAsync(string serial, string packageName, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> PullApkAsync(string serial, string remotePath, string localPath, CancellationToken cancellationToken = default);
 }
 
 public interface IDeviceToolsService
@@ -182,6 +189,11 @@ public interface IAdbCommandService
         IReadOnlyList<string> arguments,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default);
+}
+
+public interface IDeveloperVerificationPolicyProvider
+{
+    DeveloperVerificationPolicy GetPolicy(AndroidDevice? device);
 }
 
 public interface IScriptExecutionService
