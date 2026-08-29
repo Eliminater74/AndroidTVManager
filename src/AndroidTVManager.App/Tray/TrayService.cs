@@ -11,6 +11,7 @@ public sealed class TrayService : IDisposable
     private readonly IAdbProcessRunner _runner;
     private readonly ISettingsStore _settings;
     private readonly Forms.NotifyIcon _notifyIcon;
+    private readonly Forms.ContextMenuStrip _menu;
     private bool _allowClose;
     private bool _disposed;
     private bool _minimizeToTray = true;
@@ -21,12 +22,13 @@ public sealed class TrayService : IDisposable
         _window = window;
         _runner = runner;
         _settings = settings;
+        _menu = BuildMenu();
         _notifyIcon = new Forms.NotifyIcon
         {
             Icon = SystemIcons.Application,
             Text = "Android TV Manager",
             Visible = true,
-            ContextMenuStrip = BuildMenu()
+            ContextMenuStrip = _menu
         };
         _notifyIcon.DoubleClick += (_, _) => Restore();
         _window.StateChanged += OnWindowStateChanged;
@@ -49,6 +51,7 @@ public sealed class TrayService : IDisposable
         _disposed = true;
         _window.StateChanged -= OnWindowStateChanged;
         _window.Closing -= OnWindowClosing;
+        ThemeManager.ThemeChanged -= OnThemeChanged;
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
     }
@@ -63,7 +66,25 @@ public sealed class TrayService : IDisposable
         menu.Items.Add("Restart ADB Server", null, (_, _) => _ = RestartAdbServerAsync());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitApplication());
+        menu.Renderer = new ThemeRenderer(ThemeManager.CurrentTheme == AppTheme.White);
+        ApplyMenuTheme(menu);
+        ThemeManager.ThemeChanged += OnThemeChanged;
         return menu;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e) => ApplyMenuTheme(_menu);
+
+    private static void ApplyMenuTheme(Forms.ContextMenuStrip menu)
+    {
+        var light = ThemeManager.CurrentTheme == AppTheme.White;
+        menu.Renderer = new ThemeRenderer(light);
+        menu.BackColor = light ? Color.White : Color.FromArgb(17, 24, 39);
+        menu.ForeColor = light ? Color.FromArgb(22, 32, 51) : Color.FromArgb(244, 247, 255);
+        foreach (Forms.ToolStripItem item in menu.Items)
+        {
+            item.BackColor = menu.BackColor;
+            item.ForeColor = menu.ForeColor;
+        }
     }
 
     private void OnWindowStateChanged(object? sender, EventArgs e)
@@ -112,5 +133,29 @@ public sealed class TrayService : IDisposable
     {
         await _runner.RunAsync(["kill-server"], TimeSpan.FromSeconds(20));
         await _runner.RunAsync(["start-server"], TimeSpan.FromSeconds(20));
+    }
+
+    private sealed class ThemeRenderer : Forms.ToolStripProfessionalRenderer
+    {
+        public ThemeRenderer(bool light) : base(new ThemeColors(light))
+        {
+        }
+    }
+
+    private sealed class ThemeColors : Forms.ProfessionalColorTable
+    {
+        private readonly bool _light;
+
+        public ThemeColors(bool light) => _light = light;
+
+        public override Color ToolStripDropDownBackground => _light ? Color.White : Color.FromArgb(17, 24, 39);
+        public override Color MenuItemSelected => _light ? Color.FromArgb(232, 238, 247) : Color.FromArgb(27, 41, 64);
+        public override Color MenuItemBorder => _light ? Color.FromArgb(203, 214, 229) : Color.FromArgb(38, 52, 77);
+        public override Color MenuBorder => _light ? Color.FromArgb(203, 214, 229) : Color.FromArgb(38, 52, 77);
+        public override Color SeparatorDark => _light ? Color.FromArgb(203, 214, 229) : Color.FromArgb(38, 52, 77);
+        public override Color SeparatorLight => ToolStripDropDownBackground;
+        public override Color ImageMarginGradientBegin => ToolStripDropDownBackground;
+        public override Color ImageMarginGradientMiddle => ToolStripDropDownBackground;
+        public override Color ImageMarginGradientEnd => ToolStripDropDownBackground;
     }
 }

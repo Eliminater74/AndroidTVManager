@@ -21,6 +21,7 @@ public enum ConnectionType
 public sealed class AndroidDevice
 {
     public string Serial { get; init; } = string.Empty;
+    public string? FriendlyName { get; init; }
     public string? Endpoint { get; init; }
     public DeviceState State { get; init; }
     public ConnectionType ConnectionType { get; init; }
@@ -47,6 +48,7 @@ public sealed class SavedDevice
     public string? Model { get; set; }
     public string? LastKnownSerial { get; set; }
     public string? LastKnownEndpoint { get; set; }
+    public ConnectionType PreferredConnectionType { get; set; }
     public bool IsFavorite { get; set; }
     public string? Notes { get; set; }
     public DateTimeOffset? LastSeenUtc { get; set; }

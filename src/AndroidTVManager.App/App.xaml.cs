@@ -15,7 +15,7 @@ public partial class App : System.Windows.Application
     private Mutex? _instanceMutex;
     private bool _ownsInstanceMutex;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         _instanceMutex = new Mutex(true, "AndroidTVManager.SingleInstance", out var isFirstInstance);
@@ -33,6 +33,9 @@ public partial class App : System.Windows.Application
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
         _services = services.BuildServiceProvider();
+        var settings = _services.GetRequiredService<ISettingsStore>();
+        var savedTheme = await settings.GetAsync("appearance.theme");
+        ThemeManager.Apply(Enum.TryParse<AppTheme>(savedTheme, true, out var theme) ? theme : AppTheme.Dark);
         _services.GetRequiredService<IAppLogger>().Information("Application", $"Starting Android TV Manager {AppInfo.Version}.");
 
         var window = _services.GetRequiredService<MainWindow>();

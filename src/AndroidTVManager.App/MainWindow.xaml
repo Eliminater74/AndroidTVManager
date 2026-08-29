@@ -13,6 +13,12 @@
         Loaded="Window_Loaded"
         >
     <Window.Resources>
+        <DataTemplate x:Key="DeviceSelectorTemplate">
+            <StackPanel>
+                <TextBlock Text="{Binding FriendlyName}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding Serial}" Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+            </StackPanel>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DashboardPageViewModel}">
             <Grid Margin="34,26,34,28">
                 <Grid.RowDefinitions>
@@ -138,14 +144,37 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            <TextBlock Text="SAVED DEVICES" Style="{StaticResource SectionLabelStyle}" Margin="0,14,0,0"/>
+                            <ItemsControl ItemsSource="{Binding SavedDevices}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8"
+                                                Padding="12" Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding FriendlyName}" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding Model}" Foreground="{StaticResource TextSecondary}"
+                                                               FontSize="11"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="○ OFFLINE" Foreground="{StaticResource TextMuted}"
+                                                           FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
-                        <Border Background="#0A101B" CornerRadius="10" Padding="28"
+                        <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="10" Padding="28"
                                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasDevices}" Value="False">
+                                        <DataTrigger Binding="{Binding HasAnyDevices}" Value="False">
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -197,7 +226,7 @@
                         <StackPanel>
                             <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
                             <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                      DisplayMemberPath="Serial" Width="280" Margin="0,8,0,0"/>
+                                      ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="280" Margin="0,8,0,0"/>
                             <TextBlock Text="{Binding ProgressText}" Foreground="{StaticResource TextSecondary}"
                                        Margin="0,10,0,0"/>
                         </StackPanel>
@@ -314,7 +343,7 @@
                             <ItemsControl ItemsSource="{Binding Inspection.Commands}" Margin="0,10,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="#0A101B" CornerRadius="7" Padding="10" Margin="0,0,0,5">
+                                        <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="10" Margin="0,0,0,5">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding Command}" FontWeight="SemiBold"/>
                                                 <TextBlock Text="{Binding State}" Foreground="{StaticResource CyanAccent}"
@@ -360,7 +389,7 @@
                             <StackPanel>
                                 <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
                                 <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                          DisplayMemberPath="Serial" Width="250" Margin="0,8,16,0"/>
+                                          ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="250" Margin="0,8,16,0"/>
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="PRESET" Style="{StaticResource SectionLabelStyle}"/>
@@ -376,7 +405,7 @@
                         <ItemsControl ItemsSource="{Binding Plan.Warnings}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#332B14" CornerRadius="7" Padding="10" Margin="0,0,0,5">
+                                    <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="7" Padding="10" Margin="0,0,0,5">
                                         <TextBlock Text="{Binding}" Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
                                     </Border>
                                 </DataTemplate>
@@ -424,13 +453,14 @@
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
                             BorderThickness="1" CornerRadius="14" Padding="24" Margin="0,34,0,0">
                         <StackPanel>
-                            <TextBlock Text="BETA 1" Foreground="{StaticResource VioletAccent}"
+                            <TextBlock Text="{Binding DataContext.BetaLabel, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Foreground="{StaticResource VioletAccent}"
                                        FontWeight="Bold" FontSize="11"/>
                             <TextBlock Text="{Binding Version}" Foreground="{StaticResource CyanAccent}"
                                        FontSize="32" FontWeight="Bold" Margin="0,7,0,0"/>
                             <TextBlock Text="{Binding Mission}" FontSize="18" TextWrapping="Wrap"
                                        Margin="0,16,0,0"/>
-                            <Border Background="#0A101B" CornerRadius="8" Padding="14"
+                            <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="8" Padding="14"
                                     Margin="0,22,0,0">
                                 <TextBlock Text="{Binding PlatformToolsNote}" Foreground="{StaticResource TextSecondary}"
                                            TextWrapping="Wrap"/>
@@ -459,7 +489,37 @@
                         BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
                         CornerRadius="12" Padding="12" Margin="0,28,0,0">
                     <DockPanel>
-                    <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}">
+                    <Border DockPanel.Dock="Top" Background="{StaticResource PanelRaisedBackground}"
+                            CornerRadius="8" Padding="14" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="ADD NETWORK DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="IP address or hostname" Margin="0,0,8,0"/>
+                                <TextBox Grid.Column="1" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Port" Margin="0,0,8,0"/>
+                                <Button Grid.Column="2" Content="Connect and save"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding ConnectAndSaveCommand}"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBox Text="{Binding FriendlyName, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Optional friendly name" Width="260"/>
+                                <Button Content="Pair Wireless" Style="{StaticResource GhostButtonStyle}"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="Connections"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock DockPanel.Dock="Top" Text="CONNECTED DEVICES" Style="{StaticResource SectionLabelStyle}"
+                               Margin="0,0,0,8"/>
+                    <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" Height="180">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="16,14" Margin="0,0,0,8" Background="{StaticResource PanelRaisedBackground}"
@@ -485,6 +545,43 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+                    <TextBlock DockPanel.Dock="Top" Text="SAVED DEVICES" Style="{StaticResource SectionLabelStyle}"
+                               Margin="0,16,0,8"/>
+                    <ListBox ItemsSource="{Binding SavedDevices}" SelectedItem="{Binding SelectedSavedDevice}"
+                             Height="210">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
+                                        Padding="12" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding FriendlyName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Model}" Foreground="{StaticResource TextSecondary}"/>
+                                            <TextBlock Text="{Binding LastKnownEndpoint, StringFormat=Endpoint: {0}}"
+                                                       Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                                            <TextBlock Text="{Binding LastSeenUtc, StringFormat=Last seen: {0:g}}"
+                                                       Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="Reconnect" Style="{StaticResource GhostButtonStyle}"
+                                                    Command="{Binding DataContext.ReconnectCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="★" Style="{StaticResource GhostButtonStyle}" Margin="6,0,0,0"
+                                                    Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="Forget" Style="{StaticResource DangerButtonStyle}" Margin="6,0,0,0"
+                                                    Command="{Binding DataContext.ForgetCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
                         <TextBlock Text="SAVE SELECTED DEVICE" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource VioletAccent}"/>
@@ -500,6 +597,26 @@
                         </Grid>
                         <TextBlock Text="{Binding SaveMessage}" Foreground="{StaticResource TextSecondary}"
                                    Margin="0,7,0,0"/>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding SavedName, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Friendly name for selected saved device"/>
+                            <Button Grid.Column="1" Content="Rename" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding RenameSavedCommand}" Margin="8,0,0,0"/>
+                        </Grid>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding SavedNotes, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Notes for selected saved device"/>
+                            <Button Grid.Column="1" Content="Save notes" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding SaveNotesCommand}" Margin="8,0,0,0"/>
+                        </Grid>
                     </StackPanel>
                     </DockPanel>
                 </Border>
@@ -548,7 +665,7 @@
                                 <Button Grid.Column="3" Content="Pair" Style="{StaticResource GhostButtonStyle}"
                                         Command="{Binding PairCommand}"/>
                             </Grid>
-                            <Border Background="#0A101B" CornerRadius="7" Padding="12" Margin="0,18,0,0">
+                            <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="12" Margin="0,18,0,0">
                                 <TextBlock Text="{Binding Message}" Foreground="{StaticResource TextSecondary}"
                                            TextWrapping="Wrap"/>
                             </Border>
@@ -590,7 +707,7 @@
                                        Foreground="{StaticResource VioletAccent}"/>
                             <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="0,10,0,18"/>
-                            <Border Background="#102C2F" CornerRadius="8" Padding="12" Margin="0,0,0,18">
+                            <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,18">
                                 <StackPanel>
                                     <TextBlock Text="APK INSTALLATION METHOD: ADB" FontWeight="Bold"
                                                Foreground="{StaticResource GreenAccent}"/>
@@ -616,7 +733,7 @@
                             </Grid>
                             <Button Content="Install with reinstall" Style="{StaticResource AccentButtonStyle}"
                                     HorizontalAlignment="Left" Command="{Binding InstallCommand}"/>
-                            <Border Background="#0A101B" CornerRadius="7" Padding="12" Margin="0,18,0,0">
+                            <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="12" Margin="0,18,0,0">
                                 <TextBlock Text="{Binding Output}" Foreground="{StaticResource TextSecondary}"
                                            TextWrapping="Wrap"/>
                             </Border>
@@ -740,7 +857,7 @@
                             <TextBlock Text="TARGET SERIAL" FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource VioletAccent}"/>
                             <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                      DisplayMemberPath="Serial" Margin="0,10,0,6"/>
+                                      ItemTemplate="{StaticResource DeviceSelectorTemplate}" Margin="0,10,0,6"/>
                             <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,18"/>
                             <TextBlock Text="ADB SHELL" FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource VioletAccent}"/>
@@ -765,7 +882,7 @@
                                 <Button Content="Reboot" Style="{StaticResource GhostButtonStyle}"
                                         Command="{Binding RebootCommand}"/>
                             </StackPanel>
-                            <Border Background="#0A101B" CornerRadius="7" Padding="12" Margin="0,18,0,0">
+                            <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="12" Margin="0,18,0,0">
                                 <TextBlock Text="{Binding Output}" Foreground="{StaticResource TextSecondary}"
                                            TextWrapping="Wrap"/>
                             </Border>
@@ -809,7 +926,7 @@
                             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
                                 <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
                                 <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                          DisplayMemberPath="Serial" Margin="0,8,0,6"/>
+                                          ItemTemplate="{StaticResource DeviceSelectorTemplate}" Margin="0,8,0,6"/>
                                 <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}"
                                          ToolTip="Enter a serial when the device is not listed."/>
                             </StackPanel>
@@ -856,8 +973,9 @@
                                       Foreground="{StaticResource TextPrimary}" Margin="0,10,0,0"/>
                             <CheckBox Content="Remember last selected device" IsChecked="{Binding RememberSelectedDevice}"
                                       Foreground="{StaticResource TextPrimary}" Margin="0,10,0,0"/>
-                            <TextBlock Text="Appearance: Dark (Beta 2)" Foreground="{StaticResource TextSecondary}"
-                                       Margin="0,16,0,0"/>
+                            <TextBlock Text="THEME" Style="{StaticResource SectionLabelStyle}" Margin="0,18,0,0"/>
+                            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme}"
+                                      Margin="0,8,0,0"/>
                         </StackPanel>
                     </Border>
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
@@ -978,9 +1096,11 @@
                     <Border Background="{StaticResource PanelBackground}" CornerRadius="10"
                             Padding="18">
                         <StackPanel>
-                            <TextBlock Text="BETA 1" Foreground="{StaticResource TextSecondary}"
+                            <TextBlock Text="{Binding DataContext.BetaLabel, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="11" FontWeight="Bold"/>
-                            <TextBlock Text="1.0.0-B1" Margin="0,13,0,0" FontSize="20"
+                            <TextBlock Text="{Binding DataContext.Version, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Margin="0,13,0,0" FontSize="20"
                                        FontWeight="SemiBold" Foreground="{StaticResource GreenAccent}"/>
                             <TextBlock Text="Modern ADB, built for the living room." Foreground="{StaticResource TextSecondary}"
                                        Margin="0,4,0,0"/>
@@ -999,7 +1119,7 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Margin="22,26,22,18">
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="42" Height="42" CornerRadius="12" Background="#172F4E">
+                        <Border Width="42" Height="42" CornerRadius="12" Background="{StaticResource SurfaceElevatedBrush}">
                             <TextBlock Text="✦" Foreground="{StaticResource CyanAccent}" FontSize="25"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -1009,7 +1129,7 @@
                             <TextBlock Text="MANAGER" FontSize="17" FontWeight="Bold"/>
                         </StackPanel>
                     </StackPanel>
-                    <TextBlock Text="BETA 1  ·  1.0.0-B1" Foreground="{StaticResource VioletAccent}"
+                    <TextBlock Text="{Binding BetaLabel}" Foreground="{StaticResource VioletAccent}"
                                FontSize="10" FontWeight="Bold" Margin="54,6,0,0"/>
                 </StackPanel>
                 <TextBlock Text="MAIN" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondary}"
@@ -1041,11 +1161,11 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="ItemBorder" Property="Background" Value="#1A344B"/>
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource SelectionBackgroundBrush}"/>
                                                 <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
                                             </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ItemBorder" Property="Background" Value="#16273D"/>
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ControlHoverBrush}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -1083,11 +1203,11 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="ItemBorder" Property="Background" Value="#1A344B"/>
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource SelectionBackgroundBrush}"/>
                                                 <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
                                             </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ItemBorder" Property="Background" Value="#16273D"/>
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ControlHoverBrush}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -1097,7 +1217,7 @@
                     </ListBox.ItemContainerStyle>
                 </ListBox>
                 <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">
-                    <Border Background="#121D30" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
                             <DockPanel>
                                 <TextBlock Text="●" FontSize="12" Foreground="{StaticResource GreenAccent}"
@@ -1122,35 +1242,48 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="34"/>
             </Grid.RowDefinitions>
-            <Border Grid.Row="0" BorderBrush="#182337" BorderThickness="0,0,0,1">
-                <DockPanel Margin="28,0">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Grid.Row="0" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="28,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding SelectedNavigation.Label}" Foreground="{StaticResource TextPrimary}"
                                    FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding SelectedPageDescription}" Foreground="{StaticResource TextSecondary}"
                                    Margin="14,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="TARGET" Foreground="{StaticResource TextSecondary}" FontSize="10"
                                    FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                  DisplayMemberPath="Serial" Width="185" Margin="0,0,10,0"/>
+                                  ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="185" Margin="0,0,10,0"/>
                         <Button Content="↻  Refresh" Style="{StaticResource GhostButtonStyle}"
                                 Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
                     </StackPanel>
-                </DockPanel>
+                </Grid>
             </Border>
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <ContentControl Content="{Binding CurrentPage}"/>
             </ScrollViewer>
-            <Border Grid.Row="2" Background="#0A101B" Padding="28,0">
-                <DockPanel>
-                    <TextBlock Text="{Binding AdbStatus}" Foreground="{StaticResource TextSecondary}"
-                               VerticalAlignment="Center"/>
-                    <TextBlock DockPanel.Dock="Right" Text="{Binding FooterText}"
+            <Border Grid.Row="2" Background="{StaticResource ControlBackgroundBrush}" Padding="28,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding AdbStatus}" Foreground="{StaticResource TextSecondary}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ConnectedDeviceCount, StringFormat={}{0} connected device(s)}"
+                                   Foreground="{StaticResource CyanAccent}" Margin="18,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding FooterText}"
                                Foreground="{StaticResource TextSecondary}" FontSize="11"
                                VerticalAlignment="Center"/>
-                </DockPanel>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

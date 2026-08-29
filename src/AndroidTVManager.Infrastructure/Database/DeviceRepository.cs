@@ -21,7 +21,7 @@ public sealed class DeviceRepository : IDeviceRepository
         command.CommandText = """
             SELECT Id, FriendlyName, Manufacturer, Model, LastKnownSerial,
                    LastKnownEndpoint, IsFavorite, Notes, LastSeenUtc,
-                   LastConnectedUtc, LastDisconnectedUtc
+                   LastConnectedUtc, LastDisconnectedUtc, PreferredConnectionType
             FROM Devices WHERE IsSaved = 1 ORDER BY IsFavorite DESC, FriendlyName;
             """;
 
@@ -41,7 +41,8 @@ public sealed class DeviceRepository : IDeviceRepository
                 Notes = reader.IsDBNull(7) ? null : reader.GetString(7),
                 LastSeenUtc = ParseDate(reader, 8),
                 LastConnectedUtc = ParseDate(reader, 9),
-                LastDisconnectedUtc = ParseDate(reader, 10)
+                LastDisconnectedUtc = ParseDate(reader, 10),
+                PreferredConnectionType = (ConnectionType)reader.GetInt64(11)
             });
         }
         return devices;
@@ -51,18 +52,27 @@ public sealed class DeviceRepository : IDeviceRepository
     {
         await _database.InitializeAsync(cancellationToken);
         await using var connection = await _database.OpenAsync(cancellationToken);
+        if (device.Id == 0 && !string.IsNullOrWhiteSpace(device.LastKnownSerial))
+        {
+            await using var existingCommand = connection.CreateCommand();
+            existingCommand.CommandText = "SELECT Id FROM Devices WHERE LastKnownSerial = $serial LIMIT 1;";
+            existingCommand.Parameters.AddWithValue("$serial", device.LastKnownSerial);
+            if (await existingCommand.ExecuteScalarAsync(cancellationToken) is { } existingId)
+                device.Id = Convert.ToInt64(existingId);
+        }
         await using var command = connection.CreateCommand();
         command.CommandText = device.Id == 0
             ? """
               INSERT INTO Devices (FriendlyName, Manufacturer, Model, LastKnownSerial,
-                  LastKnownEndpoint, IsFavorite, IsSaved, Notes, FirstSeenUtc, CreatedUtc, UpdatedUtc)
-              VALUES ($name, $manufacturer, $model, $serial, $endpoint, $favorite, 1, $notes,
+                  LastKnownEndpoint, PreferredConnectionType, IsFavorite, IsSaved, Notes, FirstSeenUtc, CreatedUtc, UpdatedUtc)
+              VALUES ($name, $manufacturer, $model, $serial, $endpoint, $connectionType, $favorite, 1, $notes,
                   $now, $now, $now);
               SELECT last_insert_rowid();
               """
             : """
               UPDATE Devices SET FriendlyName = $name, Manufacturer = $manufacturer,
                   Model = $model, LastKnownSerial = $serial, LastKnownEndpoint = $endpoint,
+                  PreferredConnectionType = $connectionType,
                   IsFavorite = $favorite, IsSaved = 1, Notes = $notes, UpdatedUtc = $now
               WHERE Id = $id;
               SELECT $id;
@@ -105,6 +115,7 @@ public sealed class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("$model", (object?)device.Model ?? DBNull.Value);
         command.Parameters.AddWithValue("$serial", (object?)device.LastKnownSerial ?? DBNull.Value);
         command.Parameters.AddWithValue("$endpoint", (object?)device.LastKnownEndpoint ?? DBNull.Value);
+        command.Parameters.AddWithValue("$connectionType", (int)device.PreferredConnectionType);
         command.Parameters.AddWithValue("$favorite", device.IsFavorite ? 1 : 0);
         command.Parameters.AddWithValue("$notes", (object?)device.Notes ?? DBNull.Value);
         command.Parameters.AddWithValue("$now", DateTimeOffset.UtcNow.ToString("O"));

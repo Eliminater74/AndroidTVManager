@@ -112,8 +112,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
     {
-        "Dashboard" => new DashboardPageViewModel(Devices),
-        "Devices" => new DevicesPageViewModel(Devices, _deviceRepository),
+        "Dashboard" => new DashboardPageViewModel(Devices, _deviceRepository),
+        "Devices" => new DevicesPageViewModel(Devices, _deviceRepository, _connectionService, _confirmation),
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
@@ -154,7 +154,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public string AdbStatus => _adbStatus;
     public string AdbVersion => _adbVersion;
     public string Version => AppInfo.Version;
-    public string BetaLabel => $"BETA 2  ·  {Version}";
+    public string BetaLabel => $"{AppInfo.ReleaseChannel}  ·  {Version}";
     public string FooterText => $"Android TV Manager  ·  {Version}";
     public string SelectedPageDescription => SelectedNavigation.Label switch
     {
@@ -168,7 +168,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Scripts" => "Preview safe, structured ADB automation.",
         "Tools" => "Targeted device utilities and diagnostics.",
         "Settings" => "Configure Android TV Manager and managed ADB.",
-        "About" => "About Android TV Manager Beta 2.",
+        "About" => "About Android TV Manager.",
         _ => string.Empty
     };
 
@@ -222,19 +222,46 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private async void OnDevicesChanged(object? sender, IReadOnlyList<AndroidDevice> devices)
     {
+        var savedDevices = await _deviceRepository.GetSavedDevicesAsync();
+        var enrichedDevices = devices.Select(device =>
+        {
+            var saved = savedDevices.FirstOrDefault(item =>
+                string.Equals(item.LastKnownSerial, device.Serial, StringComparison.OrdinalIgnoreCase));
+            return new AndroidDevice
+            {
+                Serial = device.Serial,
+                FriendlyName = saved?.FriendlyName,
+                Endpoint = device.Endpoint,
+                State = device.State,
+                ConnectionType = device.ConnectionType,
+                Manufacturer = device.Manufacturer,
+                Brand = device.Brand,
+                Model = device.Model,
+                Product = device.Product,
+                DeviceName = device.DeviceName,
+                Board = device.Board,
+                AndroidVersion = device.AndroidVersion,
+                ApiLevel = device.ApiLevel,
+                SecurityPatch = device.SecurityPatch,
+                BuildId = device.BuildId,
+                BuildType = device.BuildType,
+                BuildFingerprint = device.BuildFingerprint,
+                SeenAtUtc = device.SeenAtUtc
+            };
+        }).ToArray();
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             Devices.Clear();
-            foreach (var device in devices)
+            foreach (var device in enrichedDevices)
                 Devices.Add(device);
             OnPropertyChanged(nameof(ConnectedDeviceCount));
             if (SelectedDevice is not null)
                 SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
         });
 
-        foreach (var device in devices)
+        foreach (var device in enrichedDevices)
             await _history.RecordDeviceSeenAsync(device);
-        await _history.SyncSessionsAsync(devices, _toolsManager.InstalledVersion);
+        await _history.SyncSessionsAsync(enrichedDevices, _toolsManager.InstalledVersion);
     }
 }
 
@@ -253,16 +280,37 @@ public class PageViewModel : ObservableObject
         : $"Manage your Android TV workflow from {Title.ToLowerInvariant()}.";
 }
 
-public sealed class DashboardPageViewModel : PageViewModel
+public sealed partial class DashboardPageViewModel : PageViewModel
 {
-    public DashboardPageViewModel(ObservableCollection<AndroidDevice> devices) : base("Dashboard")
+    private readonly IDeviceRepository _repository;
+
+    public DashboardPageViewModel(
+        ObservableCollection<AndroidDevice> devices,
+        IDeviceRepository repository) : base("Dashboard")
     {
         Devices = devices;
-        Devices.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasDevices));
+        _repository = repository;
+        Devices.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasDevices));
+            OnPropertyChanged(nameof(HasAnyDevices));
+        };
+        _ = LoadSavedAsync();
     }
 
     public ObservableCollection<AndroidDevice> Devices { get; }
+    public ObservableCollection<SavedDevice> SavedDevices { get; } = [];
     public bool HasDevices => Devices.Count > 0;
+    public bool HasAnyDevices => HasDevices || SavedDevices.Count > 0;
+
+    [RelayCommand]
+    private async Task LoadSavedAsync()
+    {
+        SavedDevices.Clear();
+        foreach (var device in await _repository.GetSavedDevicesAsync())
+            SavedDevices.Add(device);
+        OnPropertyChanged(nameof(HasAnyDevices));
+    }
 }
 
 public sealed partial class DeviceStatusPageViewModel : PageViewModel
@@ -468,25 +516,54 @@ public sealed partial class DebloatPageViewModel : PageViewModel
 public sealed partial class DevicesPageViewModel : ObservableObject
 {
     private readonly IDeviceRepository _repository;
+    private readonly IAdbConnectionService _connectionService;
+    private readonly IConfirmationService _confirmation;
 
     public DevicesPageViewModel(
         ObservableCollection<AndroidDevice> devices,
-        IDeviceRepository repository)
+        IDeviceRepository repository,
+        IAdbConnectionService connectionService,
+        IConfirmationService confirmation)
     {
         Devices = devices;
         _repository = repository;
+        _connectionService = connectionService;
+        _confirmation = confirmation;
+        _ = LoadSavedAsync();
     }
 
     public ObservableCollection<AndroidDevice> Devices { get; }
+    public ObservableCollection<SavedDevice> SavedDevices { get; } = [];
 
     [ObservableProperty]
     private AndroidDevice? _selectedDevice;
 
     [ObservableProperty]
+    private SavedDevice? _selectedSavedDevice;
+
+    [ObservableProperty]
     private string _friendlyName = string.Empty;
 
     [ObservableProperty]
+    private string _host = string.Empty;
+
+    [ObservableProperty]
+    private string _port = "5555";
+
+    [ObservableProperty]
+    private string _savedNotes = string.Empty;
+
+    [ObservableProperty]
+    private string _savedName = string.Empty;
+
+    [ObservableProperty]
     private string _saveMessage = "Select a live device to save it for later.";
+
+    partial void OnSelectedSavedDeviceChanged(SavedDevice? value)
+    {
+        SavedNotes = value?.Notes ?? string.Empty;
+        SavedName = value?.FriendlyName ?? string.Empty;
+    }
 
     [RelayCommand]
     private async Task SaveDeviceAsync()
@@ -506,9 +583,117 @@ public sealed partial class DevicesPageViewModel : ObservableObject
             Model = SelectedDevice.Model,
             LastKnownSerial = SelectedDevice.Serial,
             LastKnownEndpoint = SelectedDevice.Endpoint,
-            IsFavorite = true
+            PreferredConnectionType = SelectedDevice.ConnectionType,
+            IsFavorite = false
         });
         SaveMessage = $"{savedName} saved to your device list.";
+        await LoadSavedAsync();
+    }
+
+    [RelayCommand]
+    private async Task ConnectAndSaveAsync()
+    {
+        if (!AdbParsers.TryParseEndpoint(Host, Port, out var endpoint, out var error))
+        {
+            SaveMessage = error;
+            return;
+        }
+        SaveMessage = $"Connecting to {endpoint}…";
+        var result = await _connectionService.ConnectAsync(endpoint);
+        if (!result.IsSuccess)
+        {
+            SaveMessage = string.IsNullOrWhiteSpace(result.StandardError)
+                ? "Connection failed."
+                : result.StandardError.Trim();
+            return;
+        }
+        var name = string.IsNullOrWhiteSpace(FriendlyName) ? endpoint : FriendlyName.Trim();
+        await _repository.UpsertAsync(new SavedDevice
+        {
+            FriendlyName = name,
+            LastKnownSerial = endpoint,
+            LastKnownEndpoint = endpoint,
+            PreferredConnectionType = ConnectionType.Network,
+            IsFavorite = false
+        });
+        SaveMessage = $"{name} connected and saved.";
+        await LoadSavedAsync();
+    }
+
+    [RelayCommand]
+    private async Task LoadSavedAsync()
+    {
+        try
+        {
+            SavedDevices.Clear();
+            foreach (var device in await _repository.GetSavedDevicesAsync())
+                SavedDevices.Add(device);
+        }
+        catch (Exception exception)
+        {
+            SaveMessage = $"Saved devices unavailable: {exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ReconnectAsync(SavedDevice? device)
+    {
+        if (device?.LastKnownEndpoint is not { Length: > 0 } endpoint)
+        {
+            SaveMessage = "This device has no reusable endpoint. Use Pair Wireless or Add Device.";
+            return;
+        }
+        SaveMessage = $"Reconnecting to {endpoint}…";
+        var result = await _connectionService.ConnectAsync(endpoint);
+        SaveMessage = result.IsSuccess ? $"{device.FriendlyName} connected." : result.StandardError.Trim();
+    }
+
+    [RelayCommand]
+    private async Task ForgetAsync(SavedDevice? device)
+    {
+        if (device is null)
+            return;
+        if (!_confirmation.Confirm("Forget saved device",
+                $"Remove {device.FriendlyName} from saved devices?\n\nConnection, inspection, and script history will be retained."))
+            return;
+        await _repository.DeleteAsync(device.Id);
+        await LoadSavedAsync();
+        SaveMessage = $"{device.FriendlyName} forgotten. History was retained.";
+    }
+
+    [RelayCommand]
+    private async Task ToggleFavoriteAsync(SavedDevice? device)
+    {
+        if (device is null)
+            return;
+        device.IsFavorite = !device.IsFavorite;
+        await _repository.UpsertAsync(device);
+        await LoadSavedAsync();
+    }
+
+    [RelayCommand]
+    private async Task SaveNotesAsync()
+    {
+        if (SelectedSavedDevice is null)
+            return;
+        SelectedSavedDevice.Notes = SavedNotes.Trim();
+        await _repository.UpsertAsync(SelectedSavedDevice);
+        await LoadSavedAsync();
+        SaveMessage = "Device notes saved.";
+    }
+
+    [RelayCommand]
+    private async Task RenameSavedAsync()
+    {
+        if (SelectedSavedDevice is null || string.IsNullOrWhiteSpace(SavedName))
+        {
+            SaveMessage = "Select a saved device and enter a friendly name.";
+            return;
+        }
+        SelectedSavedDevice.FriendlyName = SavedName.Trim();
+        await _repository.UpsertAsync(SelectedSavedDevice);
+        await LoadSavedAsync();
+        SaveMessage = "Friendly name updated.";
     }
 }
 
@@ -1184,7 +1369,10 @@ public sealed partial class SettingsPageViewModel : PageViewModel
     [ObservableProperty]
     private bool _rememberSelectedDevice = true;
 
-    public string SelectedTheme => "Dark";
+    public IReadOnlyList<AppTheme> Themes { get; } = Enum.GetValues<AppTheme>();
+
+    [ObservableProperty]
+    private AppTheme _selectedTheme = AppTheme.Dark;
 
     private async Task LoadAsync()
     {
@@ -1192,12 +1380,19 @@ public sealed partial class SettingsPageViewModel : PageViewModel
         MinimizeToTray = await ReadBoolAsync("general.minimizeToTray", true);
         CloseToTray = await ReadBoolAsync("general.closeToTray", true);
         RememberSelectedDevice = await ReadBoolAsync("general.rememberSelectedDevice", true);
+        if (Enum.TryParse<AppTheme>(await _settings.GetAsync("appearance.theme"), true, out var theme))
+            SelectedTheme = theme;
     }
 
     partial void OnStartMinimizedChanged(bool value) => _ = SaveBoolAsync("general.startMinimized", value);
     partial void OnMinimizeToTrayChanged(bool value) => _ = SaveBoolAsync("general.minimizeToTray", value);
     partial void OnCloseToTrayChanged(bool value) => _ = SaveBoolAsync("general.closeToTray", value);
     partial void OnRememberSelectedDeviceChanged(bool value) => _ = SaveBoolAsync("general.rememberSelectedDevice", value);
+    partial void OnSelectedThemeChanged(AppTheme value)
+    {
+        ThemeManager.Apply(value);
+        _ = _settings.SetAsync("appearance.theme", value.ToString());
+    }
 
     private async Task<bool> ReadBoolAsync(string key, bool fallback)
         => bool.TryParse(await _settings.GetAsync(key), out var value) ? value : fallback;
