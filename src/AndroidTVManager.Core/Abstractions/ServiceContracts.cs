@@ -129,6 +129,20 @@ public interface IPackageInventoryService
         CancellationToken cancellationToken = default);
 }
 
+public sealed record PackageClassificationContext(
+    AndroidDevice Device,
+    string? ActiveLauncherPackage,
+    IReadOnlySet<string> DefaultInputMethodPackages,
+    IReadOnlySet<string> EnabledAccessibilityPackages,
+    IReadOnlySet<string> DeviceOwnerPackages);
+
+public interface IPackageClassifier
+{
+    PackageAssessment Classify(
+        PackageInventoryEntry package,
+        PackageClassificationContext context);
+}
+
 public interface IDebloatPlanner
 {
     Task<DebloatPlan> CreatePlanAsync(

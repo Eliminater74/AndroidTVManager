@@ -1,0 +1,72 @@
+[
+  {
+    "package": "com.google.android.tvrecommendations",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Recommendations",
+    "description": "Google TV recommendation service.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Home screen",
+        "description": "Recommended content rows and personalized suggestions may change."
+      }
+    ]
+  },
+  {
+    "package": "com.google.android.katniss",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Voice",
+    "description": "Google TV search and voice-related component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Voice search",
+        "description": "Voice search or microphone features may stop working."
+      }
+    ]
+  },
+  {
+    "package": "com.android.systemui",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "System UI",
+    "description": "Android system user interface.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "System",
+        "description": "Disabling this can make the device unusable."
+      }
+    ]
+  },
+  {
+    "package": "com.android.settings",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "Settings",
+    "description": "Android Settings application.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "System",
+        "description": "Disabling this removes access to device settings."
+      }
+    ]
+  },
+  {
+    "package": "com.google.android.verifier",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "Security",
+    "description": "Android Developer Verifier component when present.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Security",
+        "description": "Android security and application verification behavior may be affected."
+      }
+    ]
+  }
+]

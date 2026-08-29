@@ -4,6 +4,7 @@ using AndroidTVManager.Infrastructure.Database;
 using AndroidTVManager.Infrastructure.Logging;
 using AndroidTVManager.Infrastructure.Scripts;
 using AndroidTVManager.Core.Scripts;
+using AndroidTVManager.Infrastructure.Packages;
 using AndroidTVManager.Infrastructure.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +19,8 @@ public static class DependencyInjection
         services.AddSingleton<IDeviceSnapshotRepository, DeviceSnapshotRepository>();
         services.AddSingleton<IDeviceInspectionService, DeviceInspectionService>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
+        services.AddSingleton<IPackageClassifier, PackageClassifier>();
+        services.AddSingleton<IDebloatPlanner, DebloatPlanner>();
         services.AddSingleton<IScriptExecutionStore, ScriptExecutionStore>();
         services.AddSingleton<IScriptExecutionService, ScriptExecutionService>();
         services.AddSingleton<IAdbToolsManager, AdbToolsManager>();

@@ -22,7 +22,11 @@ public sealed class PackageInventoryService : IPackageInventoryService
             throw new ArgumentException("A device serial is required.", nameof(serial));
         serial = serial.Trim();
 
-        var commandNames = new[] { "all", "system", "user", "disabled", "enabled", "uninstalled" };
+        var commandNames = new[]
+        {
+            "all", "system", "user", "disabled", "enabled", "uninstalled",
+            "launcher", "input", "accessibility", "device-owner"
+        };
         var tasks = commandNames.Select(async name =>
         {
             var arguments = name switch
@@ -33,6 +37,11 @@ public sealed class PackageInventoryService : IPackageInventoryService
                 "disabled" => ["shell", "pm", "list", "packages", "-d"],
                 "enabled" => ["shell", "pm", "list", "packages", "-e"],
                 "uninstalled" => ["shell", "pm", "list", "packages", "-u"],
+                "launcher" => ["shell", "cmd", "package", "resolve-activity", "--brief", "-a",
+                    "android.intent.action.MAIN", "-c", "android.intent.category.HOME"],
+                "input" => ["shell", "settings", "get", "secure", "default_input_method"],
+                "accessibility" => ["shell", "settings", "get", "secure", "enabled_accessibility_services"],
+                "device-owner" => ["shell", "dumpsys", "device_policy"],
                 _ => []
             };
             return (name, Result: await _runner.RunForDeviceAsync(serial, arguments, InventoryTimeout, cancellationToken));
@@ -55,6 +64,10 @@ public sealed class PackageInventoryService : IPackageInventoryService
         var enabled = PackageInventoryParser.ParsePackageNames(results["enabled"].StandardOutput);
         var uninstalled = PackageInventoryParser.ParsePackageNames(results["uninstalled"].StandardOutput);
         var packageNames = all.Union(uninstalled, StringComparer.OrdinalIgnoreCase);
+        var launcher = ExtractPackage(results["launcher"].StandardOutput);
+        var input = ExtractPackages(results["input"].StandardOutput);
+        var accessibility = ExtractPackages(results["accessibility"].StandardOutput);
+        var owners = ExtractPackages(results["device-owner"].StandardOutput);
 
         var packages = packageNames
             .OrderBy(package => package, StringComparer.OrdinalIgnoreCase)
@@ -80,7 +93,11 @@ public sealed class PackageInventoryService : IPackageInventoryService
                     DateTimeOffset.UtcNow,
                     serial,
                     null,
-                    null);
+                    null,
+                    string.Equals(package, launcher, StringComparison.OrdinalIgnoreCase),
+                    input.Contains(package),
+                    accessibility.Contains(package),
+                    owners.Contains(package));
             })
             .ToArray();
 
@@ -91,6 +108,23 @@ public sealed class PackageInventoryService : IPackageInventoryService
                 : results["all"].StandardError.Trim();
         return new(serial, DateTimeOffset.UtcNow, packages, evidence, error);
     }
+
+    private static string? ExtractPackage(string output)
+    {
+        var value = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .LastOrDefault(line => line.Contains('/'));
+        if (value is null)
+            return null;
+        var separator = value.IndexOf('/');
+        return separator > 0 ? value[..separator] : null;
+    }
+
+    private static IReadOnlySet<string> ExtractPackages(string output)
+        => output.Split(['\r', '\n', ':', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(value => value.Split('/')[0])
+            .Where(value => value.Contains('.') && !value.Contains('='))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     public async Task<PackageInventoryEntry?> GetDetailsAsync(
         string serial,
