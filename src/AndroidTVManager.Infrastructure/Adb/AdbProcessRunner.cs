@@ -8,10 +8,12 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
 {
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
     private readonly IAdbToolsManager _toolsManager;
+    private readonly IAppLogger _logger;
 
-    public AdbProcessRunner(IAdbToolsManager toolsManager)
+    public AdbProcessRunner(IAdbToolsManager toolsManager, IAppLogger logger)
     {
         _toolsManager = toolsManager;
+        _logger = logger;
     }
 
     public Task<AdbCommandResult> RunAsync(
@@ -37,7 +39,10 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
     {
         var adbPath = _toolsManager.AdbPath;
         if (string.IsNullOrWhiteSpace(adbPath))
+        {
+            _logger.Warning("ADB", "Managed Platform-Tools are not installed.");
             return new("adb.exe", arguments, -1, string.Empty, "Managed Platform-Tools are not installed.", TimeSpan.Zero);
+        }
 
         using var process = new Process
         {
@@ -73,25 +78,41 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
             {
                 TryKill(process);
                 await process.WaitForExitAsync(CancellationToken.None);
-                return new(Path.GetFileName(adbPath), arguments, -1,
+            var result = new AdbCommandResult(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
                     await stdoutTask, await stderrTask, stopwatch.Elapsed, WasTimedOut: true);
+                _logger.Warning("ADB", $"Command timed out: {result.CommandText}");
+                return result;
             }
 
-            return new(Path.GetFileName(adbPath), arguments, process.ExitCode,
+            var completed = new AdbCommandResult(Path.GetFileName(adbPath), RedactArguments(arguments), process.ExitCode,
                 await stdoutTask, await stderrTask, stopwatch.Elapsed);
+            if (!completed.IsSuccess)
+                _logger.Warning("ADB", $"Command failed ({completed.ExitCode}): {completed.CommandText}");
+            return completed;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             TryKill(process);
-            return new(Path.GetFileName(adbPath), arguments, -1,
+            return new(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
                 string.Empty, string.Empty, stopwatch.Elapsed, WasCanceled: true);
         }
         catch (Exception exception)
         {
             TryKill(process);
-            return new(Path.GetFileName(adbPath), arguments, -1,
+            _logger.Error("ADB", "Could not start ADB command.", exception);
+            return new(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
                 string.Empty, exception.Message, stopwatch.Elapsed);
         }
+    }
+
+    private static IReadOnlyList<string> RedactArguments(IReadOnlyList<string> arguments)
+    {
+        var redacted = arguments.ToArray();
+        var pairIndex = Array.FindIndex(redacted, value =>
+            value.Equals("pair", StringComparison.OrdinalIgnoreCase));
+        if (pairIndex >= 0 && pairIndex + 2 < redacted.Length)
+            redacted[pairIndex + 2] = "<pairing-code-redacted>";
+        return redacted;
     }
 
     private static void TryKill(Process process)

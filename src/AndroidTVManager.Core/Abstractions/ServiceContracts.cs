@@ -102,6 +102,11 @@ public interface IDeviceRepository
 public interface IConnectionHistoryRepository
 {
     Task RecordDeviceSeenAsync(AndroidDevice device, CancellationToken cancellationToken = default);
+    Task SyncSessionsAsync(
+        IReadOnlyList<AndroidDevice> devices,
+        string? adbVersion,
+        CancellationToken cancellationToken = default);
+    Task RecoverOpenSessionsAsync(CancellationToken cancellationToken = default);
     Task<long> StartSessionAsync(AndroidDevice device, CancellationToken cancellationToken = default);
     Task EndSessionAsync(long sessionId, DeviceState finalState, string? reason, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ConnectionHistoryItem>> GetRecentAsync(int limit = 100, CancellationToken cancellationToken = default);
@@ -117,7 +122,12 @@ public sealed record ConnectionHistoryItem(
     DeviceState CurrentState,
     DateTimeOffset? LastSeenUtc,
     DateTimeOffset? LastConnectedUtc,
-    DateTimeOffset? LastDisconnectedUtc);
+    DateTimeOffset? LastDisconnectedUtc,
+    DateTimeOffset StartedUtc,
+    DateTimeOffset? EndedUtc)
+{
+    public TimeSpan? Duration => EndedUtc is { } ended ? ended - StartedUtc : DateTimeOffset.UtcNow - StartedUtc;
+}
 
 public interface ISettingsStore
 {
@@ -137,4 +147,11 @@ public interface ILocalAppDataPaths
     string RecordingsPath { get; }
     string TempPath { get; }
     void EnsureCreated();
+}
+
+public interface IAppLogger
+{
+    void Information(string source, string message);
+    void Warning(string source, string message);
+    void Error(string source, string message, Exception? exception = null);
 }

@@ -1,5 +1,6 @@
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Models;
+using Microsoft.Data.Sqlite;
 
 namespace AndroidTVManager.Infrastructure.Database;
 
@@ -35,6 +36,96 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
         command.Parameters.AddWithValue("$state", (int)device.State);
         command.Parameters.AddWithValue("$message", $"{device.Serial} is {device.State}");
         command.Parameters.AddWithValue("$utc", DateTimeOffset.UtcNow.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task SyncSessionsAsync(
+        IReadOnlyList<AndroidDevice> devices,
+        string? adbVersion,
+        CancellationToken cancellationToken = default)
+    {
+        await _database.InitializeAsync(cancellationToken);
+        await using var connection = await _database.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        var now = DateTimeOffset.UtcNow.ToString("O");
+        var openSessions = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+
+        await using (var openCommand = connection.CreateCommand())
+        {
+            openCommand.Transaction = transaction;
+            openCommand.CommandText = "SELECT Id, Serial FROM ConnectionSessions WHERE EndedUtc IS NULL;";
+            await using var reader = await openCommand.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                openSessions[reader.GetString(1)] = reader.GetInt64(0);
+        }
+
+        var connectedSerials = devices
+            .Where(device => device.State == DeviceState.Device)
+            .Select(device => device.Serial)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var session in openSessions.Where(session => !connectedSerials.Contains(session.Key)))
+        {
+            await using var close = connection.CreateCommand();
+            close.Transaction = transaction;
+            close.CommandText = """
+                UPDATE ConnectionSessions
+                SET EndedUtc = $ended, FinalState = $state,
+                    DisconnectReason = 'Device no longer reported by ADB'
+                WHERE Id = $id;
+                """;
+            close.Parameters.AddWithValue("$ended", now);
+            close.Parameters.AddWithValue("$state", (int)DeviceState.Disconnected);
+            close.Parameters.AddWithValue("$id", session.Value);
+            await close.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        foreach (var device in devices.Where(device => device.State == DeviceState.Device))
+        {
+            if (openSessions.ContainsKey(device.Serial))
+                continue;
+
+            var deviceId = await EnsureDeviceAsync(connection, device, cancellationToken, transaction);
+            await using var start = connection.CreateCommand();
+            start.Transaction = transaction;
+            start.CommandText = """
+                INSERT INTO ConnectionSessions
+                    (DeviceId, Serial, Endpoint, ConnectionType, StartedUtc, FinalState, AdbVersion)
+                VALUES ($deviceId, $serial, $endpoint, $type, $started, $state, $adbVersion);
+                """;
+            start.Parameters.AddWithValue("$deviceId", deviceId);
+            start.Parameters.AddWithValue("$serial", device.Serial);
+            start.Parameters.AddWithValue("$endpoint", (object?)device.Endpoint ?? DBNull.Value);
+            start.Parameters.AddWithValue("$type", (int)device.ConnectionType);
+            start.Parameters.AddWithValue("$started", now);
+            start.Parameters.AddWithValue("$state", (int)device.State);
+            start.Parameters.AddWithValue("$adbVersion", (object?)adbVersion ?? DBNull.Value);
+            await start.ExecuteNonQueryAsync(cancellationToken);
+
+            await using var connected = connection.CreateCommand();
+            connected.Transaction = transaction;
+            connected.CommandText = "UPDATE Devices SET LastConnectedUtc = $now, UpdatedUtc = $now WHERE Id = $id;";
+            connected.Parameters.AddWithValue("$now", now);
+            connected.Parameters.AddWithValue("$id", deviceId);
+            await connected.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task RecoverOpenSessionsAsync(CancellationToken cancellationToken = default)
+    {
+        await _database.InitializeAsync(cancellationToken);
+        await using var connection = await _database.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE ConnectionSessions
+            SET EndedUtc = $ended, FinalState = $state,
+                DisconnectReason = 'Application terminated before session closure'
+            WHERE EndedUtc IS NULL;
+            """;
+        command.Parameters.AddWithValue("$ended", DateTimeOffset.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("$state", (int)DeviceState.Disconnected);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
@@ -86,7 +177,7 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
         command.CommandText = """
             SELECT d.FriendlyName, d.Manufacturer, d.Model, s.Serial, s.Endpoint,
                    s.ConnectionType, s.FinalState, d.LastSeenUtc,
-                   d.LastConnectedUtc, d.LastDisconnectedUtc
+                   d.LastConnectedUtc, d.LastDisconnectedUtc, s.StartedUtc, s.EndedUtc
             FROM ConnectionSessions s
             INNER JOIN Devices d ON d.Id = s.DeviceId
             ORDER BY s.StartedUtc DESC LIMIT $limit;
@@ -107,7 +198,9 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
                 (DeviceState)reader.GetInt32(6),
                 ParseDate(reader, 7),
                 ParseDate(reader, 8),
-                ParseDate(reader, 9)));
+                ParseDate(reader, 9),
+                DateTimeOffset.Parse(reader.GetString(10)),
+                ParseDate(reader, 11)));
         }
         return result;
     }
@@ -115,23 +208,28 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
     private static async Task<long> EnsureDeviceAsync(
         Microsoft.Data.Sqlite.SqliteConnection connection,
         AndroidDevice device,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Microsoft.Data.Sqlite.SqliteTransaction? transaction = null)
     {
         await using var find = connection.CreateCommand();
+        find.Transaction = transaction;
         find.CommandText = "SELECT Id FROM Devices WHERE LastKnownSerial = $serial;";
         find.Parameters.AddWithValue("$serial", device.Serial);
         var existing = await find.ExecuteScalarAsync(cancellationToken);
         var now = DateTimeOffset.UtcNow.ToString("O");
 
         await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         if (existing is null)
         {
             command.CommandText = """
-                INSERT INTO Devices (FriendlyName, Manufacturer, Model, Product, LastKnownSerial,
-                    LastKnownEndpoint, AndroidVersion, ApiLevel, BuildFingerprint,
+                INSERT INTO Devices (FriendlyName, Manufacturer, Brand, Model, Product, DeviceName,
+                    Board, AndroidVersion, ApiLevel, SecurityPatch, BuildId, BuildType, BuildFingerprint,
+                    LastKnownSerial, LastKnownEndpoint,
                     FirstSeenUtc, LastSeenUtc, CreatedUtc, UpdatedUtc)
-                VALUES ($name, $manufacturer, $model, $product, $serial, $endpoint,
-                    $android, $api, $fingerprint, $now, $now, $now, $now);
+                VALUES ($name, $manufacturer, $brand, $model, $product, $deviceName,
+                    $board, $android, $api, $securityPatch, $buildId, $buildType, $fingerprint,
+                    $serial, $endpoint, $now, $now, $now, $now);
                 SELECT last_insert_rowid();
                 """;
             command.Parameters.AddWithValue("$name", device.Model ?? device.Serial);
@@ -139,8 +237,10 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
         else
         {
             command.CommandText = """
-                UPDATE Devices SET Manufacturer = $manufacturer, Model = $model,
-                    Product = $product, LastKnownEndpoint = $endpoint,
+                UPDATE Devices SET Manufacturer = $manufacturer, Brand = $brand, Model = $model,
+                    Product = $product, DeviceName = $deviceName, Board = $board,
+                    SecurityPatch = $securityPatch, BuildId = $buildId, BuildType = $buildType,
+                    LastKnownEndpoint = $endpoint,
                     AndroidVersion = COALESCE($android, AndroidVersion),
                     ApiLevel = COALESCE($api, ApiLevel),
                     BuildFingerprint = COALESCE($fingerprint, BuildFingerprint),
@@ -152,12 +252,18 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
         }
 
         command.Parameters.AddWithValue("$manufacturer", (object?)device.Manufacturer ?? DBNull.Value);
+        command.Parameters.AddWithValue("$brand", (object?)device.Brand ?? DBNull.Value);
         command.Parameters.AddWithValue("$model", (object?)device.Model ?? DBNull.Value);
         command.Parameters.AddWithValue("$product", (object?)device.Product ?? DBNull.Value);
+        command.Parameters.AddWithValue("$deviceName", (object?)device.DeviceName ?? DBNull.Value);
+        command.Parameters.AddWithValue("$board", (object?)device.Board ?? DBNull.Value);
         command.Parameters.AddWithValue("$serial", device.Serial);
         command.Parameters.AddWithValue("$endpoint", (object?)device.Endpoint ?? DBNull.Value);
         command.Parameters.AddWithValue("$android", (object?)device.AndroidVersion ?? DBNull.Value);
         command.Parameters.AddWithValue("$api", (object?)device.ApiLevel ?? DBNull.Value);
+        command.Parameters.AddWithValue("$securityPatch", (object?)device.SecurityPatch ?? DBNull.Value);
+        command.Parameters.AddWithValue("$buildId", (object?)device.BuildId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$buildType", (object?)device.BuildType ?? DBNull.Value);
         command.Parameters.AddWithValue("$fingerprint", (object?)device.BuildFingerprint ?? DBNull.Value);
         command.Parameters.AddWithValue("$now", now);
         return Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));

@@ -25,10 +25,16 @@ public sealed class AndroidDevice
     public DeviceState State { get; init; }
     public ConnectionType ConnectionType { get; init; }
     public string? Manufacturer { get; init; }
+    public string? Brand { get; init; }
     public string? Model { get; init; }
     public string? Product { get; init; }
+    public string? DeviceName { get; init; }
+    public string? Board { get; init; }
     public string? AndroidVersion { get; init; }
     public int? ApiLevel { get; init; }
+    public string? SecurityPatch { get; init; }
+    public string? BuildId { get; init; }
+    public string? BuildType { get; init; }
     public string? BuildFingerprint { get; init; }
     public DateTimeOffset SeenAtUtc { get; init; } = DateTimeOffset.UtcNow;
 }

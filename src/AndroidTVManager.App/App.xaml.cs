@@ -2,6 +2,7 @@
 using System.Windows;
 using AndroidTVManager.App.ViewModels;
 using AndroidTVManager.Infrastructure;
+using AndroidTVManager.Core.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AndroidTVManager.App;
@@ -19,6 +20,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
         _services = services.BuildServiceProvider();
+        _services.GetRequiredService<IAppLogger>().Information("Application", $"Starting Android TV Manager {AppInfo.Version}.");
 
         var window = _services.GetRequiredService<MainWindow>();
         MainWindow = window;
@@ -26,16 +28,21 @@ public partial class App : System.Windows.Application
         _ = window.ViewModel.InitializeRuntimeAsync();
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    protected override async void OnExit(ExitEventArgs e)
     {
         if (_services?.GetService<AndroidTVManager.Core.Abstractions.IAdbDeviceTracker>() is { } tracker)
-            _ = tracker.StopAsync();
+        {
+            await tracker.StopAsync();
+            if (_services.GetService<AndroidTVManager.Core.Abstractions.IConnectionHistoryRepository>() is { } history)
+                await history.RecoverOpenSessionsAsync();
+        }
         _services?.Dispose();
         base.OnExit(e);
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        _services?.GetService<IAppLogger>()?.Error("Application", "Unhandled UI exception.", e.Exception);
         System.Windows.MessageBox.Show(
             $"Android TV Manager encountered an unexpected error.\n\n{e.Exception.Message}",
             "Unexpected error",

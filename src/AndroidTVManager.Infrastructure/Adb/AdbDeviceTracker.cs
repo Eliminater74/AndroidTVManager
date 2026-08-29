@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
@@ -9,14 +10,20 @@ namespace AndroidTVManager.Infrastructure.Adb;
 public sealed class AdbDeviceTracker : IAdbDeviceTracker
 {
     private readonly IAdbToolsManager _toolsManager;
+    private readonly IAdbProcessRunner _runner;
+    private readonly IAppLogger _logger;
     private readonly object _sync = new();
+    private readonly ConcurrentDictionary<string, byte> _enrichmentInFlight = new();
+    private readonly ConcurrentDictionary<string, AdbDeviceMetadata> _metadataCache = new();
     private CancellationTokenSource? _stopSource;
     private Task? _trackingTask;
     private ImmutableArray<AndroidDevice> _currentDevices = [];
 
-    public AdbDeviceTracker(IAdbToolsManager toolsManager)
+    public AdbDeviceTracker(IAdbToolsManager toolsManager, IAdbProcessRunner runner, IAppLogger logger)
     {
         _toolsManager = toolsManager;
+        _runner = runner;
+        _logger = logger;
     }
 
     public event EventHandler<IReadOnlyList<AndroidDevice>>? DevicesChanged;
@@ -76,6 +83,7 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
 
             try
             {
+                _logger.Information("Tracker", "Starting adb track-devices -l.");
                 using var process = StartTracker(adbPath);
                 retryDelay = TimeSpan.FromMilliseconds(500);
                 var snapshot = new List<string>();
@@ -101,8 +109,9 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
             {
                 break;
             }
-            catch
+            catch (Exception exception)
             {
+                _logger.Error("Tracker", "ADB device tracker exited unexpectedly; retrying with backoff.", exception);
                 await DelayAsync(retryDelay, cancellationToken);
                 retryDelay = TimeSpan.FromSeconds(Math.Min(retryDelay.TotalSeconds * 2, 30));
             }
@@ -132,12 +141,86 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
 
     private void Publish(IReadOnlyList<AndroidDevice> devices)
     {
-        if (_currentDevices.Select(device => (device.Serial, device.State, device.Model))
-            .SequenceEqual(devices.Select(device => (device.Serial, device.State, device.Model))))
+        devices = devices.Select(ApplyCachedMetadata).ToArray();
+        if (_currentDevices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion, device.ApiLevel))
+            .SequenceEqual(devices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion, device.ApiLevel))))
             return;
 
         _currentDevices = devices.ToImmutableArray();
         DevicesChanged?.Invoke(this, _currentDevices);
+        foreach (var device in devices.Where(device => device.State == DeviceState.Device
+                     && _enrichmentInFlight.TryAdd(device.Serial, 0)))
+        {
+            _ = EnrichAsync(device);
+        }
+    }
+
+    private async Task EnrichAsync(AndroidDevice device)
+    {
+        try
+        {
+            var result = await _runner.RunForDeviceAsync(device.Serial, ["shell", "getprop"],
+                TimeSpan.FromSeconds(30));
+            if (!result.IsSuccess)
+                return;
+
+            var metadata = AdbMetadataParser.Parse(result.StandardOutput);
+            _metadataCache[device.Serial] = metadata;
+            var enriched = new AndroidDevice
+            {
+                Serial = device.Serial,
+                Endpoint = device.Endpoint,
+                State = device.State,
+                ConnectionType = device.ConnectionType,
+                Manufacturer = metadata.Manufacturer,
+                Brand = metadata.Brand,
+                Model = device.Model ?? metadata.Model,
+                Product = metadata.Product,
+                DeviceName = metadata.DeviceName,
+                Board = metadata.Board,
+                AndroidVersion = metadata.AndroidVersion,
+                ApiLevel = metadata.ApiLevel,
+                SecurityPatch = metadata.SecurityPatch,
+                BuildId = metadata.BuildId,
+                BuildType = metadata.BuildType,
+                BuildFingerprint = metadata.BuildFingerprint,
+                SeenAtUtc = device.SeenAtUtc
+            };
+            var updated = _currentDevices.Select(current =>
+                current.Serial == device.Serial ? enriched : current).ToArray();
+            Publish(updated);
+        }
+        finally
+        {
+            _enrichmentInFlight.TryRemove(device.Serial, out _);
+        }
+    }
+
+    private AndroidDevice ApplyCachedMetadata(AndroidDevice device)
+    {
+        if (!_metadataCache.TryGetValue(device.Serial, out var metadata))
+            return device;
+
+        return new AndroidDevice
+        {
+            Serial = device.Serial,
+            Endpoint = device.Endpoint,
+            State = device.State,
+            ConnectionType = device.ConnectionType,
+            Manufacturer = device.Manufacturer ?? metadata.Manufacturer,
+            Brand = device.Brand ?? metadata.Brand,
+            Model = device.Model ?? metadata.Model,
+            Product = device.Product ?? metadata.Product,
+            DeviceName = device.DeviceName ?? metadata.DeviceName,
+            Board = device.Board ?? metadata.Board,
+            AndroidVersion = device.AndroidVersion ?? metadata.AndroidVersion,
+            ApiLevel = device.ApiLevel ?? metadata.ApiLevel,
+            SecurityPatch = device.SecurityPatch ?? metadata.SecurityPatch,
+            BuildId = device.BuildId ?? metadata.BuildId,
+            BuildType = device.BuildType ?? metadata.BuildType,
+            BuildFingerprint = device.BuildFingerprint ?? metadata.BuildFingerprint,
+            SeenAtUtc = device.SeenAtUtc
+        };
     }
 
     private static async Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken)

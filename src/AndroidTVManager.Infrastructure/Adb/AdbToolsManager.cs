@@ -10,12 +10,14 @@ public sealed class AdbToolsManager : IAdbToolsManager
     private const string DownloadUrl = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip";
     private static readonly HttpClient HttpClient = new();
     private readonly ILocalAppDataPaths _paths;
+    private readonly IAppLogger _logger;
     private readonly SemaphoreSlim _installLock = new(1, 1);
     private string? _installedVersion;
 
-    public AdbToolsManager(ILocalAppDataPaths paths)
+    public AdbToolsManager(ILocalAppDataPaths paths, IAppLogger logger)
     {
         _paths = paths;
+        _logger = logger;
         _paths.EnsureCreated();
     }
 
@@ -42,6 +44,7 @@ public sealed class AdbToolsManager : IAdbToolsManager
         await _installLock.WaitAsync(cancellationToken);
         try
         {
+            _logger.Information("PlatformTools", "Starting official Platform-Tools installation.");
             _paths.EnsureCreated();
             var parent = Directory.GetParent(_paths.ToolsPath)?.FullName ?? _paths.Root;
             var staging = Path.Combine(parent, $"PlatformTools.staging-{Guid.NewGuid():N}");
@@ -74,6 +77,7 @@ public sealed class AdbToolsManager : IAdbToolsManager
                     Directory.Delete(previous, recursive: true);
 
                 _installedVersion = version;
+                _logger.Information("PlatformTools", $"Activated ADB {version}.");
                 return new(true, version, AdbPath, DateTimeOffset.UtcNow);
             }
             catch
@@ -90,6 +94,7 @@ public sealed class AdbToolsManager : IAdbToolsManager
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
+            _logger.Error("PlatformTools", "Platform-Tools installation failed.", exception);
             return new(false, _installedVersion, AdbPath, LastUpdateCheckUtc, exception.Message);
         }
         finally
