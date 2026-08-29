@@ -72,6 +72,61 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
+    <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+        <Setter Property="Foreground" Value="#FF8C91" />
+        <Setter Property="BorderBrush" Value="#71333F" />
+    </Style>
+
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="18" />
+    </Style>
+
+    <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource VioletAccent}" />
+    </Style>
+
+    <Style x:Key="DataGridModernStyle" TargetType="DataGrid">
+        <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="#1B2940" />
+        <Setter Property="RowBackground" Value="{StaticResource PanelBackground}" />
+        <Setter Property="AlternatingRowBackground" Value="#142033" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="CanUserResizeRows" Value="False" />
+        <Setter Property="EnableRowVirtualization" Value="True" />
+        <Setter Property="EnableColumnVirtualization" Value="True" />
+    </Style>
+
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="#17243A" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Padding" Value="10,9" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+
+    <Style TargetType="DataGridRow">
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style TargetType="DataGridCell">
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
     <Style TargetType="TextBox">
         <Setter Property="Background" Value="#0A101C" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
