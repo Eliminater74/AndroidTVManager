@@ -19,9 +19,10 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>AndroidTVManager</AssemblyName>
     <RootNamespace>AndroidTVManager.App</RootNamespace>
-    <Version>1.0.0-B1</Version>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
+    <Version>1.0.0-B2</Version>
+    <AssemblyVersion>1.0.0.2</AssemblyVersion>
+    <FileVersion>1.0.0.2</FileVersion>
+    <InformationalVersion>1.0.0-B2</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 

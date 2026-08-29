@@ -72,10 +72,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     public ObservableCollection<NavigationEntry> Navigation { get; }
+    public IEnumerable<NavigationEntry> MainNavigation => Navigation.Take(7);
+    public IEnumerable<NavigationEntry> SecondaryNavigation => Navigation.Skip(7);
     public ObservableCollection<AndroidDevice> Devices { get; }
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
     {
+        "Dashboard" => new DashboardPageViewModel(Devices),
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller),
@@ -98,7 +101,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _selectedNavigation, value))
+            {
                 CurrentPage = _pages[value.Label];
+                OnPropertyChanged(nameof(SelectedPageDescription));
+            }
         }
     }
 
@@ -111,6 +117,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public int ConnectedDeviceCount => Devices.Count(device => device.State == DeviceState.Device);
     public string AdbStatus => _adbStatus;
     public string AdbVersion => _adbVersion;
+    public string Version => AppInfo.Version;
+    public string BetaLabel => $"BETA 2  ·  {Version}";
+    public string FooterText => $"Android TV Manager  ·  {Version}";
+    public string SelectedPageDescription => SelectedNavigation.Label switch
+    {
+        "Dashboard" => "Your connected Android TV and Google TV devices, at a glance.",
+        "Devices" => "Connected and saved Android devices.",
+        "Connections" => "Connect over network or pair Android Wireless Debugging.",
+        "Install APK" => "Install applications on the selected device.",
+        "Applications" => "Inspect and manage installed packages.",
+        "Scripts" => "Preview safe, structured ADB automation.",
+        "Tools" => "Targeted device utilities and diagnostics.",
+        "Settings" => "Configure Android TV Manager and managed ADB.",
+        "About" => "About Android TV Manager Beta 2.",
+        _ => string.Empty
+    };
+
+    [RelayCommand]
+    private void Navigate(string label)
+    {
+        if (Navigation.FirstOrDefault(item => item.Label == label) is { } item)
+            SelectedNavigation = item;
+    }
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -173,10 +202,23 @@ public class PageViewModel : ObservableObject
     }
 
     public string Title { get; }
+    public string Version => AppInfo.Version;
     public string Eyebrow => Title.ToUpperInvariant();
     public string Description => Title == "Dashboard"
         ? "Your connected Android entertainment devices, at a glance."
         : $"Manage your Android TV workflow from {Title.ToLowerInvariant()}.";
+}
+
+public sealed class DashboardPageViewModel : PageViewModel
+{
+    public DashboardPageViewModel(ObservableCollection<AndroidDevice> devices) : base("Dashboard")
+    {
+        Devices = devices;
+        Devices.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasDevices));
+    }
+
+    public ObservableCollection<AndroidDevice> Devices { get; }
+    public bool HasDevices => Devices.Count > 0;
 }
 
 public sealed partial class DevicesPageViewModel : ObservableObject
@@ -232,7 +274,6 @@ public sealed class AboutPageViewModel : PageViewModel
     {
     }
 
-    public string Version => "1.0.0-B1";
     public string ProductLine => "Android TV / Google TV Device Management Toolbox";
     public string Mission => "A faster, safer, more modern way to manage the ADB-capable devices in your living room.";
     public string PlatformToolsNote => "Official Android SDK Platform-Tools are downloaded directly from Google and kept in LocalAppData.";
