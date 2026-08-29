@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen"
         AllowDrop="True"
         Drop="Window_Drop"
-        DataContext="{Binding RelativeSource={RelativeSource Self}, Path=ViewModel}">
+        >
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:AboutPageViewModel}">
             <Grid Margin="34,26,34,28">

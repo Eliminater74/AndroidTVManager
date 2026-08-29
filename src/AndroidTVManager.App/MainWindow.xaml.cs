@@ -14,6 +14,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ViewModel = viewModel;
+        DataContext = ViewModel;
         _trayService = new TrayService(this, runner);
     }
 
