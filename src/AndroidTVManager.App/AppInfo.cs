@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace AndroidTVManager.App;
 
@@ -18,7 +19,12 @@ public static class AppInfo
             : string.Empty;
 
     public static string ReleaseChannel
-        => InformationalVersion.Contains("-B2", StringComparison.OrdinalIgnoreCase) ? "BETA 2"
-            : InformationalVersion.Contains("-B1", StringComparison.OrdinalIgnoreCase) ? "BETA 1"
-            : "RELEASE";
+    {
+        get
+        {
+            var match = Regex.Match(InformationalVersion, @"-B(?<number>\d+)",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            return match.Success ? $"BETA {match.Groups["number"].Value}" : "RELEASE";
+        }
+    }
 }
