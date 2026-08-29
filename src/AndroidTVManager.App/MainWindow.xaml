@@ -310,6 +310,25 @@
                                         Margin="0,12,0,0"/>
                             </StackPanel>
                         </Border>
+                        <Expander Header="RAW ADB EVIDENCE (EXPERT)" IsExpanded="False" Margin="0,14,0,0">
+                            <ItemsControl ItemsSource="{Binding Inspection.Commands}" Margin="0,10,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0A101B" CornerRadius="7" Padding="10" Margin="0,0,0,5">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Command}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding State}" Foreground="{StaticResource CyanAccent}"
+                                                           Margin="0,3,0,0"/>
+                                                <TextBlock Text="{Binding StandardError}" Foreground="{StaticResource AmberAccent}"
+                                                           TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                <TextBlock Text="{Binding StandardOutput}" Foreground="{StaticResource TextSecondary}"
+                                                           TextWrapping="Wrap" MaxHeight="120" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
