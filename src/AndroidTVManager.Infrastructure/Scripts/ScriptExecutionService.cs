@@ -95,7 +95,7 @@ public sealed class ScriptExecutionService : IScriptExecutionService
     {
         var execution = await _store.GetAsync(executionId, cancellationToken)
             ?? throw new InvalidOperationException("The script execution no longer exists.");
-        if (!string.Equals(execution.Serial, serial, StringComparison.Ordinal))
+        if (!string.Equals(execution.Serial, serial, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Undo target serial does not match the original execution target.");
         if (execution.Actions.Any(action => string.Equals(action.UndoStatus, "Succeeded", StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("This execution has already been undone.");
