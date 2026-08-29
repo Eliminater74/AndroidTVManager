@@ -16,13 +16,17 @@ public static partial class AdbParsers
             if (line.Length == 0 || line.StartsWith("List of devices", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var columns = line.Split('\t', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var columns = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             if (columns.Length < 2)
                 continue;
 
             var serial = columns[0];
-            var state = ParseState(columns[1]);
-            var attributes = columns.Skip(2)
+            var stateText = columns.Length > 2 && columns[1].Equals("no", StringComparison.OrdinalIgnoreCase)
+                ? $"{columns[1]} {columns[2]}"
+                : columns[1];
+            var attributeStart = stateText.Equals("no permissions", StringComparison.OrdinalIgnoreCase) ? 3 : 2;
+            var state = ParseState(stateText);
+            var attributes = columns.Skip(attributeStart)
                 .Select(ParseAttribute)
                 .Where(pair => pair.HasValue)
                 .Select(pair => pair!.Value)
