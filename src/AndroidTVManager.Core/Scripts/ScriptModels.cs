@@ -79,15 +79,51 @@ public static class ScriptDefinitionParser
             var action = script.Actions[i];
             if (!ActionTypes.Contains(action.Type))
                 errors.Add($"Action {i + 1} has an unknown type: {action.Type}.");
-            if (!action.IsAdvanced && action.Type.Contains("Package", StringComparison.OrdinalIgnoreCase)
+            if (RequiresPackage(action.Type)
                 && string.IsNullOrWhiteSpace(action.Package))
                 errors.Add($"Action {i + 1} requires a package.");
+            if (RequiresPath(action.Type) && string.IsNullOrWhiteSpace(action.Path))
+                errors.Add($"Action {i + 1} requires a path.");
+            if (action.Type.Equals("setSetting", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(action.Value))
+                errors.Add($"Action {i + 1} requires a namespace:key=value setting value.");
+            if (action.Type.Equals("shell", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(action.Value))
+                errors.Add($"Action {i + 1} requires a shell command.");
+            if ((action.Type.Equals("grantPermission", StringComparison.OrdinalIgnoreCase)
+                 || action.Type.Equals("revokePermission", StringComparison.OrdinalIgnoreCase))
+                && string.IsNullOrWhiteSpace(action.Value))
+                errors.Add($"Action {i + 1} requires a permission value.");
+            if ((action.Type.Equals("pushFile", StringComparison.OrdinalIgnoreCase)
+                 || action.Type.Equals("pullFile", StringComparison.OrdinalIgnoreCase))
+                && string.IsNullOrWhiteSpace(action.Value))
+                errors.Add($"Action {i + 1} requires a destination path.");
             if (action.IsAdvanced)
                 warnings.Add($"Action {i + 1} is an advanced raw shell action.");
+            if (action.Type.Equals("clearData", StringComparison.OrdinalIgnoreCase)
+                || action.Type.Equals("uninstallUser", StringComparison.OrdinalIgnoreCase))
+                warnings.Add($"Action {i + 1} is destructive and should be reviewed before execution.");
         }
 
         return new(errors.Count == 0, errors, warnings);
     }
+
+    private static bool RequiresPackage(string type)
+        => type.Equals("disablePackage", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("enablePackage", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("uninstallUser", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("restorePackage", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("clearData", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("launchPackage", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("forceStop", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("grantPermission", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("revokePermission", StringComparison.OrdinalIgnoreCase);
+
+    private static bool RequiresPath(string type)
+        => type.Equals("installApk", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("pushFile", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("pullFile", StringComparison.OrdinalIgnoreCase)
+           || type.Equals("deleteFile", StringComparison.OrdinalIgnoreCase);
 
     public static bool IsCompatible(ScriptDefinition script, AndroidDevice device)
     {

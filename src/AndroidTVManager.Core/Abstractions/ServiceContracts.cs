@@ -1,4 +1,5 @@
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Core.Scripts;
 
 namespace AndroidTVManager.Core.Abstractions;
 
@@ -88,6 +89,32 @@ public interface IDeviceToolsService
     Task<AdbCommandResult> ShellAsync(string serial, string command, CancellationToken cancellationToken = default);
     Task<string> CaptureScreenshotAsync(string serial, string friendlyName, CancellationToken cancellationToken = default);
 }
+
+public interface IScriptExecutionService
+{
+    Task<ScriptExecutionResult> ExecuteAsync(
+        ScriptDefinition script,
+        AndroidDevice target,
+        CancellationToken cancellationToken = default);
+
+    Task<ScriptUndoResult> UndoAsync(
+        long executionId,
+        string serial,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed record ScriptExecutionResult(
+    long ExecutionId,
+    string Status,
+    int SuccessfulActions,
+    int FailedActions,
+    bool CanUndo);
+
+public sealed record ScriptUndoResult(
+    long ExecutionId,
+    string Status,
+    int RestoredActions,
+    int FailedActions);
 
 public sealed record AdbDownloadProgress(long BytesReceived, long? TotalBytes, string Status);
 

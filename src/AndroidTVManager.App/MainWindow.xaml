@@ -502,6 +502,13 @@
                         <DockPanel>
                             <Button DockPanel.Dock="Bottom" Content="Validate and preview" Style="{StaticResource AccentButtonStyle}"
                                     Margin="0,14,0,0" Command="{Binding ValidateScriptCommand}"/>
+                            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                                <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                          DisplayMemberPath="Serial" Margin="0,8,0,6"/>
+                                <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Enter a serial when the device is not listed."/>
+                            </StackPanel>
                             <TextBox Text="{Binding ScriptJson, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                                      TextWrapping="Wrap" FontFamily="Cascadia Mono" FontSize="12"/>
@@ -509,10 +516,18 @@
                     </Border>
                     <Border Grid.Column="1" Background="{StaticResource PanelRaisedBackground}"
                             CornerRadius="12" Padding="20" Margin="10,0,0,0">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <TextBlock Text="{Binding Preview}" TextWrapping="Wrap"
-                                       Foreground="{StaticResource TextPrimary}"/>
-                        </ScrollViewer>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,14,0,0">
+                                <Button Content="Run script" Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding RunScriptCommand}" Margin="0,0,8,0"/>
+                                <Button Content="Undo last run" Style="{StaticResource DangerButtonStyle}"
+                                        Command="{Binding UndoLastCommand}"/>
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{Binding Preview}" TextWrapping="Wrap"
+                                           Foreground="{StaticResource TextPrimary}"/>
+                            </ScrollViewer>
+                        </DockPanel>
                     </Border>
                 </Grid>
             </Grid>
@@ -525,6 +540,22 @@
                     <TextBlock Text="Tune your workspace" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
                     <TextBlock Text="Runtime data stays in LocalAppData so Program Files installs remain clean."
                                Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                            BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,24,0,0">
+                        <StackPanel>
+                            <TextBlock Text="GENERAL" Style="{StaticResource SectionLabelStyle}"/>
+                            <CheckBox Content="Start minimized" IsChecked="{Binding StartMinimized}"
+                                      Foreground="{StaticResource TextPrimary}" Margin="0,14,0,0"/>
+                            <CheckBox Content="Minimize to tray" IsChecked="{Binding MinimizeToTray}"
+                                      Foreground="{StaticResource TextPrimary}" Margin="0,10,0,0"/>
+                            <CheckBox Content="Close to tray" IsChecked="{Binding CloseToTray}"
+                                      Foreground="{StaticResource TextPrimary}" Margin="0,10,0,0"/>
+                            <CheckBox Content="Remember last selected device" IsChecked="{Binding RememberSelectedDevice}"
+                                      Foreground="{StaticResource TextPrimary}" Margin="0,10,0,0"/>
+                            <TextBlock Text="Appearance: Dark (Beta 2)" Foreground="{StaticResource TextSecondary}"
+                                       Margin="0,16,0,0"/>
+                        </StackPanel>
+                    </Border>
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
                             BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,28,0,0">
                         <StackPanel>
@@ -795,8 +826,14 @@
                         <TextBlock Text="{Binding SelectedPageDescription}" Foreground="{StaticResource TextSecondary}"
                                    Margin="14,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Button DockPanel.Dock="Right" Content="Refresh" Style="{StaticResource GhostButtonStyle}"
-                            Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="TARGET" Foreground="{StaticResource TextSecondary}" FontSize="10"
+                                   FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                  DisplayMemberPath="Serial" Width="185" Margin="0,0,10,0"/>
+                        <Button Content="↻  Refresh" Style="{StaticResource GhostButtonStyle}"
+                                Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </DockPanel>
             </Border>
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

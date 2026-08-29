@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
+using AndroidTVManager.App.Services;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
@@ -25,11 +26,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDeviceToolsService _toolsService;
     private readonly IDeviceRepository _deviceRepository;
     private readonly ILocalAppDataPaths _paths;
+    private readonly IConfirmationService _confirmation;
+    private readonly ISettingsStore _settingsStore;
+    private readonly IScriptExecutionService _scriptExecutionService;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
     private string _adbStatus = "ADB · Checking";
     private string _adbVersion = "Checking managed Platform-Tools…";
+    private bool _sessionsRecovered;
 
     public MainWindowViewModel(
         IAdbToolsManager toolsManager,
@@ -40,7 +45,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IPackageManager packageManager,
         IDeviceToolsService toolsService,
         IDeviceRepository deviceRepository,
-        ILocalAppDataPaths paths)
+        ILocalAppDataPaths paths,
+        IConfirmationService confirmation,
+        ISettingsStore settingsStore,
+        IScriptExecutionService scriptExecutionService)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -51,6 +59,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _toolsService = toolsService;
         _deviceRepository = deviceRepository;
         _paths = paths;
+        _confirmation = confirmation;
+        _settingsStore = settingsStore;
+        _scriptExecutionService = scriptExecutionService;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -82,10 +93,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller),
-        "Applications" => new ApplicationsPageViewModel(_packageManager),
-        "Scripts" => new ScriptsPageViewModel(),
+        "Applications" => new ApplicationsPageViewModel(_packageManager, _confirmation),
+        "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService),
-        "Settings" => new SettingsPageViewModel(_toolsManager, _paths),
+        "Settings" => new SettingsPageViewModel(_toolsManager, _paths, _settingsStore),
         "About" => new AboutPageViewModel(),
         _ => new PageViewModel(entry.Label)
     };
@@ -151,6 +162,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         _adbStatus = "ADB · Checking";
         OnPropertyChanged(nameof(AdbStatus));
+        if (!_sessionsRecovered)
+        {
+            await _history.RecoverOpenSessionsAsync(cancellationToken);
+            _sessionsRecovered = true;
+        }
         var status = await _toolsManager.GetStatusAsync(cancellationToken);
         if (!status.IsReady)
         {
@@ -191,6 +207,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         foreach (var device in devices)
             await _history.RecordDeviceSeenAsync(device);
+        await _history.SyncSessionsAsync(devices, _toolsManager.InstalledVersion);
     }
 }
 
@@ -423,10 +440,14 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
 public sealed partial class ApplicationsPageViewModel : PageViewModel
 {
     private readonly IPackageManager _packageManager;
+    private readonly IConfirmationService _confirmation;
 
-    public ApplicationsPageViewModel(IPackageManager packageManager) : base("Applications")
+    public ApplicationsPageViewModel(
+        IPackageManager packageManager,
+        IConfirmationService confirmation) : base("Applications")
     {
         _packageManager = packageManager;
+        _confirmation = confirmation;
     }
 
     public ObservableCollection<PackageInfo> Packages { get; } = [];
@@ -473,20 +494,21 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     private Task ForceStopAsync() => RunActionAsync("Force stop", (serial, package) => _packageManager.ForceStopAsync(serial, package));
 
     [RelayCommand]
-    private Task DisableAsync() => RunActionAsync("Disable", (serial, package) => _packageManager.DisableAsync(serial, package));
+    private Task DisableAsync() => RunActionAsync("Disable", (serial, package) => _packageManager.DisableAsync(serial, package), true);
 
     [RelayCommand]
     private Task EnableAsync() => RunActionAsync("Enable", (serial, package) => _packageManager.EnableAsync(serial, package));
 
     [RelayCommand]
-    private Task UninstallAsync() => RunActionAsync("Uninstall for user", (serial, package) => _packageManager.UninstallForUserAsync(serial, package));
+    private Task UninstallAsync() => RunActionAsync("Uninstall for user", (serial, package) => _packageManager.UninstallForUserAsync(serial, package), true);
 
     [RelayCommand]
-    private Task ClearDataAsync() => RunActionAsync("Clear data", (serial, package) => _packageManager.ClearDataAsync(serial, package));
+    private Task ClearDataAsync() => RunActionAsync("Clear data", (serial, package) => _packageManager.ClearDataAsync(serial, package), true);
 
     private async Task RunActionAsync(
         string action,
-        Func<string, string, Task<AdbCommandResult>> operation)
+        Func<string, string, Task<AdbCommandResult>> operation,
+        bool destructive = false)
     {
         if (SelectedPackage is null || string.IsNullOrWhiteSpace(TargetSerial))
         {
@@ -495,6 +517,13 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         }
         var serial = TargetSerial.Trim();
         var packageName = SelectedPackage.PackageName;
+        if (destructive && !_confirmation.Confirm(
+                $"{action} · confirm target",
+                $"{action} applies to:\n\n{packageName}\n\nTarget device:\n{serial}\n\nContinue?"))
+        {
+            Message = "Operation canceled.";
+            return;
+        }
         Message = $"{action} · {packageName}…";
         var result = await operation(serial, packageName);
         Message = result.IsSuccess ? $"{action} completed." : result.StandardError.Trim();
@@ -564,9 +593,24 @@ public sealed partial class ToolsPageViewModel : PageViewModel
 
 public sealed partial class ScriptsPageViewModel : PageViewModel
 {
-    public ScriptsPageViewModel() : base("Scripts")
+    private readonly IScriptExecutionService _executionService;
+    private long? _lastExecutionId;
+
+    public ScriptsPageViewModel(
+        IScriptExecutionService executionService,
+        ObservableCollection<AndroidDevice> devices) : base("Scripts")
     {
+        _executionService = executionService;
+        Devices = devices;
     }
+
+    public ObservableCollection<AndroidDevice> Devices { get; }
+
+    [ObservableProperty]
+    private AndroidDevice? _selectedDevice;
+
+    [ObservableProperty]
+    private string _targetSerial = string.Empty;
 
     [ObservableProperty]
     private string _scriptJson = """
@@ -582,6 +626,12 @@ public sealed partial class ScriptsPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _preview = "Scripts are preview-only until you validate them.";
+
+    partial void OnSelectedDeviceChanged(AndroidDevice? value)
+    {
+        if (value is not null)
+            TargetSerial = value.Serial;
+    }
 
     [RelayCommand]
     private void ValidateScript()
@@ -601,18 +651,75 @@ public sealed partial class ScriptsPageViewModel : PageViewModel
             Preview = $"Validation failed\n\n{exception.Message}";
         }
     }
+
+    [RelayCommand]
+    private async Task RunScriptAsync()
+    {
+        try
+        {
+            var script = ScriptDefinitionParser.Parse(ScriptJson);
+            if (string.IsNullOrWhiteSpace(TargetSerial))
+            {
+                Preview = "Select or enter a target device before running.";
+                return;
+            }
+
+            var target = SelectedDevice ?? new AndroidDevice
+            {
+                Serial = TargetSerial.Trim(),
+                State = DeviceState.Device,
+                ConnectionType = ConnectionType.Unknown
+            };
+            var result = await _executionService.ExecuteAsync(script, target);
+            _lastExecutionId = result.ExecutionId;
+            Preview = $"Execution {result.Status.ToLowerInvariant()}\n\n" +
+                      $"{result.SuccessfulActions} action(s) succeeded · {result.FailedActions} failed\n" +
+                      (result.CanUndo ? "This execution can be undone." : "No reversible actions were recorded.");
+        }
+        catch (Exception exception)
+        {
+            Preview = $"Execution failed\n\n{exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task UndoLastAsync()
+    {
+        if (_lastExecutionId is not { } executionId || string.IsNullOrWhiteSpace(TargetSerial))
+        {
+            Preview = "Run a script successfully before requesting undo.";
+            return;
+        }
+
+        try
+        {
+            var result = await _executionService.UndoAsync(executionId, TargetSerial.Trim());
+            Preview = $"Undo {result.Status.ToLowerInvariant()}\n\n" +
+                      $"{result.RestoredActions} action(s) restored · {result.FailedActions} failed";
+        }
+        catch (Exception exception)
+        {
+            Preview = $"Undo failed\n\n{exception.Message}";
+        }
+    }
 }
 
 public sealed partial class SettingsPageViewModel : PageViewModel
 {
     private readonly IAdbToolsManager _toolsManager;
     private readonly ILocalAppDataPaths _paths;
+    private readonly ISettingsStore _settings;
 
-    public SettingsPageViewModel(IAdbToolsManager toolsManager, ILocalAppDataPaths paths) : base("Settings")
+    public SettingsPageViewModel(
+        IAdbToolsManager toolsManager,
+        ILocalAppDataPaths paths,
+        ISettingsStore settings) : base("Settings")
     {
         _toolsManager = toolsManager;
         _paths = paths;
+        _settings = settings;
         _paths.EnsureCreated();
+        _ = LoadAsync();
     }
 
     public string DataPath => Path.GetDirectoryName(_paths.DatabasePath) ?? _paths.Root;
@@ -621,6 +728,38 @@ public sealed partial class SettingsPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _status = "Platform-Tools status is checked on startup.";
+
+    [ObservableProperty]
+    private bool _startMinimized;
+
+    [ObservableProperty]
+    private bool _minimizeToTray = true;
+
+    [ObservableProperty]
+    private bool _closeToTray = true;
+
+    [ObservableProperty]
+    private bool _rememberSelectedDevice = true;
+
+    public string SelectedTheme => "Dark";
+
+    private async Task LoadAsync()
+    {
+        StartMinimized = await ReadBoolAsync("general.startMinimized", false);
+        MinimizeToTray = await ReadBoolAsync("general.minimizeToTray", true);
+        CloseToTray = await ReadBoolAsync("general.closeToTray", true);
+        RememberSelectedDevice = await ReadBoolAsync("general.rememberSelectedDevice", true);
+    }
+
+    partial void OnStartMinimizedChanged(bool value) => _ = SaveBoolAsync("general.startMinimized", value);
+    partial void OnMinimizeToTrayChanged(bool value) => _ = SaveBoolAsync("general.minimizeToTray", value);
+    partial void OnCloseToTrayChanged(bool value) => _ = SaveBoolAsync("general.closeToTray", value);
+    partial void OnRememberSelectedDeviceChanged(bool value) => _ = SaveBoolAsync("general.rememberSelectedDevice", value);
+
+    private async Task<bool> ReadBoolAsync(string key, bool fallback)
+        => bool.TryParse(await _settings.GetAsync(key), out var value) ? value : fallback;
+
+    private Task SaveBoolAsync(string key, bool value) => _settings.SetAsync(key, value.ToString());
 
     [RelayCommand]
     private async Task RepairPlatformToolsAsync()
