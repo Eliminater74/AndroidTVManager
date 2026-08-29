@@ -23,6 +23,8 @@ public sealed class AndroidDevice
     public string Serial { get; init; } = string.Empty;
     public string? FriendlyName { get; init; }
     public string? Endpoint { get; init; }
+    public string? ReportedName { get; init; }
+    public string? MacAddress { get; init; }
     public DeviceState State { get; init; }
     public ConnectionType ConnectionType { get; init; }
     public string? Manufacturer { get; init; }
@@ -48,6 +50,8 @@ public sealed class SavedDevice
     public string? Model { get; set; }
     public string? LastKnownSerial { get; set; }
     public string? LastKnownEndpoint { get; set; }
+    public string? ReportedName { get; set; }
+    public string? MacAddress { get; set; }
     public ConnectionType PreferredConnectionType { get; set; }
     public bool IsFavorite { get; set; }
     public string? Notes { get; set; }

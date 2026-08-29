@@ -255,6 +255,24 @@
                                         <TextBlock Text="{Binding Inspection.Serial}" FontWeight="SemiBold" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </UniformGrid>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="DEVICE NAME REPORTED BY ANDROID"
+                                                   Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Inspection.Overview.Value.ReportedName, TargetNullValue=Not reported}"
+                                                   FontWeight="SemiBold" Margin="0,4,8,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="MAC ADDRESS"
+                                                   Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Inspection.Overview.Value.MacAddress, TargetNullValue=Not reported}"
+                                                   FontWeight="SemiBold" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Grid>
                                 <TextBlock Text="{Binding Inspection.Overview.Value.BuildFingerprint}"
                                            Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,14,0,0"/>
                             </StackPanel>
@@ -494,22 +512,31 @@
                         <StackPanel>
                             <TextBlock Text="ADD NETWORK DEVICE" Style="{StaticResource SectionLabelStyle}"/>
                             <Grid Margin="0,8,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBlock Text="HOST / IP" Foreground="{StaticResource TextMuted}" FontSize="10"/>
+                                <TextBlock Grid.Column="1" Text="PORT" Foreground="{StaticResource TextMuted}" FontSize="10"/>
+                                <TextBox Grid.Row="1" Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
                                          ToolTip="IP address or hostname" Margin="0,0,8,0"/>
-                                <TextBox Grid.Column="1" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
                                          ToolTip="Port" Margin="0,0,8,0"/>
-                                <Button Grid.Column="2" Content="Connect and save"
+                                <Button Grid.Row="1" Grid.Column="2" Content="Connect and save"
                                         Style="{StaticResource AccentButtonStyle}"
                                         Command="{Binding ConnectAndSaveCommand}"/>
                             </Grid>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="FRIENDLY NAME" Foreground="{StaticResource TextMuted}"
+                                           FontSize="10" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBox Text="{Binding FriendlyName, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="Optional friendly name" Width="260"/>
+                                         ToolTip="Optional friendly name, for example Living Room TV" Width="260"
+                                         Margin="0,0,0,0"/>
                                 <Button Content="Pair Wireless" Style="{StaticResource GhostButtonStyle}"
                                         Margin="8,0,0,0"
                                         Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -531,6 +558,10 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="{Binding Model}" FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding ReportedName, StringFormat=Device name: {0}}"
+                                                       Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                                            <TextBlock Text="{Binding MacAddress, StringFormat=MAC: {0}}"
+                                                       Foreground="{StaticResource TextSecondary}" FontSize="11"/>
                                             <TextBlock Text="{Binding Serial}" Foreground="{StaticResource TextSecondary}"
                                                        Margin="0,4,0,0"/>
                                         </StackPanel>
@@ -560,7 +591,12 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="{Binding FriendlyName}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Model}" Foreground="{StaticResource TextSecondary}"/>
+                                            <TextBlock Text="{Binding ReportedName, StringFormat=Device name: {0}}"
+                                                       Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                                            <TextBlock Text="{Binding Model, StringFormat=Model: {0}}"
+                                                       Foreground="{StaticResource TextSecondary}"/>
+                                            <TextBlock Text="{Binding MacAddress, StringFormat=MAC: {0}}"
+                                                       Foreground="{StaticResource TextSecondary}" FontSize="11"/>
                                             <TextBlock Text="{Binding LastKnownEndpoint, StringFormat=Endpoint: {0}}"
                                                        Foreground="{StaticResource TextSecondary}" FontSize="11"/>
                                             <TextBlock Text="{Binding LastSeenUtc, StringFormat=Last seen: {0:g}}"
@@ -664,6 +700,24 @@
                                 <TextBox Grid.Column="2" Text="{Binding PairingCode, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
                                 <Button Grid.Column="3" Content="Pair" Style="{StaticResource GhostButtonStyle}"
                                         Command="{Binding PairCommand}"/>
+                            </Grid>
+                            <TextBlock Text="CONNECT AND SAVE PAIRED DEVICE" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource VioletAccent}" Margin="0,16,0,0"/>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding DebugPort, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Debugging port shown beside Wireless Debugging"
+                                         Margin="0,0,10,0"/>
+                                <TextBox Grid.Column="1" Text="{Binding FriendlyName, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Friendly name, for example Bedroom TV"
+                                         Margin="0,0,10,0"/>
+                                <Button Grid.Column="2" Content="Pair, connect &amp; save"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding PairConnectAndSaveCommand}"/>
                             </Grid>
                             <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="12" Margin="0,18,0,0">
                                 <TextBlock Text="{Binding Message}" Foreground="{StaticResource TextSecondary}"

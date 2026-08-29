@@ -171,7 +171,11 @@ public static class AdbInspectionParsers
         var interfaces = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Select(line => Regex.Match(line, @"^\d+:\s*(?<name>[^:]+):").Groups["name"].Value)
             .Where(name => name.Length > 0).Distinct().ToArray();
-        return new(addresses, interfaces, hostname.Trim(), null, [], null);
+        var macAddresses = Regex.Matches(output,
+                @"(?<![0-9A-Fa-f])(?<mac>[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})(?![0-9A-Fa-f])")
+            .Select(match => match.Groups["mac"].Value.ToUpperInvariant())
+            .Distinct().ToArray();
+        return new(addresses, interfaces, hostname.Trim(), null, [], null, macAddresses);
     }
 
     public static DeveloperVerificationInfo ParseDeveloperVerification(

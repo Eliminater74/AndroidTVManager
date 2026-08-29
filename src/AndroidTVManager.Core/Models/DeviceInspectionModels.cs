@@ -150,7 +150,8 @@ public sealed record NetworkInfo(
     string? Hostname,
     string? Gateway,
     IReadOnlyList<string> DnsServers,
-    string? LinkSummary);
+    string? LinkSummary,
+    IReadOnlyList<string>? MacAddresses = null);
 
 public sealed record RuntimeInfo(
     string? Uptime,

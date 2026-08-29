@@ -38,4 +38,16 @@ public sealed class MetadataTests
         metadata.ApiLevel.Should().BeNull();
         metadata.Model.Should().BeNull();
     }
+
+    [Fact]
+    public void Parses_reported_device_name_and_mac_address_without_inventing_values()
+    {
+        AdbMetadataParser.ParseReportedName("  Living Room TV \r\n").Should().Be("Living Room TV");
+        AdbMetadataParser.ParseReportedName("null").Should().BeNull();
+        AdbMetadataParser.ParseMacAddress("""
+            2: wlan0: <BROADCAST,MULTICAST,UP> mtu 1500
+                link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff
+            """).Should().Be("AA:BB:CC:DD:EE:FF");
+        AdbMetadataParser.ParseMacAddress("no hardware address").Should().BeNull();
+    }
 }

@@ -4,7 +4,7 @@ namespace AndroidTVManager.Infrastructure.Database;
 
 public static class DatabaseMigrations
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     public static async Task ApplyAsync(SqliteConnection connection, CancellationToken cancellationToken = default)
     {
@@ -240,6 +240,16 @@ public static class DatabaseMigrations
                 """, cancellationToken);
             await ExecuteAsync(connection, transaction,
                 "INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (3, $utc);",
+                cancellationToken, ("$utc", DateTimeOffset.UtcNow.ToString("O")));
+        }
+        if (version < 4)
+        {
+            await ExecuteAsync(connection, transaction, """
+                ALTER TABLE Devices ADD COLUMN ReportedName TEXT;
+                ALTER TABLE Devices ADD COLUMN MacAddress TEXT;
+                """, cancellationToken);
+            await ExecuteAsync(connection, transaction,
+                "INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (4, $utc);",
                 cancellationToken, ("$utc", DateTimeOffset.UtcNow.ToString("O")));
         }
 

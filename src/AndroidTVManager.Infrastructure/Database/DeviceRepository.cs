@@ -20,7 +20,7 @@ public sealed class DeviceRepository : IDeviceRepository
         await using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT Id, FriendlyName, Manufacturer, Model, LastKnownSerial,
-                   LastKnownEndpoint, IsFavorite, Notes, LastSeenUtc,
+                   LastKnownEndpoint, ReportedName, MacAddress, IsFavorite, Notes, LastSeenUtc,
                    LastConnectedUtc, LastDisconnectedUtc, PreferredConnectionType
             FROM Devices WHERE IsSaved = 1 ORDER BY IsFavorite DESC, FriendlyName;
             """;
@@ -37,12 +37,14 @@ public sealed class DeviceRepository : IDeviceRepository
                 Model = reader.IsDBNull(3) ? null : reader.GetString(3),
                 LastKnownSerial = reader.IsDBNull(4) ? null : reader.GetString(4),
                 LastKnownEndpoint = reader.IsDBNull(5) ? null : reader.GetString(5),
-                IsFavorite = reader.GetInt64(6) == 1,
-                Notes = reader.IsDBNull(7) ? null : reader.GetString(7),
-                LastSeenUtc = ParseDate(reader, 8),
-                LastConnectedUtc = ParseDate(reader, 9),
-                LastDisconnectedUtc = ParseDate(reader, 10),
-                PreferredConnectionType = (ConnectionType)reader.GetInt64(11)
+                ReportedName = reader.IsDBNull(6) ? null : reader.GetString(6),
+                MacAddress = reader.IsDBNull(7) ? null : reader.GetString(7),
+                IsFavorite = reader.GetInt64(8) == 1,
+                Notes = reader.IsDBNull(9) ? null : reader.GetString(9),
+                LastSeenUtc = ParseDate(reader, 10),
+                LastConnectedUtc = ParseDate(reader, 11),
+                LastDisconnectedUtc = ParseDate(reader, 12),
+                PreferredConnectionType = (ConnectionType)reader.GetInt64(13)
             });
         }
         return devices;
@@ -64,14 +66,15 @@ public sealed class DeviceRepository : IDeviceRepository
         command.CommandText = device.Id == 0
             ? """
               INSERT INTO Devices (FriendlyName, Manufacturer, Model, LastKnownSerial,
-                  LastKnownEndpoint, PreferredConnectionType, IsFavorite, IsSaved, Notes, FirstSeenUtc, CreatedUtc, UpdatedUtc)
-              VALUES ($name, $manufacturer, $model, $serial, $endpoint, $connectionType, $favorite, 1, $notes,
+                  LastKnownEndpoint, ReportedName, MacAddress, PreferredConnectionType, IsFavorite, IsSaved, Notes, FirstSeenUtc, CreatedUtc, UpdatedUtc)
+              VALUES ($name, $manufacturer, $model, $serial, $endpoint, $reportedName, $macAddress, $connectionType, $favorite, 1, $notes,
                   $now, $now, $now);
               SELECT last_insert_rowid();
               """
             : """
               UPDATE Devices SET FriendlyName = $name, Manufacturer = $manufacturer,
                   Model = $model, LastKnownSerial = $serial, LastKnownEndpoint = $endpoint,
+                  ReportedName = $reportedName, MacAddress = $macAddress,
                   PreferredConnectionType = $connectionType,
                   IsFavorite = $favorite, IsSaved = 1, Notes = $notes, UpdatedUtc = $now
               WHERE Id = $id;
@@ -115,6 +118,8 @@ public sealed class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("$model", (object?)device.Model ?? DBNull.Value);
         command.Parameters.AddWithValue("$serial", (object?)device.LastKnownSerial ?? DBNull.Value);
         command.Parameters.AddWithValue("$endpoint", (object?)device.LastKnownEndpoint ?? DBNull.Value);
+        command.Parameters.AddWithValue("$reportedName", (object?)device.ReportedName ?? DBNull.Value);
+        command.Parameters.AddWithValue("$macAddress", (object?)device.MacAddress ?? DBNull.Value);
         command.Parameters.AddWithValue("$connectionType", (int)device.PreferredConnectionType);
         command.Parameters.AddWithValue("$favorite", device.IsFavorite ? 1 : 0);
         command.Parameters.AddWithValue("$notes", (object?)device.Notes ?? DBNull.Value);

@@ -115,7 +115,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Dashboard" => new DashboardPageViewModel(Devices, _deviceRepository),
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository, _connectionService, _confirmation),
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
-        "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
+        "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packagePreferences, _confirmation),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
@@ -234,6 +234,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 Endpoint = device.Endpoint,
                 State = device.State,
                 ConnectionType = device.ConnectionType,
+                ReportedName = device.ReportedName,
+                MacAddress = device.MacAddress,
                 Manufacturer = device.Manufacturer,
                 Brand = device.Brand,
                 Model = device.Model,
@@ -583,6 +585,8 @@ public sealed partial class DevicesPageViewModel : ObservableObject
             Model = SelectedDevice.Model,
             LastKnownSerial = SelectedDevice.Serial,
             LastKnownEndpoint = SelectedDevice.Endpoint,
+            ReportedName = SelectedDevice.ReportedName,
+            MacAddress = SelectedDevice.MacAddress,
             PreferredConnectionType = SelectedDevice.ConnectionType,
             IsFavorite = false
         });
@@ -712,13 +716,16 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
 {
     private readonly IAdbConnectionService _connectionService;
     private readonly IConnectionHistoryRepository _history;
+    private readonly IDeviceRepository _deviceRepository;
 
     public ConnectionsPageViewModel(
         IAdbConnectionService connectionService,
-        IConnectionHistoryRepository history) : base("Connections")
+        IConnectionHistoryRepository history,
+        IDeviceRepository deviceRepository) : base("Connections")
     {
         _connectionService = connectionService;
         _history = history;
+        _deviceRepository = deviceRepository;
         Host = string.Empty;
         Port = "5555";
         PairingPort = string.Empty;
@@ -736,6 +743,12 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _pairingCode;
+
+    [ObservableProperty]
+    private string _debugPort = "5555";
+
+    [ObservableProperty]
+    private string _friendlyName = string.Empty;
 
     [ObservableProperty]
     private string _message = "Ready to connect.";
@@ -778,6 +791,52 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
         Message = result.IsSuccess
             ? $"Pairing accepted: {result.StandardOutput.Trim()} Enter the device's debugging port to connect."
             : $"Pairing failed: {result.StandardError.Trim()}";
+    }
+
+    [RelayCommand]
+    private async Task PairConnectAndSaveAsync()
+    {
+        if (!AdbParsers.TryParseEndpoint(Host, PairingPort, out var pairingEndpoint, out var error))
+        {
+            Message = error;
+            return;
+        }
+        if (PairingCode.Trim().Length != 6 || !PairingCode.All(char.IsDigit))
+        {
+            Message = "Enter the six-digit Wireless Debugging pairing code.";
+            return;
+        }
+        if (!AdbParsers.TryParseEndpoint(Host, DebugPort, out var debugEndpoint, out error))
+        {
+            Message = $"Debugging endpoint: {error}";
+            return;
+        }
+
+        Message = $"Pairing with {pairingEndpoint}…";
+        var pairResult = await _connectionService.PairAsync(pairingEndpoint, PairingCode.Trim());
+        PairingCode = string.Empty;
+        if (!pairResult.IsSuccess)
+        {
+            Message = $"Pairing failed: {pairResult.StandardError.Trim()}";
+            return;
+        }
+
+        Message = $"Pairing accepted. Connecting to {debugEndpoint}…";
+        var connectResult = await _connectionService.ConnectAsync(debugEndpoint);
+        if (!connectResult.IsSuccess)
+        {
+            Message = $"Paired, but connection failed: {connectResult.StandardError.Trim()}";
+            return;
+        }
+        var name = string.IsNullOrWhiteSpace(FriendlyName) ? debugEndpoint : FriendlyName.Trim();
+        await _deviceRepository.UpsertAsync(new SavedDevice
+        {
+            FriendlyName = name,
+            LastKnownSerial = debugEndpoint,
+            LastKnownEndpoint = debugEndpoint,
+            PreferredConnectionType = ConnectionType.WirelessDebugging
+        });
+        Message = $"{name} paired, connected, and saved.";
     }
 
     [RelayCommand]

@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace AndroidTVManager.Core.Adb;
 
 public sealed record AdbDeviceMetadata(
@@ -47,6 +49,22 @@ public static class AdbMetadataParser
             Get(values, "ro.build.id"),
             Get(values, "ro.build.type"),
             Get(values, "ro.build.fingerprint"));
+    }
+
+    public static string? ParseReportedName(string output)
+    {
+        var value = output.Trim();
+        return value.Length == 0 || value.Equals("null", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : value;
+    }
+
+    public static string? ParseMacAddress(string output)
+    {
+        var match = Regex.Match(output,
+            @"(?<![0-9A-Fa-f])(?<mac>[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})(?![0-9A-Fa-f])",
+            RegexOptions.CultureInvariant);
+        return match.Success ? match.Groups["mac"].Value.ToUpperInvariant() : null;
     }
 
     private static string? Get(Dictionary<string, string> values, string key)

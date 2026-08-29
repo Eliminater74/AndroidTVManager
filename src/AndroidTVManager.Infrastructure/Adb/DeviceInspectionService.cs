@@ -43,6 +43,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             ["selinux"] = (["shell", "getenforce"], ReadTimeout),
             ["root"] = (["shell", "sh", "-c", "id; which su"], ReadTimeout),
             ["network"] = (["shell", "ip", "addr"], ReadTimeout),
+            ["device-name"] = (["shell", "settings", "get", "global", "device_name"], ReadTimeout),
+            ["mac-address"] = (["shell", "ip", "link"], ReadTimeout),
             ["hostname"] = (["shell", "hostname"], ReadTimeout),
             ["verifier"] = (["shell", "pm", "list", "packages", "com.google.android.verifier"], ReadTimeout),
             ["verifier-details"] = (["shell", "dumpsys", "package", "com.google.android.verifier"], ReadTimeout),
@@ -57,6 +59,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         var results = await RunCommandsAsync(serial, commands, progress, cancellationToken);
         var props = Properties(results, "getprop");
         var metadata = AdbMetadataParser.Parse(Output(results, "getprop"));
+        var reportedName = AdbMetadataParser.ParseReportedName(Output(results, "device-name"));
+        var macAddress = AdbMetadataParser.ParseMacAddress(Output(results, "mac-address"));
         var device = new AndroidDevice
         {
             Serial = serial,
@@ -68,6 +72,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Model = metadata.Model,
             Product = metadata.Product,
             DeviceName = metadata.DeviceName,
+            ReportedName = reportedName,
+            MacAddress = macAddress,
             Board = metadata.Board,
             AndroidVersion = metadata.AndroidVersion,
             ApiLevel = metadata.ApiLevel,
@@ -93,7 +99,7 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         var inspection = new DeviceInspectionResult(
             serial,
             DateTimeOffset.UtcNow,
-            Section("Overview", results, ["getprop"], device),
+            Section("Overview", results, ["getprop", "device-name", "mac-address"], device),
             Section("CPU", results, ["cpuinfo"], cpu),
             Section("Memory", results, ["meminfo"], AdbInspectionParsers.ParseMemory(Output(results, "meminfo"))),
             Section("Graphics", results, ["surfaceflinger"],
@@ -111,7 +117,7 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Section("Security", results, ["getprop", "selinux", "root"], security),
             Section("Boot", results, ["getprop"], boot),
             Section("Treble / GSI", results, ["getprop", "gsi-tool", "packages"], gsi),
-            Section("Network", results, ["network", "hostname"],
+            Section("Network", results, ["network", "hostname", "mac-address"],
                 AdbInspectionParsers.ParseNetwork(Output(results, "network"), Output(results, "hostname"))),
             Section("Runtime", results, ["uptime", "battery", "services"],
                 new RuntimeInfo(Output(results, "uptime"), Summarize(Output(results, "battery")), null, null,

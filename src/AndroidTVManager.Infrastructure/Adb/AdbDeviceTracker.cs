@@ -14,7 +14,7 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
     private readonly IAppLogger _logger;
     private readonly object _sync = new();
     private readonly ConcurrentDictionary<string, byte> _enrichmentInFlight = new();
-    private readonly ConcurrentDictionary<string, AdbDeviceMetadata> _metadataCache = new();
+    private readonly ConcurrentDictionary<string, EnrichedMetadata> _metadataCache = new();
     private CancellationTokenSource? _stopSource;
     private Task? _trackingTask;
     private ImmutableArray<AndroidDevice> _currentDevices = [];
@@ -142,8 +142,10 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
     private void Publish(IReadOnlyList<AndroidDevice> devices)
     {
         devices = devices.Select(ApplyCachedMetadata).ToArray();
-        if (_currentDevices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion, device.ApiLevel))
-            .SequenceEqual(devices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion, device.ApiLevel))))
+        if (_currentDevices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion,
+                device.ApiLevel, device.ReportedName, device.MacAddress))
+            .SequenceEqual(devices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion,
+                device.ApiLevel, device.ReportedName, device.MacAddress))))
             return;
 
         _currentDevices = devices.ToImmutableArray();
@@ -159,19 +161,33 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
     {
         try
         {
-            var result = await _runner.RunForDeviceAsync(device.Serial, ["shell", "getprop"],
+            var metadataTask = _runner.RunForDeviceAsync(device.Serial, ["shell", "getprop"],
                 TimeSpan.FromSeconds(30));
+            var nameTask = _runner.RunForDeviceAsync(device.Serial, ["shell", "settings", "get", "global", "device_name"],
+                TimeSpan.FromSeconds(15));
+            var networkTask = _runner.RunForDeviceAsync(device.Serial, ["shell", "ip", "link"],
+                TimeSpan.FromSeconds(15));
+            await Task.WhenAll(metadataTask, nameTask, networkTask);
+            var result = metadataTask.Result;
             if (!result.IsSuccess)
                 return;
 
             var metadata = AdbMetadataParser.Parse(result.StandardOutput);
-            _metadataCache[device.Serial] = metadata;
+            var reportedName = nameTask.Result.IsSuccess
+                ? AdbMetadataParser.ParseReportedName(nameTask.Result.StandardOutput)
+                : null;
+            var macAddress = networkTask.Result.IsSuccess
+                ? AdbMetadataParser.ParseMacAddress(networkTask.Result.StandardOutput)
+                : null;
+            _metadataCache[device.Serial] = new EnrichedMetadata(metadata, reportedName, macAddress);
             var enriched = new AndroidDevice
             {
                 Serial = device.Serial,
                 Endpoint = device.Endpoint,
                 State = device.State,
                 ConnectionType = device.ConnectionType,
+                ReportedName = reportedName,
+                MacAddress = macAddress,
                 Manufacturer = metadata.Manufacturer,
                 Brand = metadata.Brand,
                 Model = device.Model ?? metadata.Model,
@@ -198,7 +214,7 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
 
     private AndroidDevice ApplyCachedMetadata(AndroidDevice device)
     {
-        if (!_metadataCache.TryGetValue(device.Serial, out var metadata))
+        if (!_metadataCache.TryGetValue(device.Serial, out var cached))
             return device;
 
         return new AndroidDevice
@@ -207,21 +223,28 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
             Endpoint = device.Endpoint,
             State = device.State,
             ConnectionType = device.ConnectionType,
-            Manufacturer = device.Manufacturer ?? metadata.Manufacturer,
-            Brand = device.Brand ?? metadata.Brand,
-            Model = device.Model ?? metadata.Model,
-            Product = device.Product ?? metadata.Product,
-            DeviceName = device.DeviceName ?? metadata.DeviceName,
-            Board = device.Board ?? metadata.Board,
-            AndroidVersion = device.AndroidVersion ?? metadata.AndroidVersion,
-            ApiLevel = device.ApiLevel ?? metadata.ApiLevel,
-            SecurityPatch = device.SecurityPatch ?? metadata.SecurityPatch,
-            BuildId = device.BuildId ?? metadata.BuildId,
-            BuildType = device.BuildType ?? metadata.BuildType,
-            BuildFingerprint = device.BuildFingerprint ?? metadata.BuildFingerprint,
+            ReportedName = device.ReportedName ?? cached.ReportedName,
+            MacAddress = device.MacAddress ?? cached.MacAddress,
+            Manufacturer = device.Manufacturer ?? cached.Metadata.Manufacturer,
+            Brand = device.Brand ?? cached.Metadata.Brand,
+            Model = device.Model ?? cached.Metadata.Model,
+            Product = device.Product ?? cached.Metadata.Product,
+            DeviceName = device.DeviceName ?? cached.Metadata.DeviceName,
+            Board = device.Board ?? cached.Metadata.Board,
+            AndroidVersion = device.AndroidVersion ?? cached.Metadata.AndroidVersion,
+            ApiLevel = device.ApiLevel ?? cached.Metadata.ApiLevel,
+            SecurityPatch = device.SecurityPatch ?? cached.Metadata.SecurityPatch,
+            BuildId = device.BuildId ?? cached.Metadata.BuildId,
+            BuildType = device.BuildType ?? cached.Metadata.BuildType,
+            BuildFingerprint = device.BuildFingerprint ?? cached.Metadata.BuildFingerprint,
             SeenAtUtc = device.SeenAtUtc
         };
     }
+
+    private sealed record EnrichedMetadata(
+        AdbDeviceMetadata Metadata,
+        string? ReportedName,
+        string? MacAddress);
 
     private static async Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken)
     {

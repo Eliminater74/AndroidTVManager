@@ -27,7 +27,7 @@ public sealed class DatabaseTests
             });
 
             var saved = await repository.GetSavedDevicesAsync();
-            database.SchemaVersion.Should().Be(3);
+            database.SchemaVersion.Should().Be(4);
             await database.InitializeAsync();
             await using var connection = await database.OpenAsync();
             await using var command = connection.CreateCommand();

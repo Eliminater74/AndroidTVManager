@@ -224,10 +224,10 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
         {
             command.CommandText = """
                 INSERT INTO Devices (FriendlyName, Manufacturer, Brand, Model, Product, DeviceName,
-                    Board, AndroidVersion, ApiLevel, SecurityPatch, BuildId, BuildType, BuildFingerprint,
+                    ReportedName, MacAddress, Board, AndroidVersion, ApiLevel, SecurityPatch, BuildId, BuildType, BuildFingerprint,
                     LastKnownSerial, LastKnownEndpoint,
                     FirstSeenUtc, LastSeenUtc, CreatedUtc, UpdatedUtc)
-                VALUES ($name, $manufacturer, $brand, $model, $product, $deviceName,
+                VALUES ($name, $manufacturer, $brand, $model, $product, $deviceName, $reportedName, $macAddress,
                     $board, $android, $api, $securityPatch, $buildId, $buildType, $fingerprint,
                     $serial, $endpoint, $now, $now, $now, $now);
                 SELECT last_insert_rowid();
@@ -239,6 +239,8 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
             command.CommandText = """
                 UPDATE Devices SET Manufacturer = $manufacturer, Brand = $brand, Model = $model,
                     Product = $product, DeviceName = $deviceName, Board = $board,
+                    ReportedName = COALESCE($reportedName, ReportedName),
+                    MacAddress = COALESCE($macAddress, MacAddress),
                     SecurityPatch = $securityPatch, BuildId = $buildId, BuildType = $buildType,
                     LastKnownEndpoint = $endpoint,
                     AndroidVersion = COALESCE($android, AndroidVersion),
@@ -256,6 +258,8 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
         command.Parameters.AddWithValue("$model", (object?)device.Model ?? DBNull.Value);
         command.Parameters.AddWithValue("$product", (object?)device.Product ?? DBNull.Value);
         command.Parameters.AddWithValue("$deviceName", (object?)device.DeviceName ?? DBNull.Value);
+        command.Parameters.AddWithValue("$reportedName", (object?)device.ReportedName ?? DBNull.Value);
+        command.Parameters.AddWithValue("$macAddress", (object?)device.MacAddress ?? DBNull.Value);
         command.Parameters.AddWithValue("$board", (object?)device.Board ?? DBNull.Value);
         command.Parameters.AddWithValue("$serial", device.Serial);
         command.Parameters.AddWithValue("$endpoint", (object?)device.Endpoint ?? DBNull.Value);
