@@ -1,4 +1,5 @@
 using AndroidTVManager.Core.Abstractions;
+using AndroidTVManager.Infrastructure.Adb;
 using AndroidTVManager.Infrastructure.Database;
 using AndroidTVManager.Infrastructure.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,9 @@ public static class DependencyInjection
     public static IServiceCollection AddAndroidTVManagerInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<ILocalAppDataPaths, LocalAppDataPaths>();
+        services.AddSingleton<IAdbToolsManager, AdbToolsManager>();
+        services.AddSingleton<IAdbProcessRunner, AdbProcessRunner>();
+        services.AddSingleton<IAdbDeviceTracker, AdbDeviceTracker>();
         services.AddSingleton<SqliteDatabase>();
         services.AddSingleton<IDeviceRepository, DeviceRepository>();
         services.AddSingleton<IConnectionHistoryRepository, ConnectionHistoryRepository>();
