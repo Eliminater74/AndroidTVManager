@@ -129,6 +129,37 @@ public sealed class DatabaseTests
         }
     }
 
+    [Fact]
+    public async Task Saving_same_serial_updates_the_saved_device_instead_of_duplicating_it()
+    {
+        var paths = new TestPaths();
+        try
+        {
+            var repository = new DeviceRepository(new SqliteDatabase(paths));
+            await repository.UpsertAsync(new SavedDevice
+            {
+                FriendlyName = "First name",
+                LastKnownSerial = "tv-same",
+                LastKnownEndpoint = "tv-same"
+            });
+            await repository.UpsertAsync(new SavedDevice
+            {
+                FriendlyName = "Renamed TV",
+                LastKnownSerial = "tv-same",
+                LastKnownEndpoint = "tv-same"
+            });
+
+            var saved = await repository.GetSavedDevicesAsync();
+            saved.Should().ContainSingle();
+            saved[0].FriendlyName.Should().Be("Renamed TV");
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            Directory.Delete(paths.Root, recursive: true);
+        }
+    }
+
     private sealed class TestPaths : ILocalAppDataPaths
     {
         public TestPaths()
