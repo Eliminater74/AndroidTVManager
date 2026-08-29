@@ -10,6 +10,7 @@
         WindowStartupLocation="CenterScreen"
         AllowDrop="True"
         Drop="Window_Drop"
+        Loaded="Window_Loaded"
         >
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DashboardPageViewModel}">

@@ -9,16 +9,25 @@ namespace AndroidTVManager.App;
 public partial class MainWindow : Window
 {
     private readonly TrayService _trayService;
+    private readonly ISettingsStore _settings;
 
-    public MainWindow(MainWindowViewModel viewModel, IAdbProcessRunner runner)
+    public MainWindow(MainWindowViewModel viewModel, IAdbProcessRunner runner, ISettingsStore settings)
     {
         InitializeComponent();
         ViewModel = viewModel;
         DataContext = ViewModel;
-        _trayService = new TrayService(this, runner);
+        _settings = settings;
+        _trayService = new TrayService(this, runner, settings);
     }
 
     public MainWindowViewModel ViewModel { get; }
+
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (bool.TryParse(await _settings.GetAsync("general.startMinimized"), out var startMinimized)
+            && startMinimized)
+            WindowState = WindowState.Minimized;
+    }
 
     private void Window_Drop(object sender, System.Windows.DragEventArgs e)
     {
