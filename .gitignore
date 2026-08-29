@@ -1,0 +1,67 @@
+# Build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+publish/
+artifacts/
+
+# Visual Studio / Rider / IDE state
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.DotSettings.user
+
+# Tests and coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Runtime data and diagnostics
+/TEMP/
+*.log
+*.dmp
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+/runtime/
+/local/
+/screenshots/
+/recordings/
+/package-staging/
+
+# Platform tools and downloaded packages
+platform-tools-latest-windows.zip
+platform-tools/
+PlatformTools/
+*.apk
+*.aab
+
+# Generated packaging
+*.nupkg
+*.snupkg
+*.msix
+*.appx
+*.exe
+*.msi
+
+# Local configuration and temporary files
+.env
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Cursor generated state/worktrees (keep project rules and source-controlled config)
+.cursor/worktrees/
+.cursor/state/
