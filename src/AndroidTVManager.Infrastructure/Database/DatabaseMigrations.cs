@@ -4,7 +4,7 @@ namespace AndroidTVManager.Infrastructure.Database;
 
 public static class DatabaseMigrations
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     public static async Task ApplyAsync(SqliteConnection connection, CancellationToken cancellationToken = default)
     {
@@ -160,6 +160,86 @@ public static class DatabaseMigrations
                 """, cancellationToken);
             await ExecuteAsync(connection, transaction,
                 "INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (2, $utc);",
+                cancellationToken, ("$utc", DateTimeOffset.UtcNow.ToString("O")));
+        }
+        if (version < 3)
+        {
+            await ExecuteAsync(connection, transaction, """
+                CREATE TABLE IF NOT EXISTS PackageInventoryCaptures (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    DeviceId INTEGER NOT NULL REFERENCES Devices(Id) ON DELETE CASCADE,
+                    Serial TEXT NOT NULL,
+                    CapturedUtc TEXT NOT NULL,
+                    AndroidVersion TEXT,
+                    BuildFingerprint TEXT,
+                    ErrorMessage TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS PackageInventoryItems (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    CaptureId INTEGER NOT NULL REFERENCES PackageInventoryCaptures(Id) ON DELETE CASCADE,
+                    PackageName TEXT NOT NULL,
+                    Label TEXT,
+                    VersionName TEXT,
+                    VersionCode INTEGER,
+                    UserId TEXT,
+                    IsSystem INTEGER NOT NULL,
+                    IsUpdatedSystem INTEGER NOT NULL,
+                    IsEnabled INTEGER NOT NULL,
+                    IsInstalled INTEGER NOT NULL,
+                    IsUninstalledForUser INTEGER NOT NULL,
+                    ApkPathsJson TEXT NOT NULL,
+                    IsActiveLauncher INTEGER NOT NULL,
+                    IsDefaultInputMethod INTEGER NOT NULL,
+                    IsEnabledAccessibilityService INTEGER NOT NULL,
+                    IsDeviceOwner INTEGER NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS IX_PackageInventoryItems_CaptureId
+                    ON PackageInventoryItems(CaptureId);
+
+                CREATE TABLE IF NOT EXISTS PackageKnowledgeOverrides (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    DeviceId INTEGER REFERENCES Devices(Id) ON DELETE CASCADE,
+                    PackageName TEXT NOT NULL,
+                    Override TEXT NOT NULL,
+                    Note TEXT,
+                    UpdatedUtc TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS PackageNotes (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    DeviceId INTEGER REFERENCES Devices(Id) ON DELETE CASCADE,
+                    PackageName TEXT NOT NULL,
+                    Note TEXT NOT NULL,
+                    UpdatedUtc TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS DebloatPlans (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    DeviceId INTEGER NOT NULL REFERENCES Devices(Id) ON DELETE CASCADE,
+                    Serial TEXT NOT NULL,
+                    BuildFingerprint TEXT,
+                    CreatedUtc TEXT NOT NULL,
+                    Preset TEXT NOT NULL,
+                    BaselineSnapshotHash TEXT,
+                    Status TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS DebloatPlanItems (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PlanId INTEGER NOT NULL REFERENCES DebloatPlans(Id) ON DELETE CASCADE,
+                    PackageName TEXT NOT NULL,
+                    Risk TEXT NOT NULL,
+                    Confidence TEXT NOT NULL,
+                    RequestedAction TEXT NOT NULL,
+                    Selected INTEGER NOT NULL,
+                    SelectionBlockReason TEXT,
+                    PreviousState TEXT,
+                    ResultingState TEXT
+                );
+                """, cancellationToken);
+            await ExecuteAsync(connection, transaction,
+                "INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (3, $utc);",
                 cancellationToken, ("$utc", DateTimeOffset.UtcNow.ToString("O")));
         }
 

@@ -27,7 +27,7 @@ public sealed class DatabaseTests
             });
 
             var saved = await repository.GetSavedDevicesAsync();
-            database.SchemaVersion.Should().Be(2);
+            database.SchemaVersion.Should().Be(3);
             id.Should().BeGreaterThan(0);
             saved.Should().ContainSingle(device => device.FriendlyName == "Living Room TV");
         }
