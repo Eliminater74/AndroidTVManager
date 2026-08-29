@@ -15,6 +15,8 @@ public static class DependencyInjection
     {
         services.AddSingleton<ILocalAppDataPaths, LocalAppDataPaths>();
         services.AddSingleton<IAppLogger, FileLogger>();
+        services.AddSingleton<IDeviceSnapshotRepository, DeviceSnapshotRepository>();
+        services.AddSingleton<IDeviceInspectionService, DeviceInspectionService>();
         services.AddSingleton<IScriptExecutionStore, ScriptExecutionStore>();
         services.AddSingleton<IScriptExecutionService, ScriptExecutionService>();
         services.AddSingleton<IAdbToolsManager, AdbToolsManager>();

@@ -90,6 +90,80 @@ public interface IDeviceToolsService
     Task<string> CaptureScreenshotAsync(string serial, string friendlyName, CancellationToken cancellationToken = default);
 }
 
+public sealed record DeviceInspectionProgress(
+    string Category,
+    int CompletedCategories,
+    int TotalCategories,
+    InspectionSectionState State);
+
+public interface IDeviceInspectionService
+{
+    Task<DeviceInspectionResult> InspectAsync(
+        string serial,
+        IProgress<DeviceInspectionProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDeviceSnapshotRepository
+{
+    Task<long> SaveAsync(DeviceInspectionResult inspection, CancellationToken cancellationToken = default);
+    Task<DeviceInspectionResult?> GetLatestAsync(string serial, CancellationToken cancellationToken = default);
+}
+
+public sealed record PackageInventoryResult(
+    string Serial,
+    DateTimeOffset CapturedUtc,
+    IReadOnlyList<PackageInventoryEntry> Packages,
+    IReadOnlyList<InspectionCommandEvidence> Evidence,
+    string? ErrorMessage = null);
+
+public interface IPackageInventoryService
+{
+    Task<PackageInventoryResult> GetInventoryAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+
+    Task<PackageInventoryEntry?> GetDetailsAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDebloatPlanner
+{
+    Task<DebloatPlan> CreatePlanAsync(
+        string serial,
+        DebloatPreset preset,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDebloatExecutionService
+{
+    Task<ScriptExecutionResult> ExecuteAsync(
+        DebloatPlan plan,
+        CancellationToken cancellationToken = default);
+
+    Task<ScriptUndoResult> RestoreAsync(
+        long executionId,
+        string serial,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed record AdbCommandHistoryItem(
+    string Serial,
+    string Command,
+    AdbCommandResult Result,
+    DateTimeOffset ExecutedUtc);
+
+public interface IAdbCommandService
+{
+    Task<AdbCommandResult> ExecuteAsync(
+        string serial,
+        IReadOnlyList<string> arguments,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IScriptExecutionService
 {
     Task<ScriptExecutionResult> ExecuteAsync(
