@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows;
+using AndroidTVManager.Core.Abstractions;
 using Forms = System.Windows.Forms;
 
 namespace AndroidTVManager.App.Tray;
@@ -7,13 +8,15 @@ namespace AndroidTVManager.App.Tray;
 public sealed class TrayService : IDisposable
 {
     private readonly MainWindow _window;
+    private readonly IAdbProcessRunner _runner;
     private readonly Forms.NotifyIcon _notifyIcon;
     private bool _allowClose;
     private bool _disposed;
 
-    public TrayService(MainWindow window)
+    public TrayService(MainWindow window, IAdbProcessRunner runner)
     {
         _window = window;
+        _runner = runner;
         _notifyIcon = new Forms.NotifyIcon
         {
             Icon = SystemIcons.Application,
@@ -52,7 +55,7 @@ public sealed class TrayService : IDisposable
             new Font(menu.Font, System.Drawing.FontStyle.Bold);
         menu.Items.Add("Open", null, (_, _) => Restore());
         menu.Items.Add("Settings", null, (_, _) => RestoreTo("Settings"));
-        menu.Items.Add("Restart ADB Server", null, (_, _) => { });
+        menu.Items.Add("Restart ADB Server", null, (_, _) => _ = RestartAdbServerAsync());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitApplication());
         return menu;
@@ -87,5 +90,11 @@ public sealed class TrayService : IDisposable
         Restore();
         if (_window.ViewModel.Navigation.FirstOrDefault(item => item.Label == page) is { } item)
             _window.ViewModel.SelectedNavigation = item;
+    }
+
+    private async Task RestartAdbServerAsync()
+    {
+        await _runner.RunAsync(["kill-server"], TimeSpan.FromSeconds(20));
+        await _runner.RunAsync(["start-server"], TimeSpan.FromSeconds(20));
     }
 }

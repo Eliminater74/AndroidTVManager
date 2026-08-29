@@ -2,6 +2,7 @@
 using System.IO;
 using AndroidTVManager.App.Tray;
 using AndroidTVManager.App.ViewModels;
+using AndroidTVManager.Core.Abstractions;
 
 namespace AndroidTVManager.App;
 
@@ -9,11 +10,11 @@ public partial class MainWindow : Window
 {
     private readonly TrayService _trayService;
 
-    public MainWindow(MainWindowViewModel viewModel)
+    public MainWindow(MainWindowViewModel viewModel, IAdbProcessRunner runner)
     {
         InitializeComponent();
         ViewModel = viewModel;
-        _trayService = new TrayService(this);
+        _trayService = new TrayService(this, runner);
     }
 
     public MainWindowViewModel ViewModel { get; }
