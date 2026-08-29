@@ -85,7 +85,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         var security = AdbInspectionParsers.ParseSecurity(props, Output(results, "selinux"), Output(results, "root"));
         var boot = AdbInspectionParsers.ParseBoot(props);
         var verifier = AdbInspectionParsers.ParseDeveloperVerification(
-            Output(results, "verifier"), Output(results, "verifier-details"), props);
+            Output(results, "verifier"), Output(results, "verifier-details"), props,
+            results["verifier"].FirstOrDefault()?.State == InspectionSectionState.Completed);
         var gsi = AdbInspectionParsers.ParseGsi(props, Output(results, "gsi-tool"),
             Output(results, "packages").Contains("dynamic.system", StringComparison.OrdinalIgnoreCase));
 

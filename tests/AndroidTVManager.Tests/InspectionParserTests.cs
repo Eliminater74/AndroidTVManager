@@ -145,6 +145,19 @@ public sealed class InspectionParserTests
     }
 
     [Fact]
+    public void Unavailable_verifier_query_remains_unknown()
+    {
+        var result = AdbInspectionParsers.ParseDeveloperVerification(
+            string.Empty,
+            null,
+            new Dictionary<string, string>(),
+            packageQuerySucceeded: false);
+
+        result.VerifierPresent.Should().BeNull();
+        result.Evidence.Should().Contain(item => item.ObservedValue == null);
+    }
+
+    [Fact]
     public void Parses_storage_rows_and_skips_headers()
     {
         var storage = AdbInspectionParsers.ParseStorage("""

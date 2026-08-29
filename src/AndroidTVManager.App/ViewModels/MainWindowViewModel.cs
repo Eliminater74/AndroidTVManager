@@ -33,6 +33,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDebloatPlanner _debloatPlanner;
     private readonly IDebloatExecutionService _debloatExecutionService;
     private readonly IAdbCommandService _commandService;
+    private readonly IPackageInventoryService _packageInventoryService;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -56,7 +57,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDeviceInspectionService inspectionService,
         IDebloatPlanner debloatPlanner,
         IDebloatExecutionService debloatExecutionService,
-        IAdbCommandService commandService)
+        IAdbCommandService commandService,
+        IPackageInventoryService packageInventoryService)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -74,6 +76,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _debloatPlanner = debloatPlanner;
         _debloatExecutionService = debloatExecutionService;
         _commandService = commandService;
+        _packageInventoryService = packageInventoryService;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -108,7 +111,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller),
-        "Applications" => new ApplicationsPageViewModel(_packageManager, _confirmation),
+        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _confirmation),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
@@ -674,17 +677,21 @@ public sealed partial class InstallApkPageViewModel : PageViewModel
 public sealed partial class ApplicationsPageViewModel : PageViewModel
 {
     private readonly IPackageManager _packageManager;
+    private readonly IPackageInventoryService _inventoryService;
     private readonly IConfirmationService _confirmation;
 
     public ApplicationsPageViewModel(
         IPackageManager packageManager,
+        IPackageInventoryService inventoryService,
         IConfirmationService confirmation) : base("Applications")
     {
         _packageManager = packageManager;
+        _inventoryService = inventoryService;
         _confirmation = confirmation;
     }
 
-    public ObservableCollection<PackageInfo> Packages { get; } = [];
+    public ObservableCollection<PackageInventoryEntry> Packages { get; } = [];
+    public IReadOnlyList<string> Filters { get; } = ["All", "User", "System", "Enabled", "Disabled", "Uninstalled"];
 
     [ObservableProperty]
     private string _targetSerial = string.Empty;
@@ -693,16 +700,30 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     private string _search = string.Empty;
 
     [ObservableProperty]
-    private PackageInfo? _selectedPackage;
+    private PackageInventoryEntry? _selectedPackage;
 
     [ObservableProperty]
     private string _message = "Enter a target serial and refresh packages.";
 
-    public IEnumerable<PackageInfo> FilteredPackages =>
+    [ObservableProperty]
+    private string _selectedFilter = "All";
+
+    public IEnumerable<PackageInventoryEntry> FilteredPackages =>
         Packages.Where(package => string.IsNullOrWhiteSpace(Search)
-            || package.PackageName.Contains(Search, StringComparison.OrdinalIgnoreCase));
+            || package.PackageName.Contains(Search, StringComparison.OrdinalIgnoreCase)
+            || (package.Label?.Contains(Search, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(package => SelectedFilter switch
+        {
+            "User" => !package.IsSystem,
+            "System" => package.IsSystem,
+            "Enabled" => package.IsEnabled,
+            "Disabled" => !package.IsEnabled,
+            "Uninstalled" => package.IsUninstalledForUser,
+            _ => true
+        });
 
     partial void OnSearchChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
+    partial void OnSelectedFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -713,12 +734,14 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
             return;
         }
         Message = "Loading package list…";
-        var packages = await _packageManager.ListAsync(TargetSerial.Trim());
+        var inventory = await _inventoryService.GetInventoryAsync(TargetSerial.Trim());
         Packages.Clear();
-        foreach (var package in packages)
+        foreach (var package in inventory.Packages)
             Packages.Add(package);
         OnPropertyChanged(nameof(FilteredPackages));
-        Message = $"{Packages.Count} packages loaded.";
+        Message = inventory.ErrorMessage is null
+            ? $"{Packages.Count} packages loaded."
+            : $"{Packages.Count} packages loaded with warnings: {inventory.ErrorMessage}";
     }
 
     [RelayCommand]

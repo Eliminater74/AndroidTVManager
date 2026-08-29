@@ -78,6 +78,31 @@ public sealed class ScriptExecutionStore : IScriptExecutionStore
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task UpdateActionAsync(
+        long actionId,
+        bool success,
+        bool reversible,
+        string? resultingState,
+        string? output,
+        CancellationToken cancellationToken = default)
+    {
+        await _database.InitializeAsync(cancellationToken);
+        await using var connection = await _database.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE ScriptExecutionActions
+            SET Success = $success, Reversible = $reversible,
+                ResultingState = $resulting, Output = $output
+            WHERE Id = $id;
+            """;
+        command.Parameters.AddWithValue("$success", success ? 1 : 0);
+        command.Parameters.AddWithValue("$reversible", reversible ? 1 : 0);
+        command.Parameters.AddWithValue("$resulting", (object?)resultingState ?? DBNull.Value);
+        command.Parameters.AddWithValue("$output", (object?)output ?? DBNull.Value);
+        command.Parameters.AddWithValue("$id", actionId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     public async Task<ScriptExecutionRecord?> GetAsync(long executionId, CancellationToken cancellationToken = default)
     {
         await _database.InitializeAsync(cancellationToken);

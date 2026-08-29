@@ -21,9 +21,13 @@ public sealed class PackageClassifier : IPackageClassifier
     {
         var reasons = new List<string>();
         var isRoleProtected = package.IsActiveLauncher
+            || string.Equals(package.PackageName, context.ActiveLauncherPackage, StringComparison.OrdinalIgnoreCase)
             || package.IsDefaultInputMethod
+            || context.DefaultInputMethodPackages.Contains(package.PackageName)
             || package.IsEnabledAccessibilityService
-            || package.IsDeviceOwner;
+            || context.EnabledAccessibilityPackages.Contains(package.PackageName)
+            || package.IsDeviceOwner
+            || context.DeviceOwnerPackages.Contains(package.PackageName);
         if (isRoleProtected)
         {
             reasons.Add("This package currently holds an active device role.");

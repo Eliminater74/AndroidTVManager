@@ -37,6 +37,14 @@ public interface IScriptExecutionStore
         ScriptActionRecord action,
         CancellationToken cancellationToken = default);
 
+    Task UpdateActionAsync(
+        long actionId,
+        bool success,
+        bool reversible,
+        string? resultingState,
+        string? output,
+        CancellationToken cancellationToken = default);
+
     Task CompleteAsync(long executionId, string status, CancellationToken cancellationToken = default);
     Task<ScriptExecutionRecord?> GetAsync(long executionId, CancellationToken cancellationToken = default);
     Task SetUndoStatusAsync(long actionId, string status, CancellationToken cancellationToken = default);

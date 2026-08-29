@@ -606,12 +606,15 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
                         <TextBox Grid.Column="1" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
                                  Margin="0,0,10,0"/>
-                        <Button Grid.Column="2" Content="Refresh packages" Style="{StaticResource AccentButtonStyle}"
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding Filters}" SelectedItem="{Binding SelectedFilter}"
+                                  Width="125" Margin="0,0,10,0"/>
+                        <Button Grid.Column="3" Content="Refresh packages" Style="{StaticResource AccentButtonStyle}"
                                 Command="{Binding RefreshCommand}"/>
                     </Grid>
                 </StackPanel>

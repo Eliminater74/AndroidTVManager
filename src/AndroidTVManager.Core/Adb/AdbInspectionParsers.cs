@@ -177,14 +177,17 @@ public static class AdbInspectionParsers
     public static DeveloperVerificationInfo ParseDeveloperVerification(
         string packageList,
         string? packageDetails,
-        IReadOnlyDictionary<string, string> properties)
+        IReadOnlyDictionary<string, string> properties,
+        bool packageQuerySucceeded = true)
     {
-        var present = packageList.Contains("com.google.android.verifier", StringComparison.OrdinalIgnoreCase);
+        bool? present = packageQuerySucceeded
+            ? packageList.Contains("com.google.android.verifier", StringComparison.OrdinalIgnoreCase)
+            : null;
         var version = MatchValue(packageDetails ?? string.Empty, @"versionName[=:]\s*(?<value>[^\r\n ]+)");
         var evidence = new List<CapabilityEvidence>
         {
             Evidence("pm list packages com.google.android.verifier",
-                present ? "com.google.android.verifier" : "not detected",
+                present is true ? "com.google.android.verifier" : present is false ? "not detected" : null,
                 "Developer Verifier package presence.")
         };
         var legacyInstallProperty = Get(properties, "ro.install.unknown_sources");

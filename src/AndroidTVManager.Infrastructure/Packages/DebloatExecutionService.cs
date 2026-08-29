@@ -8,13 +8,16 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
 {
     private readonly IPackageInventoryService _inventory;
     private readonly IScriptExecutionService _scripts;
+    private readonly IDeviceInspectionService _inspection;
 
     public DebloatExecutionService(
         IPackageInventoryService inventory,
-        IScriptExecutionService scripts)
+        IScriptExecutionService scripts,
+        IDeviceInspectionService inspection)
     {
         _inventory = inventory;
         _scripts = scripts;
+        _inspection = inspection;
     }
 
     public async Task<ScriptExecutionResult> ExecuteAsync(
@@ -22,6 +25,12 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
         CancellationToken cancellationToken = default)
     {
         var current = await _inventory.GetInventoryAsync(plan.Serial, cancellationToken);
+        var live = await _inspection.InspectAsync(plan.Serial, cancellationToken: cancellationToken);
+        var liveFingerprint = live.Overview.Value?.BuildFingerprint;
+        if (plan.BuildFingerprint is not null
+            && liveFingerprint is not null
+            && !string.Equals(plan.BuildFingerprint, liveFingerprint, StringComparison.Ordinal))
+            throw new InvalidOperationException("The device build changed since the debloat plan was created. Refresh and review the plan.");
         var expected = plan.Items.Where(item => item.Selected)
             .Select(item => new { item.Package.PackageName, item.Package.IsEnabled, item.Package.IsInstalled })
             .OrderBy(item => item.PackageName, StringComparer.OrdinalIgnoreCase)
