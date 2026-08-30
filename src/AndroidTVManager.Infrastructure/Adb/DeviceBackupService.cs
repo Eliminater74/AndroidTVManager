@@ -193,6 +193,16 @@ public sealed class DeviceBackupService : IDeviceBackupService
             return new BackupRestoreResult(serial, 0, 0, ["No APK backup folder was found."]);
 
         var messages = new List<string>();
+        var verification = await VerifyBackupAsync(root, apkRoot, cancellationToken);
+        if (!verification.IsValid)
+        {
+            messages.AddRange(verification.Messages);
+            return new BackupRestoreResult(
+                serial,
+                0,
+                Directory.EnumerateDirectories(apkRoot).Count(),
+                messages);
+        }
         var restored = 0;
         var failed = 0;
         foreach (var packageDirectory in Directory.EnumerateDirectories(apkRoot).OrderBy(path => path))
@@ -221,6 +231,42 @@ public sealed class DeviceBackupService : IDeviceBackupService
             }
         }
         return new BackupRestoreResult(serial, restored, failed, messages);
+    }
+
+    private static async Task<(bool IsValid, IReadOnlyList<string> Messages)> VerifyBackupAsync(
+        string root,
+        string apkRoot,
+        CancellationToken cancellationToken)
+    {
+        var checksumPath = Path.Combine(root, "SHA256SUMS.txt");
+        if (!File.Exists(checksumPath))
+            return (false, ["Backup verification failed: SHA256SUMS.txt is missing."]);
+        var expected = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in await File.ReadAllLinesAsync(checksumPath, cancellationToken))
+        {
+            var fields = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+            if (fields.Length >= 2)
+                expected[fields[1].TrimStart('*').Replace('/', Path.DirectorySeparatorChar)] = fields[0];
+        }
+
+        var errors = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(apkRoot, "*.apk", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var relative = Path.GetRelativePath(root, file).Replace('\\', '/');
+            if (!expected.TryGetValue(relative.Replace('/', Path.DirectorySeparatorChar), out var expectedHash)
+                && !expected.TryGetValue(relative, out expectedHash))
+            {
+                errors.Add($"{relative}: no checksum entry.");
+                continue;
+            }
+            var actualHash = await HashFileAsync(file, cancellationToken);
+            if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+                errors.Add($"{relative}: checksum mismatch.");
+        }
+        return errors.Count == 0
+            ? (true, [])
+            : (false, errors.Prepend("Backup verification failed; no APKs were installed.").ToArray());
     }
 
     private async Task<BackupArtifact> WriteInspectionAsync(

@@ -35,6 +35,8 @@ The installer is currently unsigned. Windows SmartScreen may display a warning u
 - Complete package inventory including system, user, enabled, disabled, and uninstalled-for-user views
 - Optional cached package icons
 - Device-aware debloat previews with Safe, Caution, High Risk, Critical, and Unknown classifications
+- Deployment Profiles for repeatable APK/split installation and package setup after a reset
+- ADB Remote, live device Logcat, redacted Diagnostic Bundles, codec/network inspection, and shared-storage tools
 - Disable-first debloat actions, captured serials, drift checks, transaction history, and restore
 - Backup / Restore page for device reports, configuration snapshots, APKs and split APKs, shared storage, legacy app-data attempts, and APK restore
 - APK installation through ADB with accurate package-manager errors

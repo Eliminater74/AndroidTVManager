@@ -4,7 +4,7 @@ namespace AndroidTVManager.Infrastructure.Database;
 
 public static class DatabaseMigrations
 {
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
 
     public static async Task ApplyAsync(SqliteConnection connection, CancellationToken cancellationToken = default)
     {
@@ -250,6 +250,91 @@ public static class DatabaseMigrations
                 """, cancellationToken);
             await ExecuteAsync(connection, transaction,
                 "INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (4, $utc);",
+                cancellationToken, ("$utc", DateTimeOffset.UtcNow.ToString("O")));
+        }
+        if (version < 5)
+        {
+            await ExecuteAsync(connection, transaction, """
+                CREATE TABLE IF NOT EXISTS DeploymentProfiles (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Name TEXT NOT NULL,
+                    Description TEXT,
+                    Manufacturer TEXT,
+                    Brand TEXT,
+                    Model TEXT,
+                    Product TEXT,
+                    Device TEXT,
+                    MinimumApiLevel INTEGER,
+                    MaximumApiLevel INTEGER,
+                    Abi TEXT,
+                    RequiresAndroidTv INTEGER,
+                    RequiresGoogleTv INTEGER,
+                    BuildFingerprintPrefix TEXT,
+                    FormatVersion INTEGER NOT NULL DEFAULT 1,
+                    CreatedUtc TEXT NOT NULL,
+                    UpdatedUtc TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS DeploymentProfileSteps (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ProfileId INTEGER NOT NULL REFERENCES DeploymentProfiles(Id) ON DELETE CASCADE,
+                    SortOrder INTEGER NOT NULL,
+                    Kind INTEGER NOT NULL,
+                    DisplayName TEXT NOT NULL,
+                    RelativePath TEXT,
+                    PackageName TEXT,
+                    ScriptJson TEXT,
+                    AssetIdsJson TEXT,
+                    IsOptional INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE INDEX IF NOT EXISTS IX_DeploymentProfileSteps_ProfileId
+                    ON DeploymentProfileSteps(ProfileId, SortOrder);
+
+                CREATE TABLE IF NOT EXISTS DeploymentProfileAssets (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ProfileId INTEGER NOT NULL REFERENCES DeploymentProfiles(Id) ON DELETE CASCADE,
+                    Sha256 TEXT NOT NULL,
+                    OriginalFileName TEXT NOT NULL,
+                    StoredFileName TEXT NOT NULL,
+                    SizeBytes INTEGER NOT NULL,
+                    ContainerKind INTEGER NOT NULL,
+                    PackageName TEXT,
+                    VersionName TEXT,
+                    VersionCode INTEGER,
+                    ImportedUtc TEXT NOT NULL,
+                    UNIQUE(ProfileId, Sha256)
+                );
+                CREATE INDEX IF NOT EXISTS IX_DeploymentProfileAssets_ProfileId
+                    ON DeploymentProfileAssets(ProfileId);
+
+                CREATE TABLE IF NOT EXISTS DeploymentExecutions (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ProfileId INTEGER NOT NULL REFERENCES DeploymentProfiles(Id) ON DELETE CASCADE,
+                    ProfileName TEXT NOT NULL,
+                    Serial TEXT NOT NULL,
+                    StartedUtc TEXT NOT NULL,
+                    CompletedUtc TEXT,
+                    Status TEXT NOT NULL,
+                    ErrorMessage TEXT
+                );
+                CREATE INDEX IF NOT EXISTS IX_DeploymentExecutions_ProfileId
+                    ON DeploymentExecutions(ProfileId, StartedUtc);
+
+                CREATE TABLE IF NOT EXISTS DeploymentExecutionSteps (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ExecutionId INTEGER NOT NULL REFERENCES DeploymentExecutions(Id) ON DELETE CASCADE,
+                    ProfileStepId INTEGER NOT NULL,
+                    SortOrder INTEGER NOT NULL,
+                    Status TEXT NOT NULL,
+                    Output TEXT,
+                    Reversible INTEGER NOT NULL DEFAULT 0,
+                    UndoStatus TEXT
+                );
+                CREATE INDEX IF NOT EXISTS IX_DeploymentExecutionSteps_ExecutionId
+                    ON DeploymentExecutionSteps(ExecutionId, SortOrder);
+                """, cancellationToken);
+            await ExecuteAsync(connection, transaction,
+                "INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (5, $utc);",
                 cancellationToken, ("$utc", DateTimeOffset.UtcNow.ToString("O")));
         }
 

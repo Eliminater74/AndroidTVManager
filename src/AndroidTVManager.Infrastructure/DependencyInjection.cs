@@ -1,6 +1,7 @@
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Infrastructure.Adb;
 using AndroidTVManager.Infrastructure.Database;
+using AndroidTVManager.Infrastructure.Diagnostics;
 using AndroidTVManager.Infrastructure.Logging;
 using AndroidTVManager.Infrastructure.Scripts;
 using AndroidTVManager.Core.Scripts;
@@ -28,6 +29,9 @@ public static class DependencyInjection
         services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IConfigurationExplorerService, ConfigurationExplorerService>();
         services.AddSingleton<IConfigurationSnapshotStore, ConfigurationSnapshotStore>();
+        services.AddSingleton<IDeploymentProfileRepository, DeploymentProfileRepository>();
+        services.AddSingleton<IDeploymentProfileStorage, DeploymentProfileStorage>();
+        services.AddSingleton<IDeploymentProfileService, DeploymentProfileService>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
         services.AddSingleton<IPackageIconService, PackageIconService>();
         services.AddSingleton<IPackageInventoryRepository, PackageInventoryRepository>();
@@ -42,9 +46,20 @@ public static class DependencyInjection
         services.AddSingleton<IScriptExecutionService, ScriptExecutionService>();
         services.AddSingleton<IAdbToolsManager, AdbToolsManager>();
         services.AddSingleton<IAdbProcessRunner, AdbProcessRunner>();
+        services.AddSingleton<IAdbStreamingProcessRunner, AdbStreamingProcessRunner>();
+        services.AddSingleton<IDeviceLogcatService, DeviceLogcatService>();
+        services.AddSingleton<IDiagnosticBundleService, DiagnosticBundleService>();
+        services.AddSingleton<IDeviceComparisonService, DeviceComparisonService>();
+        services.AddSingleton<IScreenRecordingService, ScreenRecordingService>();
         services.AddSingleton<IAdbDeviceTracker, AdbDeviceTracker>();
         services.AddSingleton<IAdbConnectionService, AdbConnectionService>();
         services.AddSingleton<IApkInstaller, ApkInstaller>();
+        services.AddSingleton<IBulkApkService, BulkApkService>();
+        services.AddSingleton<IRemoteControlService, RemoteControlService>();
+        services.AddSingleton<INetworkDiagnosticsService, NetworkDiagnosticsService>();
+        services.AddSingleton<ICodecInspectionService, CodecInspectionService>();
+        services.AddSingleton<IBootInspectionService, BootInspectionService>();
+        services.AddSingleton<IDeviceFileService, DeviceFileService>();
         services.AddSingleton<IPackageManager, PackageManager>();
         services.AddSingleton<IDeviceToolsService, DeviceToolsService>();
         services.AddSingleton<SqliteDatabase>();

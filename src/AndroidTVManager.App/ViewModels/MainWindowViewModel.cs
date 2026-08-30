@@ -47,6 +47,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
     private readonly ILogViewerService _logViewer;
     private readonly IUpdateService _updates;
+    private readonly IDeploymentProfileRepository _deploymentProfiles;
+    private readonly IDeploymentProfileStorage _profileStorage;
+    private readonly IDeploymentProfileService _profileDeployment;
+    private readonly IBulkApkService _bulkApkService;
+    private readonly IRemoteControlService _remoteControl;
+    private readonly IDeviceLogcatService _deviceLogcat;
+    private readonly IDiagnosticBundleService _diagnosticBundles;
+    private readonly INetworkDiagnosticsService _networkDiagnostics;
+    private readonly ICodecInspectionService _codecInspection;
+    private readonly IBootInspectionService _bootInspection;
+    private readonly IDeviceFileService _deviceFiles;
+    private readonly IDeviceComparisonService _deviceComparison;
+    private readonly IScreenRecordingService _screenRecording;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -82,7 +95,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDeveloperVerificationPolicyProvider verificationPolicy,
         IPackagePreferenceRepository packagePreferences,
         ILogViewerService logViewer,
-        IUpdateService updates)
+        IUpdateService updates,
+        IDeploymentProfileRepository deploymentProfiles,
+        IDeploymentProfileStorage profileStorage,
+        IDeploymentProfileService profileDeployment,
+        IBulkApkService bulkApkService,
+        IRemoteControlService remoteControl,
+        IDeviceLogcatService deviceLogcat,
+        IDiagnosticBundleService diagnosticBundles,
+        INetworkDiagnosticsService networkDiagnostics,
+        ICodecInspectionService codecInspection,
+        IBootInspectionService bootInspection,
+        IDeviceFileService deviceFiles,
+        IDeviceComparisonService deviceComparison,
+        IScreenRecordingService screenRecording)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -112,6 +138,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _verificationPolicy = verificationPolicy;
         _logViewer = logViewer;
         _updates = updates;
+        _deploymentProfiles = deploymentProfiles;
+        _profileStorage = profileStorage;
+        _profileDeployment = profileDeployment;
+        _bulkApkService = bulkApkService;
+        _remoteControl = remoteControl;
+        _deviceLogcat = deviceLogcat;
+        _diagnosticBundles = diagnosticBundles;
+        _networkDiagnostics = networkDiagnostics;
+        _codecInspection = codecInspection;
+        _bootInspection = bootInspection;
+        _deviceFiles = deviceFiles;
+        _deviceComparison = deviceComparison;
+        _screenRecording = screenRecording;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -122,6 +161,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Configuration Explorer", "≋"),
             new("Connections", "↔"),
             new("Install APK", "＋"),
+            new("Deployment Profiles", "▤"),
+            new("Remote", "⌨"),
+            new("Device Logcat", "≡"),
+            new("Diagnostic Bundles", "▥"),
+            new("Advanced Diagnostics", "◫"),
+            new("Device Comparison", "⇄"),
             new("Applications", "▦"),
             new("Debloat", "◌"),
             new("Backup / Restore", "⇩"),
@@ -165,6 +210,41 @@ public sealed partial class MainWindowViewModel : ObservableObject
             device => SelectedDevice = device),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
+        "Deployment Profiles" => new DeploymentProfilesPageViewModel(
+            _deploymentProfiles,
+            _profileStorage,
+            _profileDeployment,
+            _bulkApkService,
+            _confirmation,
+            Devices,
+            device => SelectedDevice = device),
+        "Remote" => new RemotePageViewModel(
+            _remoteControl,
+            _packageManager,
+            _settingsStore,
+            Devices,
+            device => SelectedDevice = device),
+        "Device Logcat" => new DeviceLogcatPageViewModel(
+            _deviceLogcat,
+            Devices,
+            device => SelectedDevice = device),
+        "Diagnostic Bundles" => new DiagnosticBundlePageViewModel(
+            _diagnosticBundles,
+            Devices,
+            device => SelectedDevice = device),
+        "Advanced Diagnostics" => new AdvancedDiagnosticsPageViewModel(
+            _networkDiagnostics,
+            _codecInspection,
+            _bootInspection,
+            _deviceFiles,
+            _screenRecording,
+            _confirmation,
+            Devices,
+            device => SelectedDevice = device),
+        "Device Comparison" => new DeviceComparisonPageViewModel(
+            _deviceComparison,
+            Devices,
+            device => SelectedDevice = device),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packageIconService,
             _packagePreferences, _confirmation, _settingsStore, Devices),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
@@ -221,6 +301,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
             if (_pages.TryGetValue("ADB Transport Doctor", out var transportPage)
                 && transportPage is TransportDoctorPageViewModel transport)
                 transport.SelectedDevice = value;
+            if (_pages.TryGetValue("Deployment Profiles", out var profilesPage)
+                && profilesPage is DeploymentProfilesPageViewModel profiles)
+                profiles.SelectedDevice = value;
+            if (_pages.TryGetValue("Remote", out var remotePage)
+                && remotePage is RemotePageViewModel remote)
+                remote.SelectedDevice = value;
+            if (_pages.TryGetValue("Device Logcat", out var logcatPage)
+                && logcatPage is DeviceLogcatPageViewModel logcat)
+                logcat.SelectedDevice = value;
+            if (_pages.TryGetValue("Diagnostic Bundles", out var bundlePage)
+                && bundlePage is DiagnosticBundlePageViewModel bundle)
+                bundle.SelectedDevice = value;
+            if (_pages.TryGetValue("Advanced Diagnostics", out var advancedPage)
+                && advancedPage is AdvancedDiagnosticsPageViewModel advanced)
+                advanced.SelectedDevice = value;
+            if (_pages.TryGetValue("Device Comparison", out var comparisonPage)
+                && comparisonPage is DeviceComparisonPageViewModel comparison
+                && comparison.LeftDevice is null)
+                comparison.LeftDevice = value;
         }
     }
 
@@ -240,6 +339,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Configuration Explorer" => "Read-only runtime properties, partition files, and configuration provenance.",
         "Connections" => "Connect over network or pair Android Wireless Debugging.",
         "Install APK" => "Install applications on the selected device.",
+        "Deployment Profiles" => "Repeatable APK, package, and script setup plans for connected devices.",
+        "Remote" => "Send safe typed ADB remote-control commands to the selected device.",
+        "Device Logcat" => "Stream, filter, save, and capture real device logcat output.",
+        "Diagnostic Bundles" => "Collect redacted or full device evidence into a shareable ZIP.",
+        "Advanced Diagnostics" => "Inspect network, media codecs, boot state, and shared device storage.",
+        "Device Comparison" => "Compare two connected devices across build, package, display, security, and capability evidence.",
         "Applications" => "Inspect and manage installed packages.",
         "Debloat" => "Preview conservative, device-specific package changes.",
         "Backup / Restore" => "Create safe device backups and restore APKs.",

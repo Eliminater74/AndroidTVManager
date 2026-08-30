@@ -12,21 +12,22 @@
 - APK installation and complete package management
 - Conservative debloat planning with transaction restore
 - System tray, settings, logs, themes, scripts, screenshots, and device tools
+- Deployment Profiles with copied APK assets, split-package installs, compatibility warnings, and execution history
+- Typed ADB Remote with repeat controls and persisted favorite apps
+- Streaming device Logcat with bounded filtering, save, and problem capture
+- Redacted Diagnostic Bundles with inspection, display, transport, network, codec, and checksum evidence
+- Advanced diagnostics for boot/Fastboot state, shared storage, network, codecs, device comparison, and screen recording
 - Release automation, self-contained Windows packaging, and installer distribution
 
 ## Next
 
-- Backup/Restore follow-up: user-selected file backup with progress, cancellation, and checksums
-- Export/import of app settings and saved-device definitions
-- Device comparison across inspection/configuration snapshots
+- Profile export/import (`.atmprofile`) with optional APK assets
 - More hardware fixtures and physical-device validation
 
 ## Later
 
 - scrcpy integration
 - QR Wireless Debugging pairing
-- richer file manager
-- separate logcat viewer
 - automatic LAN discovery
 - multi-device operations with explicit per-device confirmation
 - script packs and a safe import library

@@ -1,0 +1,57 @@
+<UserControl x:Class="AndroidTVManager.App.Views.Pages.DeviceLogcatPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="34,26,34,28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="DEVICE LOGCAT" Style="{StaticResource SectionLabelStyle}"/>
+        <TextBlock Grid.Row="1" Text="Live Android system log" FontSize="34"
+                   FontWeight="SemiBold" Margin="0,5,0,18"/>
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                          DisplayMemberPath="FriendlyName" Width="260"/>
+                <TextBox Text="{Binding PackageFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Package or PID filter" Width="160" Margin="8,0,0,0"/>
+                <TextBox Text="{Binding TagFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Tag filter" Width="130" Margin="8,0,0,0"/>
+                <ComboBox ItemsSource="{Binding SeverityOptions}" SelectedItem="{Binding SeverityFilter}"
+                          Width="100" Margin="8,0,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Start" Command="{Binding StartCommand}"
+                        Style="{StaticResource AccentButtonStyle}" Margin="8,0,0,0"/>
+                <Button Content="Stop" Command="{Binding StopCommand}"
+                        Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                <Button Content="Clear device" Command="{Binding ClearDeviceLogCommand}"
+                        Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                <Button Content="Save" Command="{Binding SaveCommand}"
+                        Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                <Button Content="Capture around problem" Command="{Binding CaptureAroundProblemCommand}"
+                        Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+            </StackPanel>
+            <Border Grid.Row="1" Grid.ColumnSpan="2" Background="{StaticResource ControlBackgroundBrush}"
+                    BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
+                    CornerRadius="8" Margin="0,12,0,0">
+                <ListBox ItemsSource="{Binding FilteredEntries}" FontFamily="Consolas" FontSize="12"
+                         BorderThickness="0" Background="Transparent"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+            </Border>
+        </Grid>
+        <TextBlock Grid.Row="3" Text="{Binding Status}" Foreground="{StaticResource TextSecondary}"
+                   TextWrapping="Wrap" Margin="0,12,0,0"/>
+    </Grid>
+</UserControl>

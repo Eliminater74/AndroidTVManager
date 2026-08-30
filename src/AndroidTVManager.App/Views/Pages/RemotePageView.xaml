@@ -1,0 +1,112 @@
+<UserControl x:Class="AndroidTVManager.App.Views.Pages.RemotePageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:AndroidTVManager.Core.Models;assembly=AndroidTVManager.Core">
+    <Grid Margin="34,26,34,28">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="ADB REMOTE" Style="{StaticResource SectionLabelStyle}"/>
+                <TextBlock Text="Control the selected Android TV device" FontSize="34"
+                           FontWeight="SemiBold" Margin="0,5,0,0"/>
+                <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                          DisplayMemberPath="FriendlyName" Margin="0,20,0,0" Width="300"
+                          HorizontalAlignment="Left"/>
+
+                <Grid Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="320"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                            BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,16,0">
+                        <StackPanel>
+                            <TextBlock Text="D-PAD" Style="{StaticResource SectionLabelStyle}"/>
+                            <Grid Width="220" Height="190" HorizontalAlignment="Center" Margin="0,12,0,0">
+                                <Button Content="▲" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Up}"
+                                        Width="64" Height="52" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                <Button Content="◀" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Left}"
+                                        Width="64" Height="52" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                <Button Content="OK" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Select}"
+                                        Width="64" Height="52" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Style="{StaticResource AccentButtonStyle}"/>
+                                <Button Content="▶" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Right}"
+                                        Width="64" Height="52" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                <Button Content="▼" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Down}"
+                                        Width="64" Height="52" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button Content="Back" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Back}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="3"/>
+                                <Button Content="Home" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Home}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="3"/>
+                                <Button Content="Menu" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Menu}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="3"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Background="{StaticResource PanelBackground}"
+                            BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
+                            CornerRadius="12" Padding="18">
+                        <StackPanel>
+                            <TextBlock Text="MEDIA AND VOLUME" Style="{StaticResource SectionLabelStyle}"/>
+                            <WrapPanel Margin="0,12,0,0">
+                                <Button Content="Play / Pause" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.PlayPause}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,6"/>
+                                <Button Content="Rewind" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Rewind}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,6"/>
+                                <Button Content="Fast Forward" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.FastForward}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,6"/>
+                                <Button Content="Volume +" Command="{Binding RepeatCommand}" CommandParameter="{x:Static models:RemoteKey.VolumeUp}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,6"/>
+                                <Button Content="Volume -" Command="{Binding RepeatCommand}" CommandParameter="{x:Static models:RemoteKey.VolumeDown}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,6"/>
+                                <Button Content="Mute" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Mute}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,6"/>
+                                <Button Content="Power" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Power}"
+                                        Style="{StaticResource DangerButtonStyle}" Margin="0,0,6,6"/>
+                            </WrapPanel>
+                            <TextBlock Text="NUMBER KEYS" Style="{StaticResource SectionLabelStyle}" Margin="0,16,0,0"/>
+                            <UniformGrid Columns="5" Width="280" HorizontalAlignment="Left" Margin="0,8,0,0">
+                                <Button Content="1" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit1}"/>
+                                <Button Content="2" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit2}"/>
+                                <Button Content="3" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit3}"/>
+                                <Button Content="4" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit4}"/>
+                                <Button Content="5" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit5}"/>
+                                <Button Content="6" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit6}"/>
+                                <Button Content="7" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit7}"/>
+                                <Button Content="8" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit8}"/>
+                                <Button Content="9" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit9}"/>
+                                <Button Content="0" Command="{Binding PressCommand}" CommandParameter="{x:Static models:RemoteKey.Digit0}"/>
+                            </UniformGrid>
+                            <TextBlock Text="TEXT ENTRY" Style="{StaticResource SectionLabelStyle}" Margin="0,16,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="260"/>
+                                <Button Content="Send text" Command="{Binding TypeTextCommand}"
+                                        Style="{StaticResource AccentButtonStyle}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="FAVORITE APPS" Style="{StaticResource SectionLabelStyle}" Margin="0,18,0,0"/>
+                            <ItemsControl ItemsSource="{Binding Favorites}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Label}" Command="{Binding DataContext.LaunchFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource GhostButtonStyle}" Margin="0,2"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBox Text="{Binding FavoriteLabel, UpdateSourceTrigger=PropertyChanged}" Width="120"
+                                         ToolTip="Button label"/>
+                                <TextBox Text="{Binding FavoritePackage, UpdateSourceTrigger=PropertyChanged}" Width="190"
+                                         ToolTip="com.example.package" Margin="6,0,0,0"/>
+                                <Button Content="Add" Command="{Binding AddFavoriteCommand}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}"
+                           TextWrapping="Wrap" Margin="0,16,0,0"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

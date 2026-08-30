@@ -22,6 +22,7 @@ public sealed class AdbToolsManager : IAdbToolsManager
     }
 
     public string? AdbPath => File.Exists(GetAdbPath()) ? GetAdbPath() : null;
+    public string? FastbootPath => File.Exists(GetFastbootPath()) ? GetFastbootPath() : null;
     public string? InstalledVersion => _installedVersion;
     public DateTimeOffset? LastUpdateCheckUtc { get; private set; }
     public bool IsReady => AdbPath is not null;
@@ -149,4 +150,5 @@ public sealed class AdbToolsManager : IAdbToolsManager
     }
 
     private string GetAdbPath() => Path.Combine(_paths.ToolsPath, "adb.exe");
+    private string GetFastbootPath() => Path.Combine(_paths.ToolsPath, "fastboot.exe");
 }

@@ -3,6 +3,8 @@ using AndroidTVManager.Core.Models;
 using AndroidTVManager.Infrastructure.Adb;
 using AndroidTVManager.Tests.TestDoubles;
 using FluentAssertions;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace AndroidTVManager.Tests;
 
@@ -43,6 +45,13 @@ public sealed class BackupServiceTests
             await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.single", "base.apk"), "apk");
             await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.split", "base.apk"), "apk");
             await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.split", "config.tv.apk"), "apk");
+            var apkHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("apk"))).ToLowerInvariant();
+            await File.WriteAllLinesAsync(Path.Combine(root, "SHA256SUMS.txt"),
+            [
+                $"{apkHash}  apks/com.example.single/base.apk",
+                $"{apkHash}  apks/com.example.split/base.apk",
+                $"{apkHash}  apks/com.example.split/config.tv.apk"
+            ]);
 
             var runner = new FakeAdbProcessRunner();
             var service = CreateService(runner);

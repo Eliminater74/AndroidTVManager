@@ -17,9 +17,119 @@ public interface IAdbProcessRunner
         CancellationToken cancellationToken = default);
 }
 
+public interface IAdbStreamingProcessRunner
+{
+    Task<IAdbProcessSession> StartForDeviceAsync(
+        string serial,
+        IReadOnlyList<string> arguments,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IAdbProcessSession : IAsyncDisposable
+{
+    IAsyncEnumerable<string> ReadStandardOutputAsync(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<string> ReadStandardErrorAsync(CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> Completion { get; }
+    Task StopAsync();
+}
+
+public interface IDeviceLogcatService
+{
+    Task<IAdbProcessSession> StartAsync(
+        string serial,
+        LogcatOptions options,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> ClearAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDiagnosticBundleService
+{
+    Task<DiagnosticBundleResult> CreateAsync(
+        DiagnosticBundleRequest request,
+        CancellationToken cancellationToken = default);
+}
+
+public interface INetworkDiagnosticsService
+{
+    Task<NetworkDiagnosticResult> InspectAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+}
+
+public interface ICodecInspectionService
+{
+    Task<CodecInspectionResult> InspectAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IBootInspectionService
+{
+    Task<BootInspectionResult> InspectAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> RebootAsync(
+        string serial,
+        string mode = "",
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDeviceFileService
+{
+    Task<IReadOnlyList<DeviceFileEntry>> ListAsync(
+        string serial,
+        string remoteDirectory,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> PushAsync(
+        string serial,
+        string localPath,
+        string remotePath,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> PullAsync(
+        string serial,
+        string remotePath,
+        string localPath,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> CreateDirectoryAsync(
+        string serial,
+        string remotePath,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> DeleteAsync(
+        string serial,
+        string remotePath,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDeviceComparisonService
+{
+    Task<DeviceComparisonResult> CompareAsync(
+        AndroidDevice left,
+        AndroidDevice right,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IScreenRecordingService
+{
+    bool IsRecording { get; }
+    ScreenRecordingInfo? Current { get; }
+    Task<ScreenRecordingInfo> StartAsync(
+        string serial,
+        TimeSpan duration,
+        CancellationToken cancellationToken = default);
+    Task<string?> StopAsync(CancellationToken cancellationToken = default);
+}
+
 public interface IAdbToolsManager
 {
     string? AdbPath { get; }
+    string? FastbootPath { get; }
     string? InstalledVersion { get; }
     DateTimeOffset? LastUpdateCheckUtc { get; }
     bool IsReady { get; }
@@ -68,6 +178,77 @@ public interface IApkInstaller
         string apkPath,
         bool reinstall = true,
         CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> InstallMultipleAsync(
+        string serial,
+        IReadOnlyList<string> apkPaths,
+        bool reinstall = true,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IBulkApkService
+{
+    Task<BulkInstallPackageSet> PrepareAsync(
+        IReadOnlyList<string> paths,
+        CancellationToken cancellationToken = default);
+
+    Task<BulkInstallResult> InstallAsync(
+        string serial,
+        BulkInstallPackageSet packageSet,
+        IProgress<BulkInstallProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    void Cleanup(BulkInstallPackageSet packageSet);
+}
+
+public interface IDeploymentProfileRepository
+{
+    Task<IReadOnlyList<DeploymentProfile>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<DeploymentProfile?> GetAsync(long id, CancellationToken cancellationToken = default);
+    Task<long> UpsertAsync(DeploymentProfile profile, CancellationToken cancellationToken = default);
+    Task DeleteAsync(long id, CancellationToken cancellationToken = default);
+    Task<long> StartExecutionAsync(
+        long profileId,
+        string profileName,
+        string serial,
+        CancellationToken cancellationToken = default);
+    Task CompleteExecutionAsync(
+        long executionId,
+        string status,
+        string? errorMessage = null,
+        CancellationToken cancellationToken = default);
+    Task RecordExecutionStepAsync(
+        long executionId,
+        DeploymentExecutionStep step,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DeploymentProfileExecution>> GetExecutionsAsync(
+        long profileId,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDeploymentProfileStorage
+{
+    string GetProfileDirectory(long profileId);
+    string GetPackagePath(long profileId, string relativePath);
+    Task<string> CopyPackageAsync(
+        long profileId,
+        string sourcePath,
+        string? storedFileName = null,
+        CancellationToken cancellationToken = default);
+    Task DeleteProfileFilesAsync(long profileId, CancellationToken cancellationToken = default);
+}
+
+public interface IDeploymentProfileService
+{
+    DeploymentCompatibility CheckCompatibility(
+        DeploymentProfile profile,
+        AndroidDevice device);
+
+    Task<DeploymentProfileDeploymentResult> DeployAsync(
+        DeploymentProfile profile,
+        AndroidDevice device,
+        IProgress<DeploymentProfileStepResult>? progress = null,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IPackageManager
@@ -96,6 +277,19 @@ public interface IDeviceToolsService
     Task<AdbCommandResult> RebootAsync(string serial, string mode = "", CancellationToken cancellationToken = default);
     Task<AdbCommandResult> ShellAsync(string serial, string command, CancellationToken cancellationToken = default);
     Task<string> CaptureScreenshotAsync(string serial, string friendlyName, CancellationToken cancellationToken = default);
+}
+
+public interface IRemoteControlService
+{
+    Task<AdbCommandResult> PressAsync(
+        string serial,
+        RemoteKey key,
+        CancellationToken cancellationToken = default);
+
+    Task<AdbCommandResult> TypeTextAsync(
+        string serial,
+        string text,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record DeviceInspectionProgress(

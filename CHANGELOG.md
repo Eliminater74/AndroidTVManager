@@ -4,6 +4,20 @@ All notable changes to Android TV Manager are documented here.
 
 The project follows a beta-first release cycle while real Android TV hardware validation is completed.
 
+## Unreleased
+
+### Added
+
+- Deployment Profiles with managed APK assets, SHA-256 identity, split-package deployment, compatibility checks, preview/confirmation, and step-level execution history.
+- A typed ADB Remote with D-pad, media, volume, text entry, repeat actions, and favorite app launch buttons.
+- A streaming device Logcat page with bounded buffering, filters, save, clear, and problem capture.
+- Redacted/full Diagnostic Bundle generation with display, transport, network, codec, package, configuration, logcat, manifest, and checksum evidence.
+- Advanced diagnostics for boot/Fastboot state, shared storage, network, codecs, device comparison, and screen recording.
+
+### Changed
+
+- APK backup restoration now verifies SHA-256 checksums before installing.
+
 ## [1.0.0-B2] - 2026-08-30
 
 ### Added

@@ -43,4 +43,21 @@ public sealed class ApkInstaller : IApkInstaller
         var arguments = reinstall ? new[] { "install", "-r", apkPath } : new[] { "install", apkPath };
         return _runner.RunForDeviceAsync(serial, arguments, TimeSpan.FromMinutes(10), cancellationToken);
     }
+
+    public Task<AdbCommandResult> InstallMultipleAsync(
+        string serial,
+        IReadOnlyList<string> apkPaths,
+        bool reinstall = true,
+        CancellationToken cancellationToken = default)
+    {
+        var arguments = new List<string> { "install-multiple" };
+        if (reinstall)
+            arguments.Add("-r");
+        arguments.AddRange(apkPaths);
+        return _runner.RunForDeviceAsync(
+            serial,
+            arguments,
+            TimeSpan.FromMinutes(10),
+            cancellationToken);
+    }
 }

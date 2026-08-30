@@ -1,0 +1,116 @@
+<UserControl x:Class="AndroidTVManager.App.Views.Pages.AdvancedDiagnosticsPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="34,26,34,28">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="ADVANCED DIAGNOSTICS" Style="{StaticResource SectionLabelStyle}"/>
+                <TextBlock Text="Network, media, boot, and shared-storage tools" FontSize="34"
+                           FontWeight="SemiBold" Margin="0,5,0,0"/>
+                <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                          DisplayMemberPath="FriendlyName" Width="320" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+
+                <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0">
+                    <StackPanel>
+                        <TextBlock Text="NETWORK DOCTOR" Style="{StaticResource SectionLabelStyle}"/>
+                        <Button Content="Inspect network" Command="{Binding InspectNetworkCommand}"
+                                Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                        <TextBox Text="{Binding NetworkOutput}" IsReadOnly="True" AcceptsReturn="True"
+                                 TextWrapping="Wrap" FontFamily="Consolas" MinHeight="130" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0">
+                    <StackPanel>
+                        <TextBlock Text="CODEC / MEDIA INSPECTOR" Style="{StaticResource SectionLabelStyle}"/>
+                        <Button Content="Inspect codecs" Command="{Binding InspectCodecsCommand}"
+                                Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                        <TextBox Text="{Binding CodecOutput}" IsReadOnly="True" AcceptsReturn="True"
+                                 TextWrapping="Wrap" FontFamily="Consolas" MinHeight="100" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0">
+                    <StackPanel>
+                        <TextBlock Text="BOOT / USB INSPECTOR" Style="{StaticResource SectionLabelStyle}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Inspect state" Command="{Binding InspectBootCommand}"
+                                    Style="{StaticResource GhostButtonStyle}"/>
+                            <Button Content="System" Command="{Binding RebootCommand}" CommandParameter=""
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                            <Button Content="Recovery" Command="{Binding RebootCommand}" CommandParameter="recovery"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                            <Button Content="Bootloader" Command="{Binding RebootCommand}" CommandParameter="bootloader"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                            <Button Content="Fastbootd" Command="{Binding RebootCommand}" CommandParameter="fastboot"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBox Text="{Binding BootOutput}" IsReadOnly="True" AcceptsReturn="True"
+                                 TextWrapping="Wrap" FontFamily="Consolas" MinHeight="100" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0">
+                    <StackPanel>
+                        <TextBlock Text="SHARED STORAGE FILE MANAGER" Style="{StaticResource SectionLabelStyle}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <TextBox Text="{Binding RemoteDirectory, UpdateSourceTrigger=PropertyChanged}" Width="300"/>
+                            <Button Content="List" Command="{Binding RefreshFilesCommand}"
+                                    Style="{StaticResource AccentButtonStyle}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <ListBox ItemsSource="{Binding FileEntries}" Margin="0,10,0,0" MinHeight="120"
+                                 SelectedItem="{Binding SelectedFile}"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="4,3">
+                                        <TextBlock Text="{Binding IsDirectory}" Width="50"
+                                                   Foreground="{StaticResource CyanAccent}"/>
+                                        <TextBlock Text="{Binding Name}" Width="240"/>
+                                        <TextBlock Text="{Binding SizeBytes}" Foreground="{StaticResource TextSecondary}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Push file" Command="{Binding PushFileCommand}"
+                                    Style="{StaticResource GhostButtonStyle}"/>
+                            <Button Content="Pull selected" Command="{Binding PullFileCommand}"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                            <Button Content="Delete selected" Command="{Binding DeleteFileCommand}"
+                                    Style="{StaticResource DangerButtonStyle}" Margin="8,0,0,0"/>
+                            <TextBox Text="{Binding NewDirectoryName, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="150" ToolTip="New folder name" Margin="14,0,0,0"/>
+                            <Button Content="Create folder" Command="{Binding CreateDirectoryCommand}"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                        BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0">
+                    <StackPanel>
+                        <TextBlock Text="SCREEN RECORDING" Style="{StaticResource SectionLabelStyle}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <TextBlock Text="Maximum seconds:" VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondary}"/>
+                            <TextBox Text="{Binding RecordingDurationSeconds, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="70" Margin="8,0,8,0"/>
+                            <Button Content="Start recording" Command="{Binding StartRecordingCommand}"
+                                    Style="{StaticResource AccentButtonStyle}"/>
+                            <Button Content="Stop and pull" Command="{Binding StopRecordingCommand}"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding RecordingStatus}" Foreground="{StaticResource TextSecondary}"
+                                   TextWrapping="Wrap" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}"
+                           TextWrapping="Wrap" Margin="0,14,0,0"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
