@@ -12,7 +12,7 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ### 1.0.0-B2 — Beta 2
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta releases are marked as pre-releases while hardware validation continues.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 2 is currently published as the latest release; future beta tags may be marked as pre-releases while hardware validation continues.
 
 Available assets:
 
