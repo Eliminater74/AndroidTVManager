@@ -1,5 +1,8 @@
 ﻿using System.Windows;
 using System.IO;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using AndroidTVManager.App.Tray;
 using AndroidTVManager.App.ViewModels;
 using AndroidTVManager.Core.Abstractions;
@@ -30,6 +33,30 @@ public partial class MainWindow : Window
     {
         if (e.PropertyName == nameof(MainWindowViewModel.SelectedNavigation))
             Dispatcher.BeginInvoke(() => PageScrollViewer.ScrollToTop());
+    }
+
+    private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        var scrollViewer = FindParent<ScrollViewer>(e.OriginalSource as DependencyObject);
+        if (scrollViewer is null || scrollViewer == PageScrollViewer || scrollViewer.ScrollableHeight <= 0)
+            return;
+
+        scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta / 3.0);
+        e.Handled = true;
+    }
+
+    private static T? FindParent<T>(DependencyObject? child)
+        where T : DependencyObject
+    {
+        while (child is not null)
+        {
+            if (child is T match)
+                return match;
+            child = child is Visual visual
+                ? VisualTreeHelper.GetParent(visual)
+                : LogicalTreeHelper.GetParent(child);
+        }
+        return null;
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)

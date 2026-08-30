@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:AndroidTVManager.App.ViewModels"
         Title="Android TV Manager"
         Icon="Assets/AndroidTVManager.ico"
+        PreviewMouseWheel="Window_PreviewMouseWheel"
         Width="1240"
         Height="780"
         MinWidth="960"
@@ -685,7 +686,7 @@
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ConfigurationPageViewModel}">
-            <Grid Margin="34,26,34,28">
+            <Grid Height="600" Margin="34,26,34,28">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
