@@ -137,6 +137,28 @@ public interface IConfigurationSnapshotStore
         CancellationToken cancellationToken = default);
 }
 
+public interface IDisplayDiagnosticsService
+{
+    Task<DisplayDiagnosticSnapshot> CaptureAsync(
+        string serial,
+        string? friendlyDeviceName = null,
+        DisplayCaptureLabel label = DisplayCaptureLabel.Unlabeled,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IDisplayDiagnosticsSnapshotStore
+{
+    Task SaveAsync(
+        DisplayDiagnosticSnapshot snapshot,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DisplayDiagnosticSnapshot>> GetRecentAsync(
+        string serial,
+        int limit = 20,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IDeviceBackupService
 {
     Task<IReadOnlyList<BackupCapability>> GetCapabilitiesAsync(

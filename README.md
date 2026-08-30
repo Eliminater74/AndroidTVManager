@@ -27,6 +27,7 @@ The installer is currently unsigned. Windows SmartScreen may display a warning u
 - USB, traditional TCP/IP ADB, and Android 11+ Wireless Debugging pairing
 - Saved, renamed, favorited devices that remain visible while offline
 - Evidence-backed Device Status with hardware, Android, security, root feasibility, OEM unlock, network, Bluetooth, HDMI/CEC, DRM, services, packages, and raw evidence
+- Display / HDMI Diagnostics with Good State, Bad State, comparison, HDR/HDCP/CEC evidence, SurfaceFlinger modes, and a resolution-change watcher
 - Configuration Explorer for read-only property provenance, conflicts, snapshots, and reports
 - Complete package inventory including system, user, enabled, disabled, and uninstalled-for-user views
 - Optional cached package icons

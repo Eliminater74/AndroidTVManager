@@ -32,6 +32,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IScriptExecutionService _scriptExecutionService;
     private readonly IDeviceInspectionService _inspectionService;
     private readonly IDeviceBackupService _backupService;
+    private readonly IDisplayDiagnosticsService _displayDiagnosticsService;
+    private readonly IDisplayDiagnosticsSnapshotStore _displaySnapshots;
     private readonly IConfigurationExplorerService _configurationService;
     private readonly IConfigurationSnapshotStore _configurationSnapshots;
     private readonly IDebloatPlanner _debloatPlanner;
@@ -64,6 +66,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IScriptExecutionService scriptExecutionService,
         IDeviceInspectionService inspectionService,
         IDeviceBackupService backupService,
+        IDisplayDiagnosticsService displayDiagnosticsService,
+        IDisplayDiagnosticsSnapshotStore displaySnapshots,
         IConfigurationExplorerService configurationService,
         IConfigurationSnapshotStore configurationSnapshots,
         IDebloatPlanner debloatPlanner,
@@ -89,6 +93,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _scriptExecutionService = scriptExecutionService;
         _inspectionService = inspectionService;
         _backupService = backupService;
+        _displayDiagnosticsService = displayDiagnosticsService;
+        _displaySnapshots = displaySnapshots;
         _configurationService = configurationService;
         _configurationSnapshots = configurationSnapshots;
         _debloatPlanner = debloatPlanner;
@@ -104,6 +110,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Dashboard", "⌂"),
             new("Devices", "◉"),
             new("Device Status", "◈"),
+            new("Display Diagnostics", "▣"),
             new("Configuration Explorer", "≋"),
             new("Connections", "↔"),
             new("Install APK", "＋"),
@@ -136,6 +143,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Dashboard" => new DashboardPageViewModel(Devices, _deviceRepository),
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository, _connectionService, _confirmation),
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
+        "Display Diagnostics" => new DisplayDiagnosticsPageViewModel(
+            _displayDiagnosticsService,
+            _displaySnapshots,
+            Devices),
         "Configuration Explorer" => new ConfigurationPageViewModel(
             _configurationService,
             _configurationSnapshots,
@@ -187,6 +198,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             if (_pages.TryGetValue("Backup / Restore", out var backupPage)
                 && backupPage is BackupPageViewModel backup)
                 backup.SelectedDevice = value;
+            if (_pages.TryGetValue("Display Diagnostics", out var displayPage)
+                && displayPage is DisplayDiagnosticsPageViewModel display)
+                display.SelectedDevice = value;
         }
     }
 
@@ -201,6 +215,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Dashboard" => "Your connected Android TV and Google TV devices, at a glance.",
         "Devices" => "Connected and saved Android devices.",
         "Device Status" => "Evidence-backed hardware, Android, security, and capability information.",
+        "Display Diagnostics" => "Capture, compare, and monitor display, HDMI, HDR, HDCP, and CEC evidence.",
         "Configuration Explorer" => "Read-only runtime properties, partition files, and configuration provenance.",
         "Connections" => "Connect over network or pair Android Wireless Debugging.",
         "Install APK" => "Install applications on the selected device.",

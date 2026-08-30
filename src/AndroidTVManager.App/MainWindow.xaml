@@ -686,6 +686,162 @@
                 </StackPanel>
             </Grid>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DisplayDiagnosticsPageViewModel}">
+            <Grid Height="650" Margin="34,26,34,28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel>
+                    <StackPanel>
+                        <TextBlock Text="DISPLAY / HDMI DIAGNOSTICS" Style="{StaticResource SectionLabelStyle}"/>
+                        <TextBlock Text="Capture the good state. Prove the bad state." FontSize="34"
+                                   FontWeight="SemiBold" Margin="0,5,0,0"/>
+                        <TextBlock Text="Compare resolution, refresh rate, HDR, HDCP, CEC, audio, and SurfaceFlinger evidence."
+                                   Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Refresh" Style="{StaticResource GhostButtonStyle}"
+                                Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
+                        <Button Content="Export report" Style="{StaticResource AccentButtonStyle}"
+                                Command="{Binding ExportCommand}"/>
+                    </StackPanel>
+                </DockPanel>
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,24,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="240"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                            <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                      ItemTemplate="{StaticResource DeviceSelectorTemplate}" Margin="0,8,12,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <Button Content="Capture Good State" Style="{StaticResource AccentButtonStyle}"
+                                    Command="{Binding CaptureGoodCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Capture Bad State" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding CaptureBadCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Compare Good / Bad" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding CompareGoodBadCommand}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <Button Content="Start watcher" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding StartWatchingCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Stop" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding StopWatchingCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}"
+                                   TextWrapping="Wrap" Margin="0,0,0,12"/>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <DockPanel>
+                                    <TextBlock Text="CURRENT OUTPUT" Style="{StaticResource SectionLabelStyle}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CurrentSnapshot.Label}"
+                                               Foreground="{StaticResource CyanAccent}" FontWeight="SemiBold"/>
+                                </DockPanel>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="RESOLUTION" Style="{StaticResource SectionLabelStyle}"/>
+                                        <TextBlock Text="{Binding CurrentSnapshot.Display.CurrentResolution}"
+                                                   FontSize="20" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        <TextBlock Text="{Binding CurrentSnapshot.Display.PhysicalResolution}"
+                                                   Foreground="{StaticResource TextSecondary}" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="REFRESH / HDR" Style="{StaticResource SectionLabelStyle}"/>
+                                        <TextBlock Text="{Binding CurrentSnapshot.Display.RefreshRate}"
+                                                   FontSize="18" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        <TextBlock Text="{Binding CurrentSnapshot.Display.HdrCapabilities, StringFormat={}{0}}"
+                                                   Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="HDCP / CEC" Style="{StaticResource SectionLabelStyle}"/>
+                                        <TextBlock Text="{Binding CurrentSnapshot.HdcpState, StringFormat=HDCP: {0}}"
+                                                   FontSize="16" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        <TextBlock Text="{Binding CurrentSnapshot.Hdmi.CecState, StringFormat=CEC: {0}}"
+                                                   Foreground="{StaticResource TextSecondary}" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="{Binding CurrentSnapshot.Hdmi.ActiveInput, StringFormat=Active input: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" Margin="0,14,0,0"/>
+                                <TextBlock Text="{Binding CurrentSnapshot.Hdmi.AudioRoute, StringFormat=Audio route: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardStyle}" Margin="0,14,0,0">
+                            <StackPanel>
+                                <DockPanel>
+                                    <TextBlock Text="CHANGES" Style="{StaticResource SectionLabelStyle}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Comparison.Changes.Count, StringFormat={}{0} detected}"
+                                               Foreground="{StaticResource AmberAccent}"/>
+                                </DockPanel>
+                                <TextBlock Text="Capture Good State before reproducing a problem, then capture Bad State and compare."
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,10"/>
+                                <ItemsControl ItemsSource="{Binding Comparison.Changes}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,7">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="180"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding PreviousValue, StringFormat={}{0}  →  }"
+                                                           Foreground="{StaticResource TextSecondary}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentValue}"
+                                                           Foreground="{StaticResource AmberAccent}" Margin="130,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardStyle}" Margin="0,14,0,0">
+                            <StackPanel>
+                                <TextBlock Text="CAPTURE HISTORY" Style="{StaticResource SectionLabelStyle}"/>
+                                <ItemsControl ItemsSource="{Binding Snapshots}" Margin="0,10,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource PanelRaisedBackground}"
+                                                    CornerRadius="7" Padding="10" Margin="0,0,0,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="90"/>
+                                                        <ColumnDefinition Width="180"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Label}" Foreground="{StaticResource CyanAccent}"
+                                                               FontWeight="SemiBold"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding CapturedUtc, StringFormat={}{0:g}}"
+                                                               Foreground="{StaticResource TextSecondary}"/>
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding Display.CurrentResolution, StringFormat=Resolution: {0}}"
+                                                               Foreground="{StaticResource TextSecondary}"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ConfigurationPageViewModel}">
             <Grid Height="600" Margin="34,26,34,28">
                 <Grid.RowDefinitions>
