@@ -37,6 +37,9 @@ public sealed class BackupServiceTests
         {
             Directory.CreateDirectory(Path.Combine(root, "apks", "com.example.single"));
             Directory.CreateDirectory(Path.Combine(root, "apks", "com.example.split"));
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "backup-manifest.json"),
+                """{"serial":"tv-1","friendlyDeviceName":"Test TV","createdUtc":"2026-01-01T00:00:00Z","requestedKinds":[2],"artifacts":[],"warnings":[]}""");
             await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.single", "base.apk"), "apk");
             await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.split", "base.apk"), "apk");
             await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.split", "config.tv.apk"), "apk");

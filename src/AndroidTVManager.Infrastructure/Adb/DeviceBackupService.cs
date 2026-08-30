@@ -107,6 +107,10 @@ public sealed class DeviceBackupService : IDeviceBackupService
                     BackupKind.FullDeviceImage => UnsupportedArtifact(kind, "Requires supported root, recovery, or vendor tooling; no image command was run."),
                     _ => UnsupportedArtifact(kind, "Unsupported backup option.")
                 };
+                artifact = artifact with
+                {
+                    Sha256 = await HashFileAsync(artifact.Path, cancellationToken)
+                };
                 artifacts.Add(artifact);
                 if (artifact.State != CapabilityState.Supported)
                     warnings.Add($"{artifact.Name}: {artifact.Details ?? artifact.State.ToString()}");
@@ -123,6 +127,17 @@ public sealed class DeviceBackupService : IDeviceBackupService
                 warnings.Add($"{DisplayName(kind)} failed: {exception.Message}");
             }
         }
+
+        var checksumPath = Path.Combine(destination, "SHA256SUMS.txt");
+        await WriteChecksumsAsync(destination, checksumPath, cancellationToken);
+        artifacts.Add(new BackupArtifact(
+            BackupKind.DeviceReport,
+            "Backup checksums",
+            checksumPath,
+            new FileInfo(checksumPath).Length,
+            CapabilityState.Supported,
+            "SHA-256 checksums for files in this backup.",
+            await HashFileAsync(checksumPath, cancellationToken)));
 
         var manifest = new DeviceBackupManifest(
             device.Serial,
@@ -153,7 +168,27 @@ public sealed class DeviceBackupService : IDeviceBackupService
         string backupDirectory,
         CancellationToken cancellationToken = default)
     {
-        var apkRoot = Path.Combine(Path.GetFullPath(backupDirectory), "apks");
+        var root = Path.GetFullPath(backupDirectory);
+        if (!Directory.Exists(root))
+            return new BackupRestoreResult(serial, 0, 0, ["The selected backup folder does not exist."]);
+        var manifestPath = Path.Combine(root, "backup-manifest.json");
+        if (!File.Exists(manifestPath))
+            return new BackupRestoreResult(serial, 0, 0, ["backup-manifest.json was not found; choose a folder created by Android TV Manager."]);
+
+        try
+        {
+            await using var manifestStream = File.OpenRead(manifestPath);
+            var manifest = await JsonSerializer.DeserializeAsync<DeviceBackupManifest>(
+                manifestStream, cancellationToken: cancellationToken);
+            if (manifest is null)
+                return new BackupRestoreResult(serial, 0, 0, ["The backup manifest is invalid."]);
+        }
+        catch (JsonException)
+        {
+            return new BackupRestoreResult(serial, 0, 0, ["The backup manifest is invalid."]);
+        }
+
+        var apkRoot = Path.Combine(root, "apks");
         if (!Directory.Exists(apkRoot))
             return new BackupRestoreResult(serial, 0, 0, ["No APK backup folder was found."]);
 
@@ -307,6 +342,44 @@ public sealed class DeviceBackupService : IDeviceBackupService
 
     private static BackupArtifact UnsupportedArtifact(BackupKind kind, string details)
         => new(kind, DisplayName(kind), string.Empty, null, CapabilityState.Unsupported, details);
+
+    private static async Task<string?> HashFileAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(path))
+            return null;
+        await using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            64 * 1024,
+            useAsync: true);
+        return Convert.ToHexString(await System.Security.Cryptography.SHA256.HashDataAsync(
+            stream,
+            cancellationToken)).ToLowerInvariant();
+    }
+
+    private static async Task WriteChecksumsAsync(
+        string destination,
+        string checksumPath,
+        CancellationToken cancellationToken)
+    {
+        var lines = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(destination, "*", SearchOption.AllDirectories)
+                     .Where(file => !string.Equals(file, checksumPath, StringComparison.OrdinalIgnoreCase)
+                         && !string.Equals(file, Path.Combine(destination, "backup-manifest.json"),
+                             StringComparison.OrdinalIgnoreCase))
+                     .OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var hash = await HashFileAsync(file, cancellationToken);
+            if (hash is not null)
+                lines.Add($"{hash}  {Path.GetRelativePath(destination, file).Replace('\\', '/')}");
+        }
+        await File.WriteAllLinesAsync(checksumPath, lines, cancellationToken);
+    }
 
     private static async Task WriteJsonAsync<T>(
         string path,

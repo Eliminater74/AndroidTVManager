@@ -35,7 +35,8 @@ public sealed record BackupArtifact(
     string Path,
     long? SizeBytes,
     CapabilityState State,
-    string? Details = null);
+    string? Details = null,
+    string? Sha256 = null);
 
 public sealed record DeviceBackupManifest(
     string Serial,
