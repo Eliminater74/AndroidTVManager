@@ -711,8 +711,12 @@
                 <Border Grid.Row="1" Background="{StaticResource PanelBackground}"
                         BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
                         CornerRadius="12" Padding="16" Margin="0,24,0,0">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Top">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="250"/>
@@ -730,8 +734,10 @@
                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            MaxWidth="260"/>
                             </Grid>
-                        </StackPanel>
-                        <TabControl Margin="0,16,0,0">
+                        </Grid>
+                        <TabControl Grid.Row="1" Margin="0,16,0,0"
+                                    VerticalContentAlignment="Stretch"
+                                    HorizontalContentAlignment="Stretch">
                             <TabItem Header="Readable View">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                                               HorizontalScrollBarVisibility="Disabled">
@@ -882,7 +888,7 @@
                                 </ScrollViewer>
                             </TabItem>
                         </TabControl>
-                    </DockPanel>
+                    </Grid>
                 </Border>
             </Grid>
         </DataTemplate>

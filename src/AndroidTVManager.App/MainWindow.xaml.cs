@@ -38,11 +38,26 @@ public partial class MainWindow : Window
     private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         var scrollViewer = FindParent<ScrollViewer>(e.OriginalSource as DependencyObject);
-        if (scrollViewer is null || scrollViewer == PageScrollViewer || scrollViewer.ScrollableHeight <= 0)
+        if (scrollViewer is null || scrollViewer == PageScrollViewer)
             return;
 
-        scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta / 3.0);
-        e.Handled = true;
+        var targetOffset = Math.Clamp(
+            scrollViewer.VerticalOffset - e.Delta / 3.0,
+            0,
+            scrollViewer.ScrollableHeight);
+        if (scrollViewer.ScrollableHeight > 0 && targetOffset != scrollViewer.VerticalOffset)
+        {
+            scrollViewer.ScrollToVerticalOffset(targetOffset);
+            e.Handled = true;
+            return;
+        }
+
+        if (PageScrollViewer.ScrollableHeight > 0)
+        {
+            PageScrollViewer.ScrollToVerticalOffset(
+                Math.Clamp(PageScrollViewer.VerticalOffset - e.Delta / 3.0, 0, PageScrollViewer.ScrollableHeight));
+            e.Handled = true;
+        }
     }
 
     private static T? FindParent<T>(DependencyObject? child)
