@@ -1423,10 +1423,13 @@
                     <TextBlock Text="{Binding BetaLabel}" Foreground="{StaticResource VioletAccent}"
                                FontSize="10" FontWeight="Bold" Margin="54,6,0,0"/>
                 </StackPanel>
-                <TextBlock Text="MAIN" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondary}"
-                           Margin="24,0,0,6"/>
-                <ListBox ItemsSource="{Binding MainNavigation}" SelectedItem="{Binding SelectedNavigation}"
-                         Margin="0,5,0,0">
+                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Text="MAIN" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondary}"
+                                   Margin="24,0,0,6"/>
+                        <ListBox ItemsSource="{Binding MainNavigation}" SelectedItem="{Binding SelectedNavigation}"
+                                 Margin="0,5,0,0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -1464,11 +1467,11 @@
                             </Setter>
                         </Style>
                     </ListBox.ItemContainerStyle>
-                </ListBox>
-                <TextBlock Text="PREFERENCES" FontSize="10" FontWeight="Bold"
-                           Foreground="{StaticResource TextSecondary}" Margin="24,20,0,6"/>
-                <ListBox ItemsSource="{Binding SecondaryNavigation}" SelectedItem="{Binding SelectedNavigation}"
-                         Margin="0,0,0,0">
+                        </ListBox>
+                        <TextBlock Text="PREFERENCES" FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource TextSecondary}" Margin="24,20,0,6"/>
+                        <ListBox ItemsSource="{Binding SecondaryNavigation}" SelectedItem="{Binding SelectedNavigation}"
+                                 Margin="0,0,0,0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -1506,7 +1509,9 @@
                             </Setter>
                         </Style>
                     </ListBox.ItemContainerStyle>
-                </ListBox>
+                        </ListBox>
+                    </StackPanel>
+                </ScrollViewer>
                 <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">
                     <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
@@ -1555,7 +1560,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+            <ScrollViewer x:Name="PageScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           CanContentScroll="True">
                 <ContentControl Content="{Binding CurrentPage}"/>

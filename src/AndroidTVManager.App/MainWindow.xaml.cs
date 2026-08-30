@@ -16,11 +16,21 @@ public partial class MainWindow : Window
         InitializeComponent();
         ViewModel = viewModel;
         DataContext = ViewModel;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         _settings = settings;
         _trayService = new TrayService(this, runner, settings);
+        Closed += (_, _) => ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 
     public MainWindowViewModel ViewModel { get; }
+
+    private void OnViewModelPropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.SelectedNavigation))
+            Dispatcher.BeginInvoke(() => PageScrollViewer.ScrollToTop());
+    }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {

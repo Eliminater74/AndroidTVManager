@@ -113,8 +113,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     public ObservableCollection<NavigationEntry> Navigation { get; }
-    public IEnumerable<NavigationEntry> MainNavigation => Navigation.Take(9);
-    public IEnumerable<NavigationEntry> SecondaryNavigation => Navigation.Skip(9);
+    public IEnumerable<NavigationEntry> MainNavigation => Navigation.Take(11);
+    public IEnumerable<NavigationEntry> SecondaryNavigation => Navigation.Skip(11);
     public ObservableCollection<AndroidDevice> Devices { get; }
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
@@ -514,7 +514,8 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     private async Task LoadIconSettingAsync()
     {
         var value = await _settings.GetAsync("applications.showPackageIcons");
-        ShowPackageIcons = string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+        ShowPackageIcons = value is null
+            || string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
     }
 
     private void StartIconLoading(DebloatPlan plan)
@@ -1188,7 +1189,8 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     {
         var value = await _settings.GetAsync("applications.showPackageIcons");
         _updatingIconSetting = true;
-        ShowPackageIcons = string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+        ShowPackageIcons = value is null
+            || string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
         _updatingIconSetting = false;
         IconStatus = ShowPackageIcons
             ? "Icons enabled; they load asynchronously after scanning."
