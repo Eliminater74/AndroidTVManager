@@ -575,6 +575,8 @@
                 <StackPanel Grid.Row="2">
                     <StackPanel>
                         <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
+                        <TextBlock Text="{Binding IconStatus}" Foreground="{StaticResource TextMuted}"
+                                   FontSize="11" Margin="0,0,0,8"/>
                         <ItemsControl ItemsSource="{Binding Plan.Warnings}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -594,14 +596,26 @@
                                                     Padding="12" Margin="0,0,0,6">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="250"/>
+                                                        <ColumnDefinition Width="38"/>
+                                                        <ColumnDefinition Width="212"/>
                                                         <ColumnDefinition Width="100"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding Package.PackageName}" FontWeight="SemiBold"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Assessment.Risk}"
+                                                    <Border Width="30" Height="30" CornerRadius="6"
+                                                            Background="{StaticResource SurfaceSecondaryBrush}">
+                                                        <Grid>
+                                                            <TextBlock Text="▦" FontSize="17"
+                                                                       Foreground="{StaticResource TextSecondary}"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            <Image Source="{Binding Package.IconPath}" Width="28" Height="28"
+                                                                   Stretch="Uniform"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Package.PackageName}"
+                                                               FontWeight="SemiBold"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Assessment.Risk}"
                                                                Foreground="{StaticResource AmberAccent}"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding SelectionBlockReason}"
+                                                    <TextBlock Grid.Column="3" Text="{Binding SelectionBlockReason}"
                                                                Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
                                                 </Grid>
                                             </Border>

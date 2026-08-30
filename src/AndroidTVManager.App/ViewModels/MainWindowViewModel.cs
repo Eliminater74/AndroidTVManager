@@ -126,7 +126,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packageIconService,
             _packagePreferences, _confirmation, _settingsStore, Devices),
-        "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
+        "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
+            _packageIconService, _settingsStore, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
         "Logs" => new LogPageViewModel(_logViewer, _confirmation),
@@ -434,17 +435,27 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     private readonly IDebloatPlanner _planner;
     private readonly IDebloatExecutionService _execution;
     private readonly IConfirmationService _confirmation;
+    private readonly IPackageIconService _iconService;
+    private readonly ISettingsStore _settings;
+    private readonly Task _settingsLoaded;
+    private readonly SemaphoreSlim _iconThrottle = new(4, 4);
+    private CancellationTokenSource? _iconSource;
     private long? _lastExecutionId;
 
     public DebloatPageViewModel(
         IDebloatPlanner planner,
         IDebloatExecutionService execution,
         IConfirmationService confirmation,
+        IPackageIconService iconService,
+        ISettingsStore settings,
         ObservableCollection<AndroidDevice> devices) : base("Debloat")
     {
         _planner = planner;
         _execution = execution;
         _confirmation = confirmation;
+        _iconService = iconService;
+        _settings = settings;
+        _settingsLoaded = LoadIconSettingAsync();
         Devices = devices;
     }
 
@@ -463,10 +474,18 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     [ObservableProperty]
     private string _status = "Generate a preview before changing anything.";
 
+    [ObservableProperty]
+    private string _iconStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool _showPackageIcons;
+
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
+        _iconSource?.Cancel();
         Plan = null;
         Status = value is null ? "Select a connected device." : $"Ready to analyze {value.Serial}.";
+        IconStatus = string.Empty;
     }
 
     [RelayCommand]
@@ -480,12 +499,82 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         try
         {
             Status = $"Analyzing packages on {SelectedDevice.Serial}…";
+            await _settingsLoaded;
             Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset);
             Status = $"{Plan.Items.Count(item => item.Selected)} package(s) selected; review the plan before execution.";
+            if (ShowPackageIcons)
+                StartIconLoading(Plan);
         }
         catch (Exception exception)
         {
             Status = $"Plan failed: {exception.Message}";
+        }
+    }
+
+    private async Task LoadIconSettingAsync()
+    {
+        var value = await _settings.GetAsync("applications.showPackageIcons");
+        ShowPackageIcons = string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void StartIconLoading(DebloatPlan plan)
+    {
+        _iconSource?.Cancel();
+        _iconSource?.Dispose();
+        _iconSource = new CancellationTokenSource();
+        IconStatus = "Loading candidate icons in the background…";
+        _ = LoadPlanIconsAsync(plan, _iconSource.Token);
+    }
+
+    private async Task LoadPlanIconsAsync(DebloatPlan plan, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.WhenAll(plan.Items.Select(item =>
+                LoadPlanIconAsync(plan.Serial, item.Package, cancellationToken)));
+            if (!cancellationToken.IsCancellationRequested && ReferenceEquals(Plan, plan))
+                IconStatus = "Candidate icons loaded.";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            IconStatus = $"Some candidate icons could not be loaded: {exception.Message}";
+        }
+    }
+
+    private async Task LoadPlanIconAsync(
+        string serial,
+        PackageInventoryEntry package,
+        CancellationToken cancellationToken)
+    {
+        await _iconThrottle.WaitAsync(cancellationToken);
+        try
+        {
+            var iconPath = await _iconService.GetIconPathAsync(serial, package, cancellationToken);
+            if (iconPath is null || cancellationToken.IsCancellationRequested)
+                return;
+
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher is null)
+                return;
+            await dispatcher.InvokeAsync(() =>
+            {
+                if (Plan is null || Plan.Serial != serial)
+                    return;
+                Plan = Plan with
+                {
+                    Items = Plan.Items.Select(item =>
+                        item.Package.PackageName.Equals(package.PackageName, StringComparison.OrdinalIgnoreCase)
+                            ? item with { Package = item.Package with { IconPath = iconPath } }
+                            : item).ToArray()
+                };
+            });
+        }
+        finally
+        {
+            _iconThrottle.Release();
         }
     }
 
