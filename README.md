@@ -1,47 +1,65 @@
 # Android TV Manager
 
-Android TV Manager is a Windows-first Android TV / Google TV device management toolbox. It focuses on the useful parts of ADB with a fast native WPF interface, live device tracking, safe APK workflows, package management, saved devices, connection history, and reversible script transactions.
+[![Build](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml/badge.svg)](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/Eliminater74/AndroidTVManager?include_prereleases)](https://github.com/Eliminater74/AndroidTVManager/releases)
+[![License](https://img.shields.io/github/license/Eliminater74/AndroidTVManager)](LICENSE)
+
+Android TV Manager is a Windows-first Android TV / Google TV device management toolbox. It provides a native WPF interface for ADB device discovery, saved devices, device intelligence, package management, cautious debloating, APK installation, scripts, configuration inspection, and connection history.
 
 This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database, userdata, and compatibility features are intentionally out of scope.
 
-## Beta 2
+## Current release
 
-Current product version: **1.0.0-B2**
+### 1.0.0-B2 — Beta 2
 
-Beta 2 adds evidence-backed Device Status inspection, cached snapshots, complete package inventory, package role detection, conservative debloat previews, guarded package mutations, package preferences/notes, and the ADB Command Center.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta releases are marked as pre-releases while hardware validation continues.
+
+Available assets:
+
+- `AndroidTVManager-1.0.0-B2-Setup.exe` — self-contained Windows installer
+- `AndroidTVManager-1.0.0-B2-win-x64.zip` — portable self-contained build
+- `SHA256SUMS.txt` — SHA-256 checksums for the release assets
+
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository.
+
+## Highlights
+
+- USB, traditional TCP/IP ADB, and Android 11+ Wireless Debugging pairing
+- Saved, renamed, favorited devices that remain visible while offline
+- Evidence-backed Device Status with hardware, Android, security, root feasibility, OEM unlock, network, Bluetooth, HDMI/CEC, DRM, services, packages, and raw evidence
+- Configuration Explorer for read-only property provenance, conflicts, snapshots, and reports
+- Complete package inventory including system, user, enabled, disabled, and uninstalled-for-user views
+- Optional cached package icons
+- Device-aware debloat previews with Safe, Caution, High Risk, Critical, and Unknown classifications
+- Disable-first debloat actions, captured serials, drift checks, transaction history, and restore
+- APK installation through ADB with accurate package-manager errors
+- ADB Command Center, scripts, screenshots, live application logs, and system-tray controls
+- Dark, Pure Black, and White themes
 
 ## Requirements
 
-- Windows 10 or later
-- .NET 10 Desktop Runtime for framework-dependent runs, or use the self-contained publish output
-- An Android TV / Google TV device with ADB enabled
+- Windows 10 or later, x64
+- An Android TV / Google TV / Android device with ADB enabled
 - Network access on first run if Platform-Tools are not already installed
 
-The application downloads official Android SDK Platform-Tools from Google's Android repository infrastructure. It does not ship or retrieve a mystery third-party ADB binary.
+The application downloads official Android SDK Platform-Tools from Google's Android repository infrastructure. It does not retrieve a mystery third-party ADB binary.
 
-## Supported connection direction
+## Install and run
 
-- USB ADB devices
-- Traditional network ADB (`host:port`, normally port 5555)
-- Android 11+ Wireless Debugging pairing (`adb pair`) with a follow-up debugging endpoint
-- Live state changes through `adb track-devices -l`
+1. Download the installer from [Releases](https://github.com/Eliminater74/AndroidTVManager/releases).
+2. Run the installer and launch Android TV Manager.
+3. Connect one disposable or recoverable test device over USB, TCP/IP ADB, or Wireless Debugging.
+4. Confirm the target serial in the header before running device actions.
 
-## Build and run
+The portable ZIP can be extracted to any user-writable folder and run without installation.
 
-```powershell
-dotnet restore
-dotnet build -c Debug
-dotnet test -c Debug
-dotnet run --project src/AndroidTVManager.App
-```
+## Safety boundaries
 
-Release validation:
+Device inspection is read-only and reports `Unknown` when Android does not expose reliable evidence. It does not run `adb root`, `su -c`, unlock commands, fastboot checks, or bootloader changes during passive inspection.
 
-```powershell
-dotnet build -c Release
-dotnet test -c Release
-dotnet publish src/AndroidTVManager.App -c Release -r win-x64 --self-contained true
-```
+Debloat always creates a preview, captures one target serial, rechecks package state before execution, prefers disabling for User 0, and protects critical, active-role, and Unknown packages from automatic selection. Restore uses the transaction journal.
+
+APK installation uses ADB and is separate from Android's manual unverified-developer installation policy. Android TV Manager never bypasses verification, waiting periods, device administration, or package-manager policy.
 
 ## Runtime data
 
@@ -54,42 +72,42 @@ Mutable data is stored under `%LOCALAPPDATA%\AndroidTVManager\`:
 
 These files are runtime data and are intentionally excluded from Git.
 
-## Device intelligence and safety
+## Build from source
 
-Device Status runs standard ADB diagnostics asynchronously and records command evidence,
-including partial failures. A value shown as `Unknown` is intentionally not inferred from
-an absent package or a vendor-specific property. Expert diagnostics can inspect the source
-command for each section. The report includes merged package-state views (including packages
-uninstalled for User 0), OEM unlock option/setting/capability as separate states, current root
-evidence, conservative root guidance, network routes/DNS, Bluetooth, HDMI/CEC/audio, DRM,
-services, processes, and thermal status where the connected build exposes them.
+Install the .NET 10 SDK and, for local installer creation, [Inno Setup 6](https://jrsoftware.org/isinfo.php).
 
-ADB properties cannot prove that a bootloader can actually be unlocked. Android TV Manager
-does not run `adb root`, `su -c`, unlock commands, reboot into bootloader, or fastboot checks
-during passive inspection. A later explicit fastboot workflow may provide stronger evidence,
-but manufacturer policy and exact firmware support still determine what is possible. Root
-guidance is informational and must not be treated as an unlock procedure.
+```powershell
+dotnet restore
+dotnet build AndroidTVManager.sln -c Debug
+dotnet test AndroidTVManager.sln -c Debug
+dotnet run --project src/AndroidTVManager.App
+```
 
-Debloat always targets one captured serial, creates a preview, prefers disabling for User 0,
-and rechecks package state before execution. Critical, active-role, and Unknown packages are
-never automatically selected. Aggressive mode is still only a preview until the user confirms
-it. Restore uses the existing script transaction journal; a device build or package-state drift
-invalidates the plan.
+Create release artifacts locally:
 
-Android TV Manager installs APKs through ADB. It does not patch, disable, uninstall, spoof, or
-bypass Android Developer Verification or any waiting period used by manual on-device installs.
-Manual installation guidance is device/version dependent and must be completed in Android Settings
-when required.
+```powershell
+.\scripts\package-release.ps1 -Version 1.0.0-B2
+```
 
-## First hardware-test checklist
+The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.
 
-1. Connect one disposable or recoverable Android TV target and confirm its serial in the header.
-2. Run Device Status and verify the Overview, security, installation, package, and service sections.
-3. Refresh Applications and test only read-only package details first.
-4. Use a non-critical test package to verify Disable, Enable, Restore, and Undo behavior.
-5. Create a Simple debloat preview; do not execute Medium/Aggressive until every selected item is reviewed.
-6. Confirm the ADB installer reports the real package-manager error if a policy blocks an install.
+## Automated releases
 
-## Product direction
+Pushing a tag matching `v*` starts [the release workflow](.github/workflows/release.yml). It restores, builds, tests, publishes a self-contained `win-x64` application, compiles the Inno Setup installer, creates a portable ZIP, generates checksums, and creates a GitHub release with the assets attached.
 
-The MVP includes managed ADB bootstrap, USB and network devices, Wireless Debugging pairing, saved devices, SQLite history, APK installation, package management, tray support, script preview/execution, and best-effort undo. Later work may add scrcpy, richer file operations, logcat, device comparisons, multi-device actions, and script packs.
+The release process is documented in [docs/RELEASE.md](docs/RELEASE.md). Version metadata is maintained in the application project and the tag must match it.
+
+## Documentation
+
+- [Changelog](CHANGELOG.md)
+- [Roadmap](docs/ROADMAP.md)
+- [TODO](TODO.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Release process](docs/RELEASE.md)
+- [Contributing](CONTRIBUTING.md)
+
+## License
+
+Android TV Manager is released under the [MIT License](LICENSE).
+
+Copyright © 2026 Eliminater74.

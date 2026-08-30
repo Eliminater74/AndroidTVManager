@@ -1,31 +1,37 @@
 # Roadmap
 
-## MVP
+## Beta 2 — current
 
 - Managed official Android SDK Platform-Tools bootstrap
-- USB and live ADB device tracking
-- Traditional network ADB and Android 11+ Wireless Debugging pairing
-- Saved, renamed, favorited devices
-- SQLite devices, sessions, events, and history
-- APK installation queue
-- Installed package management
-- System tray and settings
-- Script validation and preview
-- Structured script execution with best-effort undo
-- Screenshots, shell, reboot, and device information tools
+- USB, traditional network ADB, and Android Wireless Debugging pairing
+- Saved, renamed, favorited devices with offline visibility
+- SQLite devices, sessions, events, package inventory, and inspection history
+- Device intelligence, Configuration Explorer, and capability evidence
+- APK installation and complete package management
+- Conservative debloat planning with transaction restore
+- System tray, settings, logs, themes, scripts, screenshots, and device tools
+- Release automation, self-contained Windows packaging, and installer distribution
+
+## Next
+
+- Device Backup tab with clear backup scope and capability reporting
+- APK and split-APK backup manifests with optional restore
+- User-selected file backup with progress, cancellation, and checksums
+- Export/import of app settings and saved-device definitions
+- Device comparison across inspection/configuration snapshots
+- More hardware fixtures and physical-device validation
 
 ## Later
 
 - scrcpy integration
 - QR Wireless Debugging pairing
 - richer file manager
-- logcat viewer
-- APK backup and restore
-- device comparison
-- script packs and a safe import library
+- separate logcat viewer
 - automatic LAN discovery
-- multi-device operations
-- export/import settings
-- device backups
+- multi-device operations with explicit per-device confirmation
+- script packs and a safe import library
+- code-signed installer and update notifications
+
+Android TV Manager will not promise a full device image when standard ADB cannot provide one. Root- or recovery-dependent operations will remain explicitly labeled and opt-in.
 
 An unnecessary plugin architecture is intentionally not planned for the MVP.
