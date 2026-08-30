@@ -117,7 +117,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
-        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packagePreferences, _confirmation),
+        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packagePreferences, _confirmation, Devices),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
@@ -262,6 +262,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(ConnectedDeviceCount));
             if (SelectedDevice is not null)
                 SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
+            else
+                SelectedDevice = Devices.FirstOrDefault(device => device.State == DeviceState.Device);
         });
 
         foreach (var device in enrichedDevices)
@@ -333,6 +335,12 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
         _policyProvider = policyProvider;
         Devices = devices;
         InstallationPolicy = policyProvider.GetPolicy(null).ManualInstallGuidance;
+        Devices.CollectionChanged += (_, _) =>
+        {
+            if ((SelectedDevice is null || !Devices.Any(device => device.Serial == SelectedDevice.Serial))
+                && Devices.FirstOrDefault(device => device.State == DeviceState.Device) is { } device)
+                SelectedDevice = device;
+        };
     }
 
     public ObservableCollection<AndroidDevice> Devices { get; }
@@ -361,7 +369,9 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
             Inspection = null;
         ProgressText = value is null
             ? "Select a connected device and inspect it."
-            : $"Ready to inspect {value.Serial}.";
+            : $"Scanning {value.FriendlyName ?? value.Model ?? value.Serial} automatically…";
+        if (value is not null)
+            _ = InspectAsync();
     }
 
     [RelayCommand]
@@ -936,14 +946,29 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         IPackageManager packageManager,
         IPackageInventoryService inventoryService,
         IPackagePreferenceRepository preferences,
-        IConfirmationService confirmation) : base("Applications")
+        IConfirmationService confirmation,
+        ObservableCollection<AndroidDevice> devices) : base("Applications")
     {
         _packageManager = packageManager;
         _inventoryService = inventoryService;
         _preferences = preferences;
         _confirmation = confirmation;
+        Devices = devices;
+        Devices.CollectionChanged += (_, _) =>
+        {
+            var targetChanged = false;
+            if ((string.IsNullOrWhiteSpace(TargetSerial) || !Devices.Any(device => device.Serial == TargetSerial))
+                && Devices.FirstOrDefault(device => device.State == DeviceState.Device) is { } device)
+            {
+                TargetSerial = device.Serial;
+                targetChanged = true;
+            }
+            if (targetChanged || (!string.IsNullOrWhiteSpace(TargetSerial) && Packages.Count == 0))
+                _ = RefreshAsync();
+        };
     }
 
+    public ObservableCollection<AndroidDevice> Devices { get; }
     public ObservableCollection<PackageInventoryEntry> Packages { get; } = [];
     public IReadOnlyList<string> Filters { get; } = ["All", "User", "System", "Enabled", "Disabled", "Uninstalled"];
 
@@ -957,7 +982,7 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     private PackageInventoryEntry? _selectedPackage;
 
     [ObservableProperty]
-    private string _message = "Enter a target serial and refresh packages.";
+    private string _message = "Waiting for a connected device…";
 
     [ObservableProperty]
     private string _selectedFilter = "All";

@@ -117,8 +117,11 @@ public static class AdbInspectionParsers
             [
                 Evidence("getenforce", selinux, "SELinux enforcement state."),
                 Evidence("getprop ro.boot.verifiedbootstate", Get(properties, "ro.boot.verifiedbootstate"), "Verified Boot state."),
-                Evidence("which su", rootCheck, "Root binary availability.")
-            ]);
+                Evidence("which su", rootCheck, "Root binary availability."),
+                Evidence("getprop OEM unlock", Get(properties, "sys.oem_unlock_allowed")
+                    ?? Get(properties, "ro.oem_unlock_supported"), "OEM unlock evidence.")
+            ],
+            Get(properties, "sys.oem_unlock_allowed") ?? Get(properties, "ro.oem_unlock_supported"));
     }
 
     public static BootInfo ParseBoot(IReadOnlyDictionary<string, string> properties)

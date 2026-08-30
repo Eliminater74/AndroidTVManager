@@ -77,7 +77,8 @@ public sealed class InspectionParserTests
             new Dictionary<string, string>
             {
                 ["ro.debuggable"] = "0",
-                ["ro.boot.verifiedbootstate"] = "green"
+                ["ro.boot.verifiedbootstate"] = "green",
+                ["sys.oem_unlock_allowed"] = "0"
             },
             "Enforcing",
             "sh: su: not found");
@@ -86,6 +87,7 @@ public sealed class InspectionParserTests
         security.RootAvailability.Should().Be(CapabilityState.Unsupported);
         security.AdbRoot.Should().Be(CapabilityState.Unsupported);
         security.VerifiedBootState.Should().Be("green");
+        security.OemUnlockAllowed.Should().Be("0");
     }
 
     [Fact]

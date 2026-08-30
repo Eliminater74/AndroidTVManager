@@ -126,7 +126,13 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Section("Packages", results, ["packages"],
                 new PackageSummaryInfo(
                     CountLines(Output(results, "packages"), "package:"),
-                    "All packages visible to the connected ADB user.")),
+                    "All packages visible to the connected ADB user.",
+                    Output(results, "packages").Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                        .Where(line => line.StartsWith("package:", StringComparison.OrdinalIgnoreCase))
+                        .Select(line => line["package:".Length..].Trim())
+                        .Where(name => name.Length > 0)
+                        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                        .ToArray())),
             Section("Services", results, ["services"],
                 new ServiceSummaryInfo(
                     CountLines(Output(results, "services"), "ServiceRecord{"),

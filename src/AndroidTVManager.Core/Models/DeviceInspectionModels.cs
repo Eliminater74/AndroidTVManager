@@ -69,7 +69,10 @@ public sealed record CpuInfo(
     string? DetectedSoC,
     string? InferredSoC,
     string? FrequencySummary,
-    string? Governor);
+    string? Governor)
+{
+    public string SupportedAbiSummary => string.Join(", ", SupportedAbis);
+}
 
 public sealed record MemoryInfo(
     long? TotalBytes,
@@ -116,7 +119,8 @@ public sealed record SecurityInfo(
     string? BuildTags,
     CapabilityState RootAvailability,
     CapabilityState AdbRoot,
-    IReadOnlyList<CapabilityEvidence> Evidence);
+    IReadOnlyList<CapabilityEvidence> Evidence,
+    string? OemUnlockAllowed = null);
 
 public sealed record BootInfo(
     bool? IsAbDevice,
@@ -151,7 +155,12 @@ public sealed record NetworkInfo(
     string? Gateway,
     IReadOnlyList<string> DnsServers,
     string? LinkSummary,
-    IReadOnlyList<string>? MacAddresses = null);
+    IReadOnlyList<string>? MacAddresses = null)
+{
+    public string AddressSummary => string.Join(", ", Addresses);
+    public string InterfaceSummary => string.Join(", ", Interfaces);
+    public string MacAddressSummary => string.Join(", ", MacAddresses ?? []);
+}
 
 public sealed record RuntimeInfo(
     string? Uptime,
@@ -162,7 +171,8 @@ public sealed record RuntimeInfo(
 
 public sealed record PackageSummaryInfo(
     int? TotalPackages,
-    string? PackageListSummary);
+    string? PackageListSummary,
+    IReadOnlyList<string>? PackageNames = null);
 
 public sealed record ServiceSummaryInfo(
     int? RunningServiceCount,

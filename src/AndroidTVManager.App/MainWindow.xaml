@@ -232,7 +232,7 @@
                         </StackPanel>
                     </DockPanel>
                 </Border>
-                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Grid.Row="2">
                     <StackPanel>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
@@ -306,6 +306,11 @@
                                     <TextBlock Text="{Binding Inspection.Packages.Value.TotalPackages, StringFormat=Visible packages: {0}}"/>
                                     <TextBlock Text="{Binding Inspection.Packages.State, StringFormat=Scan state: {0}}"
                                                Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <ListBox ItemsSource="{Binding Inspection.Packages.Value.PackageNames}"
+                                             Height="230" Margin="0,10,0,0"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             VirtualizingStackPanel.IsVirtualizing="True"
+                                             VirtualizingStackPanel.VirtualizationMode="Recycling"/>
                                 </StackPanel>
                             </Expander>
                             <Expander Header="SERVICES" IsExpanded="False" Margin="7,0,0,0">
@@ -337,11 +342,161 @@
                                                Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
                                     <TextBlock Text="{Binding Inspection.Security.Value.AdbRoot, StringFormat=ADB root: {0}}"
                                                Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Security.Value.RootAvailability, StringFormat=Root availability: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Security.Value.BootloaderDeviceState, StringFormat=Bootloader: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Security.Value.FlashLockState, StringFormat=Flash lock: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Security.Value.OemUnlockAllowed, StringFormat=OEM unlock allowed: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
                                     <TextBlock Text="{Binding Inspection.DeveloperVerification.Value.VerifierPresent, StringFormat=Developer Verifier: {0}}"
                                                Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
                                     <TextBlock Text="ADB installation: Supported; manual verification state: Check on device."
                                                Foreground="{StaticResource GreenAccent}" TextWrapping="Wrap" Margin="0,5,0,0"/>
                                 </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="CPU" IsExpanded="True" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.Architecture, StringFormat=Architecture: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.PrimaryAbi, StringFormat=Primary ABI: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.SupportedAbiSummary, StringFormat=Supported ABIs: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.LogicalCoreCount, StringFormat=Logical cores: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.Hardware, StringFormat=Hardware: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.DetectedSoC, StringFormat=Detected SoC: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Cpu.Value.FrequencySummary, StringFormat=Frequency: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="MEMORY" IsExpanded="True" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Memory.Value.TotalBytes, StringFormat=Total RAM: {0} bytes}"/>
+                                    <TextBlock Text="{Binding Inspection.Memory.Value.AvailableBytes, StringFormat=Available RAM: {0} bytes}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Memory.Value.FreeBytes, StringFormat=Free RAM: {0} bytes}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Memory.Value.SwapTotalBytes, StringFormat=Swap: {0} bytes}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Memory.Value.ZramTotalBytes, StringFormat=ZRAM: {0} bytes}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="GRAPHICS" IsExpanded="False" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Graphics.Value.Renderer, StringFormat=Renderer: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Graphics.Value.Vendor, StringFormat=Vendor: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Graphics.Value.OpenGlEsVersion, StringFormat=OpenGL ES: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Graphics.Value.VulkanVersion, StringFormat=Vulkan: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Graphics.Value.HardwareComposer, StringFormat=Composer: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="DISPLAY" IsExpanded="False" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Display.Value.CurrentResolution, StringFormat=Current resolution: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Display.Value.PhysicalResolution, StringFormat=Physical resolution: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Display.Value.Density, StringFormat=Density: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Display.Value.RefreshRate, StringFormat=Refresh rate: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Display.Value.ColorMode, StringFormat=Color mode: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="ANDROID AND BUILD" IsExpanded="False" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Overview.Value.Manufacturer, StringFormat=Manufacturer: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Overview.Value.Brand, StringFormat=Brand: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Overview.Value.Product, StringFormat=Product: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Overview.Value.BuildId, StringFormat=Build ID: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Overview.Value.BuildType, StringFormat=Build type: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Overview.Value.SecurityPatch, StringFormat=Security patch: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="BOOT AND PARTITIONS" IsExpanded="False" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Boot.Value.IsAbDevice, StringFormat=A/B device: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Boot.Value.IsVirtualAb, StringFormat=Virtual A/B: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Boot.Value.HasDynamicPartitions, StringFormat=Dynamic partitions: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Boot.Value.CurrentSlot, StringFormat=Current slot: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Boot.Value.SuperPartition, StringFormat=Super partition: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="NETWORK" IsExpanded="False" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Network.Value.Hostname, StringFormat=Hostname: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Network.Value.Gateway, StringFormat=Gateway: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Network.Value.InterfaceSummary, StringFormat=Interfaces: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Network.Value.MacAddressSummary, StringFormat=MAC addresses: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Network.Value.AddressSummary, StringFormat=Addresses: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="RUNTIME AND FEATURES" IsExpanded="False" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Runtime.Value.Uptime, StringFormat=Uptime: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Runtime.Value.BatterySummary, StringFormat=Battery: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Inspection.Features.Value.Count, StringFormat=Features detected: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Gsi.Value.Assessment, StringFormat=GSI assessment: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="STORAGE VOLUMES" IsExpanded="False" Margin="0,0,7,0">
+                                <ItemsControl ItemsSource="{Binding Inspection.Storage.Value.Volumes}" Margin="0,10,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,0,8">
+                                                <TextBlock Text="{Binding MountPoint}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding FileSystem, StringFormat=File system: {0}}"
+                                                           Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                                                <TextBlock Text="{Binding TotalBytes, StringFormat=Total: {0} bytes}"
+                                                           Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                                                <TextBlock Text="{Binding AvailableBytes, StringFormat=Available: {0} bytes}"
+                                                           Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Expander>
+                            <Expander Header="ANDROID FEATURES" IsExpanded="False" Margin="7,0,0,0">
+                                <ListBox ItemsSource="{Binding Inspection.Features.Value}" Height="220"
+                                         Margin="0,10,0,0"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         VirtualizingStackPanel.IsVirtualizing="True"
+                                         VirtualizingStackPanel.VirtualizationMode="Recycling"/>
                             </Expander>
                         </UniformGrid>
                         <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="10"
@@ -377,7 +532,7 @@
                             </ItemsControl>
                         </Expander>
                     </StackPanel>
-                </ScrollViewer>
+                </StackPanel>
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DebloatPageViewModel}">
@@ -417,7 +572,7 @@
                         </StackPanel>
                     </DockPanel>
                 </Border>
-                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Grid.Row="2">
                     <StackPanel>
                         <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
                         <ItemsControl ItemsSource="{Binding Plan.Warnings}">
@@ -456,7 +611,7 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                </ScrollViewer>
+                </StackPanel>
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:AboutPageViewModel}">
@@ -1318,7 +1473,9 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          CanContentScroll="True">
                 <ContentControl Content="{Binding CurrentPage}"/>
             </ScrollViewer>
             <Border Grid.Row="2" Background="{StaticResource ControlBackgroundBrush}" Padding="28,0">

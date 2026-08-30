@@ -61,11 +61,33 @@ public static class AdbMetadataParser
 
     public static string? ParseMacAddress(string output)
     {
-        var match = Regex.Match(output,
-            @"(?<![0-9A-Fa-f])(?<mac>[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})(?![0-9A-Fa-f])",
-            RegexOptions.CultureInvariant);
-        return match.Success ? match.Groups["mac"].Value.ToUpperInvariant() : null;
+        var interfaces = Regex.Matches(output,
+                @"(?ms)^\d+:\s*(?<interface>[^\s:]+).*?(?=^\d+:\s|\z)")
+            .Select(match =>
+            {
+                var name = match.Groups["interface"].Value;
+                var flags = match.Value.Contains("<", StringComparison.Ordinal)
+                    && match.Value.Contains("UP", StringComparison.Ordinal);
+                var mac = Regex.Match(match.Value,
+                    @"(?<![0-9A-Fa-f])(?<mac>[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})(?![0-9A-Fa-f])",
+                    RegexOptions.CultureInvariant);
+                return (Name: name, IsUp: flags, Mac: mac.Success ? mac.Groups["mac"].Value.ToUpperInvariant() : null);
+            })
+            .Where(item => item.Mac is not null && item.Mac.Replace(":", string.Empty)
+                .Any(character => character != '0'))
+            .OrderByDescending(item => IsPhysicalInterface(item.Name) && item.IsUp)
+            .ThenByDescending(item => IsPhysicalInterface(item.Name))
+            .Select(item => item.Mac)
+            .FirstOrDefault();
+        return interfaces;
     }
+
+    private static bool IsPhysicalInterface(string name)
+        => name.StartsWith("eth", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("wlan", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("wifi", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("usb", StringComparison.OrdinalIgnoreCase);
 
     private static string? Get(Dictionary<string, string> values, string key)
         => values.TryGetValue(key, out var value) && value.Length > 0 ? value : null;
