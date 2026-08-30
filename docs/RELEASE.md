@@ -27,6 +27,7 @@ dotnet test AndroidTVManager.sln -c Release
 The script writes only generated output under `artifacts\`, which is ignored by Git:
 
 - `AndroidTVManager-{version}-Setup.exe`
+- `AndroidTVManager-Setup.exe` (stable installer filename for README download links)
 - `AndroidTVManager-{version}-win-x64.zip`
 - `SHA256SUMS.txt`
 

@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml/badge.svg)](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/Eliminater74/AndroidTVManager?include_prereleases)](https://github.com/Eliminater74/AndroidTVManager/releases)
+[![Downloads](https://img.shields.io/github/downloads/Eliminater74/AndroidTVManager/total?label=downloads)](https://github.com/Eliminater74/AndroidTVManager/releases)
 [![License](https://img.shields.io/github/license/Eliminater74/AndroidTVManager)](LICENSE)
 
 Android TV Manager is a Windows-first Android TV / Google TV device management toolbox. It provides a native WPF interface for ADB device discovery, saved devices, device intelligence, package management, cautious debloating, APK installation, scripts, configuration inspection, and connection history.
@@ -16,7 +17,8 @@ Download the latest published build from the [GitHub Releases page](https://gith
 
 Available assets:
 
-- `AndroidTVManager-1.0.0-B2-Setup.exe` — self-contained Windows installer
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/latest/download/AndroidTVManager-Setup.exe) — stable installer link; GitHub records the asset download count
+- `AndroidTVManager-1.0.0-B2-Setup.exe` — versioned self-contained Windows installer
 - `AndroidTVManager-1.0.0-B2-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 

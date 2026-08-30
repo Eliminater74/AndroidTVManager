@@ -89,6 +89,14 @@ else {
     if ($LASTEXITCODE -ne 0) {
         throw "Inno Setup failed with exit code $LASTEXITCODE."
     }
+    $versionedInstaller = Get-ChildItem -LiteralPath $releaseDir -Filter "*-Setup.exe" -File |
+        Select-Object -First 1
+    if ($null -eq $versionedInstaller) {
+        throw "Inno Setup completed without producing an installer."
+    }
+    Copy-Item -LiteralPath $versionedInstaller.FullName `
+        -Destination (Join-Path $releaseDir "AndroidTVManager-Setup.exe") `
+        -Force
 }
 
 $releaseFiles = Get-ChildItem -LiteralPath $releaseDir -File |
