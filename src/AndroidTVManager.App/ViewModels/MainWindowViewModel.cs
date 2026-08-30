@@ -36,6 +36,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IPackageInventoryService _packageInventoryService;
     private readonly IPackagePreferenceRepository _packagePreferences;
     private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
+    private readonly ILogViewerService _logViewer;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -62,7 +63,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IAdbCommandService commandService,
         IPackageInventoryService packageInventoryService,
         IDeveloperVerificationPolicyProvider verificationPolicy,
-        IPackagePreferenceRepository packagePreferences)
+        IPackagePreferenceRepository packagePreferences,
+        ILogViewerService logViewer)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -83,6 +85,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _packageInventoryService = packageInventoryService;
         _packagePreferences = packagePreferences;
         _verificationPolicy = verificationPolicy;
+        _logViewer = logViewer;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -94,6 +97,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Debloat", "◌"),
             new("Scripts", "◇"),
             new("Tools", "⚙"),
+            new("Logs", "≡"),
             new("Settings", "☷"),
             new("About", "?")
         };
@@ -121,6 +125,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
+        "Logs" => new LogPageViewModel(_logViewer, _confirmation),
         "Settings" => new SettingsPageViewModel(_toolsManager, _paths, _settingsStore),
         "About" => new AboutPageViewModel(),
         _ => new PageViewModel(entry.Label)

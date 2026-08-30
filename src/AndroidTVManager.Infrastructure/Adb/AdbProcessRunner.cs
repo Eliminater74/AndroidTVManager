@@ -88,11 +88,14 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
                 await stdoutTask, await stderrTask, stopwatch.Elapsed);
             if (!completed.IsSuccess)
                 _logger.Warning("ADB", $"Command failed ({completed.ExitCode}): {completed.CommandText}");
+            else
+                _logger.Information("ADB", $"Command completed ({completed.ExitCode}): {completed.CommandText}");
             return completed;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             TryKill(process);
+            _logger.Information("ADB", $"Command canceled: {string.Join(' ', RedactArguments(arguments))}");
             return new(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
                 string.Empty, string.Empty, stopwatch.Elapsed, WasCanceled: true);
         }

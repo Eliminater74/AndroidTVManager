@@ -1162,6 +1162,45 @@
                 </Grid>
             </Grid>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LogPageViewModel}">
+            <Grid Margin="34,26,34,28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="DIAGNOSTICS" Style="{StaticResource SectionLabelStyle}"/>
+                    <TextBlock Text="Live application log" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                    <TextBlock Text="Monitor Android TV Manager activity without opening a separate editor."
+                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                </StackPanel>
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,24,0,18">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Refresh" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding RefreshCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Clear log" Style="{StaticResource DangerButtonStyle}"
+                                    Command="{Binding ClearCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}"/>
+                            <TextBlock Text="{Binding LogPath}" Foreground="{StaticResource TextMuted}"
+                                       FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="12"
+                        Height="520" VerticalAlignment="Top">
+                    <ListBox ItemsSource="{Binding Entries}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             VirtualizingStackPanel.IsVirtualizing="True"
+                             VirtualizingStackPanel.VirtualizationMode="Recycling"
+                             FontFamily="Consolas" FontSize="12"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsPageViewModel}">
             <Grid Margin="34,26,34,28">
                 <StackPanel>

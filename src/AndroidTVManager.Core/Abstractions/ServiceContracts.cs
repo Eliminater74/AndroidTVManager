@@ -311,3 +311,12 @@ public interface IAppLogger
     void Warning(string source, string message);
     void Error(string source, string message, Exception? exception = null);
 }
+
+public interface ILogViewerService
+{
+    event EventHandler<string>? EntryWritten;
+    string LogDirectory { get; }
+    string CurrentLogPath { get; }
+    Task<IReadOnlyList<string>> ReadCurrentAsync(CancellationToken cancellationToken = default);
+    Task ClearAsync(CancellationToken cancellationToken = default);
+}

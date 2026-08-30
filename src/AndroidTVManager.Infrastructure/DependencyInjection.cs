@@ -15,7 +15,9 @@ public static class DependencyInjection
     public static IServiceCollection AddAndroidTVManagerInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<ILocalAppDataPaths, LocalAppDataPaths>();
-        services.AddSingleton<IAppLogger, FileLogger>();
+        services.AddSingleton<FileLogger>();
+        services.AddSingleton<IAppLogger>(services => services.GetRequiredService<FileLogger>());
+        services.AddSingleton<ILogViewerService>(services => services.GetRequiredService<FileLogger>());
         services.AddSingleton<IDeviceSnapshotRepository, DeviceSnapshotRepository>();
         services.AddSingleton<IDeviceInspectionService, DeviceInspectionService>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
