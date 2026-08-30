@@ -16,6 +16,7 @@ public sealed class LocalAppDataPaths : ILocalAppDataPaths
         SnapshotsPath = Path.Combine(Root, "Snapshots");
         ScreenshotsPath = Path.Combine(Root, "Screenshots");
         RecordingsPath = Path.Combine(Root, "Recordings");
+        BackupsPath = Path.Combine(Root, "Backups");
         TempPath = Path.Combine(Root, "Temp");
     }
 
@@ -27,12 +28,13 @@ public sealed class LocalAppDataPaths : ILocalAppDataPaths
     public string SnapshotsPath { get; }
     public string ScreenshotsPath { get; }
     public string RecordingsPath { get; }
+    public string BackupsPath { get; }
     public string TempPath { get; }
 
     public void EnsureCreated()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
-        foreach (var path in new[] { ToolsPath, LogsPath, ScriptsPath, SnapshotsPath, ScreenshotsPath, RecordingsPath, TempPath })
+        foreach (var path in new[] { ToolsPath, LogsPath, ScriptsPath, SnapshotsPath, ScreenshotsPath, RecordingsPath, BackupsPath, TempPath })
             Directory.CreateDirectory(path);
     }
 }

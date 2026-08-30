@@ -156,6 +156,7 @@ public sealed class ConfigurationExplorerServiceTests
         public string SnapshotsPath => Path.Combine(Root, "Snapshots");
         public string ScreenshotsPath => Path.Combine(Root, "Screenshots");
         public string RecordingsPath => Path.Combine(Root, "Recordings");
+        public string BackupsPath => Path.Combine(Root, "Backups");
         public string TempPath => Path.Combine(Root, "Temp");
 
         public void EnsureCreated()

@@ -31,6 +31,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ISettingsStore _settingsStore;
     private readonly IScriptExecutionService _scriptExecutionService;
     private readonly IDeviceInspectionService _inspectionService;
+    private readonly IDeviceBackupService _backupService;
     private readonly IConfigurationExplorerService _configurationService;
     private readonly IConfigurationSnapshotStore _configurationSnapshots;
     private readonly IDebloatPlanner _debloatPlanner;
@@ -62,6 +63,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ISettingsStore settingsStore,
         IScriptExecutionService scriptExecutionService,
         IDeviceInspectionService inspectionService,
+        IDeviceBackupService backupService,
         IConfigurationExplorerService configurationService,
         IConfigurationSnapshotStore configurationSnapshots,
         IDebloatPlanner debloatPlanner,
@@ -86,6 +88,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsStore = settingsStore;
         _scriptExecutionService = scriptExecutionService;
         _inspectionService = inspectionService;
+        _backupService = backupService;
         _configurationService = configurationService;
         _configurationSnapshots = configurationSnapshots;
         _debloatPlanner = debloatPlanner;
@@ -106,6 +109,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Install APK", "＋"),
             new("Applications", "▦"),
             new("Debloat", "◌"),
+            new("Backup / Restore", "⇩"),
             new("Scripts", "◇"),
             new("Tools", "⚙"),
             new("Logs", "≡"),
@@ -143,6 +147,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _packagePreferences, _confirmation, _settingsStore, Devices),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
             _packageIconService, _settingsStore, Devices),
+        "Backup / Restore" => new BackupPageViewModel(_backupService, _paths, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
         "Logs" => new LogPageViewModel(_logViewer, _confirmation),
@@ -179,6 +184,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             if (_pages.TryGetValue("Configuration Explorer", out var page)
                 && page is ConfigurationPageViewModel configuration)
                 configuration.SelectedDevice = value;
+            if (_pages.TryGetValue("Backup / Restore", out var backupPage)
+                && backupPage is BackupPageViewModel backup)
+                backup.SelectedDevice = value;
         }
     }
 
@@ -198,6 +206,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Install APK" => "Install applications on the selected device.",
         "Applications" => "Inspect and manage installed packages.",
         "Debloat" => "Preview conservative, device-specific package changes.",
+        "Backup / Restore" => "Create safe device backups and restore APKs.",
         "Scripts" => "Preview safe, structured ADB automation.",
         "Tools" => "Targeted device utilities and diagnostics.",
         "Settings" => "Configure Android TV Manager and managed ADB.",
@@ -484,6 +493,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
 
     public ObservableCollection<AndroidDevice> Devices { get; }
     public IReadOnlyList<DebloatPreset> Presets { get; } = Enum.GetValues<DebloatPreset>();
+    public ObservableCollection<DebloatPlanItemViewModel> PlanItems { get; } = [];
 
     [ObservableProperty]
     private AndroidDevice? _selectedDevice;
@@ -503,12 +513,34 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     [ObservableProperty]
     private bool _showPackageIcons;
 
+    public bool IsSimplePreset => SelectedPreset == DebloatPreset.Simple;
+    public bool IsMediumPreset => SelectedPreset == DebloatPreset.Medium;
+    public bool IsAggressivePreset => SelectedPreset == DebloatPreset.Aggressive;
+    public int SelectedCount => PlanItems.Count(item => item.IsSelected);
+
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
         _iconSource?.Cancel();
         Plan = null;
+        PlanItems.Clear();
         Status = value is null ? "Select a connected device." : $"Ready to analyze {value.Serial}.";
         IconStatus = string.Empty;
+    }
+
+    partial void OnSelectedPresetChanged(DebloatPreset value)
+    {
+        OnPropertyChanged(nameof(IsSimplePreset));
+        OnPropertyChanged(nameof(IsMediumPreset));
+        OnPropertyChanged(nameof(IsAggressivePreset));
+        Plan = null;
+        PlanItems.Clear();
+        Status = $"Preset set to {value}. Create a new preview to apply its defaults.";
+    }
+
+    [RelayCommand]
+    private void SelectPreset(DebloatPreset preset)
+    {
+        SelectedPreset = preset;
     }
 
     [RelayCommand]
@@ -524,7 +556,19 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             Status = $"Analyzing packages on {SelectedDevice.Serial}…";
             await _settingsLoaded;
             Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset);
-            Status = $"{Plan.Items.Count(item => item.Selected)} package(s) selected; review the plan before execution.";
+            PlanItems.Clear();
+            foreach (var item in Plan.Items)
+            {
+                var itemViewModel = new DebloatPlanItemViewModel(item);
+                itemViewModel.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName == nameof(DebloatPlanItemViewModel.IsSelected))
+                        OnPropertyChanged(nameof(SelectedCount));
+                };
+                PlanItems.Add(itemViewModel);
+            }
+            OnPropertyChanged(nameof(SelectedCount));
+            Status = $"{SelectedCount} package(s) pre-selected; review or change the checks before execution.";
             if (ShowPackageIcons)
                 StartIconLoading(Plan);
         }
@@ -587,13 +631,10 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             {
                 if (Plan is null || Plan.Serial != serial)
                     return;
-                Plan = Plan with
-                {
-                    Items = Plan.Items.Select(item =>
-                        item.Package.PackageName.Equals(package.PackageName, StringComparison.OrdinalIgnoreCase)
-                            ? item with { Package = item.Package with { IconPath = iconPath } }
-                            : item).ToArray()
-                };
+                var item = PlanItems.FirstOrDefault(candidate =>
+                    candidate.Package.PackageName.Equals(package.PackageName, StringComparison.OrdinalIgnoreCase));
+                if (item is not null)
+                    item.UpdatePackage(item.Package with { IconPath = iconPath });
             });
         }
         finally
@@ -610,17 +651,25 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             Status = "Create a plan and select its target first.";
             return;
         }
-        var selected = Plan.Items.Count(item => item.Selected);
+        var selected = SelectedCount;
         if (!_confirmation.Confirm(
                 $"Run {Plan.Preset} debloat",
-                $"This will disable {selected} package(s) on target:\n{Plan.Serial}\n\nUnknown and critical packages are excluded. Continue?"))
+                $"This will disable {selected} package(s) on target:\n{Plan.Serial}\n\nCritical packages remain locked. Manually selected Unknown packages require your review. Continue?"))
         {
             Status = "Debloat canceled.";
             return;
         }
         try
         {
-            var result = await _execution.ExecuteAsync(Plan);
+            var executionPlan = Plan with
+            {
+                Items = PlanItems.Select(item => item.ToModel()).ToArray(),
+                Warnings = Plan.Warnings.Concat(
+                    PlanItems.Any(item => item.IsSelected && item.RequiresManualReview)
+                        ? ["One or more Unknown packages were manually selected."]
+                        : []).ToArray()
+            };
+            var result = await _execution.ExecuteAsync(executionPlan);
             _lastExecutionId = result.ExecutionId;
             Status = $"Debloat {result.Status.ToLowerInvariant()}: {result.SuccessfulActions} succeeded, {result.FailedActions} failed.";
         }

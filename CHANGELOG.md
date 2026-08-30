@@ -38,4 +38,8 @@ The initial Beta 1 foundation established managed Platform-Tools, ADB connection
 
 ## Unreleased
 
+- Added the Backup / Restore page with capability-aware report, configuration, APK/split-APK, shared-storage, legacy app-data, and APK restore workflows.
+- Added visible Debloat preset choices with preselected known candidates and manual selection for reviewed Unknown/private packages.
+- Kept Critical packages and active device roles locked from manual debloat selection.
+
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).

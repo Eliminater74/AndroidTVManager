@@ -14,9 +14,7 @@
 
 ## Next
 
-- Device Backup tab with clear backup scope and capability reporting
-- APK and split-APK backup manifests with optional restore
-- User-selected file backup with progress, cancellation, and checksums
+- Backup/Restore follow-up: user-selected file backup with progress, cancellation, and checksums
 - Export/import of app settings and saved-device definitions
 - Device comparison across inspection/configuration snapshots
 - More hardware fixtures and physical-device validation

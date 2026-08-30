@@ -102,12 +102,14 @@ public sealed class DebloatPlanner : IDebloatPlanner
                 PackageRiskLevel.HighRisk => preset == DebloatPreset.Aggressive,
                 _ => false
             });
-        var protectedPackage = assessment.IsProtected || assessment.Risk is PackageRiskLevel.Critical or PackageRiskLevel.Unknown;
+        var protectedPackage = assessment.IsProtected || assessment.Risk == PackageRiskLevel.Critical;
         var selected = allowed && !protectedPackage && package.IsInstalled;
         var reason = selected
             ? null
             : protectedPackage
-                ? "Protected: critical, unknown, or active device role."
+                ? "Locked: critical package or active device role."
+                : assessment.Risk == PackageRiskLevel.Unknown
+                    ? "Not auto-selected: unknown package. You may select it manually after review."
                 : !package.IsInstalled
                     ? "Package is not currently installed for the user."
                     : $"Not included in {preset} preset.";

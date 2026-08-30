@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:AndroidTVManager.App.ViewModels"
+        xmlns:models="clr-namespace:AndroidTVManager.Core.Models;assembly=AndroidTVManager.Core"
         Title="Android TV Manager"
         Icon="Assets/AndroidTVManager.ico"
         PreviewMouseWheel="Window_PreviewMouseWheel"
@@ -923,8 +924,19 @@
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="PRESET" Style="{StaticResource SectionLabelStyle}"/>
-                                <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
-                                          Width="140" Margin="0,8,0,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <RadioButton Content="Simple" IsChecked="{Binding IsSimplePreset, Mode=OneWay}"
+                                                 Command="{Binding SelectPresetCommand}"
+                                                 CommandParameter="{x:Static models:DebloatPreset.Simple}"
+                                                 Margin="0,0,14,0"/>
+                                    <RadioButton Content="Medium" IsChecked="{Binding IsMediumPreset, Mode=OneWay}"
+                                                 Command="{Binding SelectPresetCommand}"
+                                                 CommandParameter="{x:Static models:DebloatPreset.Medium}"
+                                                 Margin="0,0,14,0"/>
+                                    <RadioButton Content="Aggressive / Full" IsChecked="{Binding IsAggressivePreset, Mode=OneWay}"
+                                                 Command="{Binding SelectPresetCommand}"
+                                                 CommandParameter="{x:Static models:DebloatPreset.Aggressive}"/>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </DockPanel>
@@ -946,19 +958,25 @@
                         <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
                             <StackPanel>
                                 <TextBlock Text="PLAN ITEMS" Style="{StaticResource SectionLabelStyle}"/>
-                                <ItemsControl ItemsSource="{Binding Plan.Items}" Margin="0,12,0,0">
+                                <ItemsControl ItemsSource="{Binding PlanItems}" Margin="0,12,0,0">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
                                                     Padding="12" Margin="0,0,0,6">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="32"/>
                                                         <ColumnDefinition Width="38"/>
                                                         <ColumnDefinition Width="212"/>
                                                         <ColumnDefinition Width="100"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
+                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                              IsEnabled="{Binding CanSelect}"
+                                                              VerticalAlignment="Top"
+                                                              ToolTip="{Binding SelectionLabel}"/>
                                                     <Border Width="30" Height="30" CornerRadius="6"
+                                                            Grid.Column="1"
                                                             Background="{StaticResource SurfaceSecondaryBrush}">
                                                         <Grid>
                                                             <TextBlock Text="▦" FontSize="17"
@@ -968,12 +986,27 @@
                                                                    Stretch="Uniform"/>
                                                         </Grid>
                                                     </Border>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Package.PackageName}"
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="{Binding Package.PackageName}"
                                                                FontWeight="SemiBold"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding Assessment.Risk}"
-                                                               Foreground="{StaticResource AmberAccent}"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding SelectionBlockReason}"
+                                                        <TextBlock Text="{Binding Assessment.Description}"
+                                                                   Foreground="{StaticResource TextSecondary}"
+                                                                   TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="3">
+                                                        <TextBlock Text="{Binding Assessment.Risk}"
+                                                                   Foreground="{StaticResource AmberAccent}"/>
+                                                        <TextBlock Text="{Binding Assessment.Confidence}"
+                                                                   Foreground="{StaticResource TextMuted}"
+                                                                   FontSize="11" Margin="0,3,0,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="4">
+                                                        <TextBlock Text="{Binding SelectionLabel}"
+                                                                   Foreground="{StaticResource TextSecondary}"
+                                                                   TextWrapping="Wrap"/>
+                                                        <TextBlock Text="{Binding ImpactSummary}"
                                                                Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                                    </StackPanel>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -982,6 +1015,136 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BackupPageViewModel}">
+            <Grid Margin="34,26,34,28">
+                <StackPanel>
+                    <TextBlock Text="BACKUP / RESTORE" Style="{StaticResource SectionLabelStyle}"/>
+                    <TextBlock Text="Protect what the device exposes" FontSize="34"
+                               FontWeight="SemiBold" Margin="0,5,0,0"/>
+                    <TextBlock Text="Choose exactly what to capture. Unsupported operations stay visible with an explanation."
+                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                    <Border Style="{StaticResource CardStyle}" Margin="0,24,0,0">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="250"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                              ItemTemplate="{StaticResource DeviceSelectorTemplate}" Margin="0,8,12,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="BACKUP FOLDER" Style="{StaticResource SectionLabelStyle}"/>
+                                    <TextBox Text="{Binding DestinationDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,8,12,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButtonStyle}"
+                                        VerticalAlignment="Bottom" Command="{Binding BrowseDestinationCommand}"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Content="Refresh capabilities" Style="{StaticResource GhostButtonStyle}"
+                                        Command="{Binding RefreshCapabilitiesCommand}" Margin="0,0,8,0"/>
+                                <Button Content="Create selected backup" Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding CreateBackupCommand}" Margin="0,0,8,0"/>
+                                <Button Content="Cancel" Style="{StaticResource GhostButtonStyle}"
+                                        Command="{Binding CancelCommand}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}"
+                               TextWrapping="Wrap" Margin="0,14,0,10"/>
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock Text="BACKUP OPTIONS" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock DockPanel.Dock="Right"
+                                           Text="{Binding SelectedOptionCount, StringFormat={}{0} selected}"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Options}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource PanelRaisedBackground}"
+                                                BorderBrush="{StaticResource PanelBorder}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Padding="12" Margin="0,0,0,7">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="32"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          IsEnabled="{Binding CanSelect}"
+                                                          VerticalAlignment="Top" ToolTip="{Binding Evidence}"/>
+                                                <StackPanel Grid.Column="1" Margin="8,0,12,0">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding Description}" Foreground="{StaticResource TextSecondary}"
+                                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding Evidence}" Foreground="{StaticResource TextMuted}"
+                                                               TextWrapping="Wrap" FontSize="11" Margin="0,5,0,0"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding StateLabel}"
+                                                           Foreground="{StaticResource AmberAccent}"
+                                                           FontWeight="SemiBold" VerticalAlignment="Top"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}" Margin="0,18,0,0">
+                        <StackPanel>
+                            <TextBlock Text="RESTORE APKs" Style="{StaticResource SectionLabelStyle}"/>
+                            <TextBlock Text="Restore APKs and split APKs from a previous backup. App data is not restored by this operation."
+                                       Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding RestoreDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,10,0"/>
+                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource GhostButtonStyle}"
+                                        Command="{Binding BrowseRestoreDirectoryCommand}" Margin="0,0,8,0"/>
+                                <Button Grid.Column="2" Content="Restore APKs" Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding RestoreApksCommand}"/>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding LastRestore.Messages}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Foreground="{StaticResource TextSecondary}"
+                                                   TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}" Margin="0,18,0,0">
+                        <StackPanel>
+                            <TextBlock Text="LAST BACKUP" Style="{StaticResource SectionLabelStyle}"/>
+                            <ItemsControl ItemsSource="{Binding LastBackup.Artifacts}" Margin="0,10,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextSecondary}"
+                                                   Margin="0,0,0,4"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Grid>
         </DataTemplate>

@@ -32,6 +32,7 @@ The installer is currently unsigned. Windows SmartScreen may display a warning u
 - Optional cached package icons
 - Device-aware debloat previews with Safe, Caution, High Risk, Critical, and Unknown classifications
 - Disable-first debloat actions, captured serials, drift checks, transaction history, and restore
+- Backup / Restore page for device reports, configuration snapshots, APKs and split APKs, shared storage, legacy app-data attempts, and APK restore
 - APK installation through ADB with accurate package-manager errors
 - ADB Command Center, scripts, screenshots, live application logs, and system-tray controls
 - Dark, Pure Black, and White themes
@@ -68,7 +69,7 @@ Mutable data is stored under `%LOCALAPPDATA%\AndroidTVManager\`:
 - `Data\androidtvmanager.db` — SQLite database and migrations
 - `Logs\` — bounded application logs
 - `Tools\PlatformTools\` — managed official Platform-Tools
-- `Scripts\`, `Snapshots\`, `Screenshots\`, `Recordings\`, and `Temp\`
+- `Scripts\`, `Snapshots\`, `Screenshots\`, `Recordings\`, `Backups\`, and `Temp\`
 
 These files are runtime data and are intentionally excluded from Git.
 

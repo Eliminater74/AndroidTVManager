@@ -15,8 +15,8 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 
 ## Beta 2 follow-up
 
-- [ ] Add a first-class device backup tab with APK, split-APK, metadata, configuration, and user-file backup options.
-- [ ] Add backup manifests, progress, cancellation, integrity checks, and restore warnings.
+- [ ] Add backup integrity verification and a richer backup history browser.
+- [ ] Add restore warnings and validation for more backup artifact types.
 - [ ] Add device comparison between saved inspection/configuration snapshots.
 - [ ] Improve package icon extraction for more APK/resource formats.
 - [ ] Add richer file browsing with explicit user-selected paths.

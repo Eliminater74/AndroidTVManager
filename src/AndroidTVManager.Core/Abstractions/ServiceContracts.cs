@@ -137,6 +137,24 @@ public interface IConfigurationSnapshotStore
         CancellationToken cancellationToken = default);
 }
 
+public interface IDeviceBackupService
+{
+    Task<IReadOnlyList<BackupCapability>> GetCapabilitiesAsync(
+        AndroidDevice device,
+        CancellationToken cancellationToken = default);
+
+    Task<DeviceBackupResult> CreateAsync(
+        BackupRequest request,
+        AndroidDevice device,
+        IProgress<BackupProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task<BackupRestoreResult> RestoreApksAsync(
+        string serial,
+        string backupDirectory,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IDeviceSnapshotRepository
 {
     Task<long> SaveAsync(DeviceInspectionResult inspection, CancellationToken cancellationToken = default);
@@ -343,6 +361,7 @@ public interface ILocalAppDataPaths
     string SnapshotsPath { get; }
     string ScreenshotsPath { get; }
     string RecordingsPath { get; }
+    string BackupsPath { get; }
     string TempPath { get; }
     void EnsureCreated();
 }
