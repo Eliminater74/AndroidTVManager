@@ -115,6 +115,10 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
             value.Equals("pair", StringComparison.OrdinalIgnoreCase));
         if (pairIndex >= 0 && pairIndex + 2 < redacted.Length)
             redacted[pairIndex + 2] = "<pairing-code-redacted>";
+        var pullIndex = Array.FindIndex(redacted, value =>
+            value.Equals("pull", StringComparison.OrdinalIgnoreCase));
+        if (pullIndex >= 0 && pullIndex + 2 < redacted.Length)
+            redacted[pullIndex + 2] = "<local-path-redacted>";
         return redacted;
     }
 

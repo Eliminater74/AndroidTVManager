@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddSingleton<IDeviceSnapshotRepository, DeviceSnapshotRepository>();
         services.AddSingleton<IDeviceInspectionService, DeviceInspectionService>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
+        services.AddSingleton<IPackageIconService, PackageIconService>();
         services.AddSingleton<IPackageInventoryRepository, PackageInventoryRepository>();
         services.AddSingleton<IPackagePreferenceRepository, PackagePreferenceRepository>();
         services.AddSingleton<IAdbCommandService, AdbCommandService>();

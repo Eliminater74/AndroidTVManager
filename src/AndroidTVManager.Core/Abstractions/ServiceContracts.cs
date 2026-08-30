@@ -137,6 +137,14 @@ public interface IPackageInventoryService
         CancellationToken cancellationToken = default);
 }
 
+public interface IPackageIconService
+{
+    Task<string?> GetIconPathAsync(
+        string serial,
+        PackageInventoryEntry package,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IPackageInventoryRepository
 {
     Task<long> SaveAsync(PackageInventoryResult inventory, CancellationToken cancellationToken = default);

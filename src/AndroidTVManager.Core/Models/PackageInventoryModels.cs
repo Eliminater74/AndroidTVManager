@@ -44,7 +44,8 @@ public sealed record PackageInventoryEntry(
     bool IsActiveLauncher = false,
     bool IsDefaultInputMethod = false,
     bool IsEnabledAccessibilityService = false,
-    bool IsDeviceOwner = false);
+    bool IsDeviceOwner = false,
+    string? IconPath = null);
 
 public sealed record PackageImpact(
     string Area,

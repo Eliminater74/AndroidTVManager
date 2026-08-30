@@ -34,6 +34,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDebloatExecutionService _debloatExecutionService;
     private readonly IAdbCommandService _commandService;
     private readonly IPackageInventoryService _packageInventoryService;
+    private readonly IPackageIconService _packageIconService;
     private readonly IPackagePreferenceRepository _packagePreferences;
     private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
     private readonly ILogViewerService _logViewer;
@@ -62,6 +63,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDebloatExecutionService debloatExecutionService,
         IAdbCommandService commandService,
         IPackageInventoryService packageInventoryService,
+        IPackageIconService packageIconService,
         IDeveloperVerificationPolicyProvider verificationPolicy,
         IPackagePreferenceRepository packagePreferences,
         ILogViewerService logViewer)
@@ -83,6 +85,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _debloatExecutionService = debloatExecutionService;
         _commandService = commandService;
         _packageInventoryService = packageInventoryService;
+        _packageIconService = packageIconService;
         _packagePreferences = packagePreferences;
         _verificationPolicy = verificationPolicy;
         _logViewer = logViewer;
@@ -121,7 +124,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
-        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packagePreferences, _confirmation, Devices),
+        "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packageIconService,
+            _packagePreferences, _confirmation, _settingsStore, Devices),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
@@ -944,20 +948,31 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 {
     private readonly IPackageManager _packageManager;
     private readonly IPackageInventoryService _inventoryService;
+    private readonly IPackageIconService _iconService;
     private readonly IPackagePreferenceRepository _preferences;
     private readonly IConfirmationService _confirmation;
+    private readonly ISettingsStore _settings;
+    private readonly Task _settingsLoaded;
+    private readonly SemaphoreSlim _iconThrottle = new(4, 4);
+    private CancellationTokenSource? _iconSource;
+    private bool _updatingIconSetting;
 
     public ApplicationsPageViewModel(
         IPackageManager packageManager,
         IPackageInventoryService inventoryService,
+        IPackageIconService iconService,
         IPackagePreferenceRepository preferences,
         IConfirmationService confirmation,
+        ISettingsStore settings,
         ObservableCollection<AndroidDevice> devices) : base("Applications")
     {
         _packageManager = packageManager;
         _inventoryService = inventoryService;
+        _iconService = iconService;
         _preferences = preferences;
         _confirmation = confirmation;
+        _settings = settings;
+        _settingsLoaded = LoadIconSettingAsync();
         Devices = devices;
         Devices.CollectionChanged += (_, _) =>
         {
@@ -988,6 +1003,12 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _message = "Waiting for a connected device…";
+
+    [ObservableProperty]
+    private bool _showPackageIcons;
+
+    [ObservableProperty]
+    private string _iconStatus = "Package icons are disabled for faster scans.";
 
     [ObservableProperty]
     private string _selectedFilter = "All";
@@ -1021,9 +1042,41 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     partial void OnSearchChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
     partial void OnSelectedFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
 
+    partial void OnShowPackageIconsChanged(bool value)
+    {
+        if (_updatingIconSetting)
+            return;
+
+        if (value && !_confirmation.Confirm(
+                "Enable package icons",
+                "Icons are loaded from package APKs after scanning. This can add extra load time and temporary ADB traffic. Continue?"))
+        {
+            _updatingIconSetting = true;
+            ShowPackageIcons = false;
+            _updatingIconSetting = false;
+            return;
+        }
+
+        _ = _settings.SetAsync("applications.showPackageIcons", value.ToString());
+        if (value)
+        {
+            IconStatus = "Icons enabled; they will load in the background after scanning.";
+            if (Packages.Count > 0 && !string.IsNullOrWhiteSpace(TargetSerial))
+                StartIconLoading(TargetSerial);
+        }
+        else
+        {
+            _iconSource?.Cancel();
+            IconStatus = "Package icons are disabled for faster scans.";
+            for (var index = 0; index < Packages.Count; index++)
+                Packages[index] = Packages[index] with { IconPath = null };
+        }
+    }
+
     [RelayCommand]
     private async Task RefreshAsync()
     {
+        await _settingsLoaded;
         if (string.IsNullOrWhiteSpace(TargetSerial))
         {
             Message = "Target serial is required.";
@@ -1038,6 +1091,77 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         Message = inventory.ErrorMessage is null
             ? $"{Packages.Count} packages loaded."
             : $"{Packages.Count} packages loaded with warnings: {inventory.ErrorMessage}";
+        if (ShowPackageIcons)
+            StartIconLoading(TargetSerial.Trim());
+    }
+
+    private async Task LoadIconSettingAsync()
+    {
+        var value = await _settings.GetAsync("applications.showPackageIcons");
+        _updatingIconSetting = true;
+        ShowPackageIcons = string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+        _updatingIconSetting = false;
+        IconStatus = ShowPackageIcons
+            ? "Icons enabled; they load asynchronously after scanning."
+            : "Package icons are disabled for faster scans.";
+    }
+
+    private void StartIconLoading(string serial)
+    {
+        _iconSource?.Cancel();
+        _iconSource?.Dispose();
+        _iconSource = new CancellationTokenSource();
+        var token = _iconSource.Token;
+        IconStatus = "Loading package icons in the background…";
+        _ = LoadIconsAsync(serial, token);
+    }
+
+    private async Task LoadIconsAsync(string serial, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.WhenAll(Packages.ToArray().Select(package =>
+                LoadIconAsync(serial, package, cancellationToken)));
+            if (!cancellationToken.IsCancellationRequested && serial == TargetSerial)
+                IconStatus = "Package icons loaded.";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            IconStatus = $"Some package icons could not be loaded: {exception.Message}";
+        }
+    }
+
+    private async Task LoadIconAsync(
+        string serial,
+        PackageInventoryEntry package,
+        CancellationToken cancellationToken)
+    {
+        await _iconThrottle.WaitAsync(cancellationToken);
+        try
+        {
+            var iconPath = await _iconService.GetIconPathAsync(serial, package, cancellationToken);
+            if (iconPath is null || cancellationToken.IsCancellationRequested)
+                return;
+
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher is null)
+                return;
+            await dispatcher.InvokeAsync(() =>
+            {
+                if (serial != TargetSerial)
+                    return;
+                var index = Packages.IndexOf(package);
+                if (index >= 0)
+                    Packages[index] = package with { IconPath = iconPath };
+            });
+        }
+        finally
+        {
+            _iconThrottle.Release();
+        }
     }
 
     [RelayCommand]
