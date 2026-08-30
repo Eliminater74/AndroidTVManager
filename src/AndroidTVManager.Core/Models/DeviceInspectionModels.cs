@@ -160,6 +160,7 @@ public sealed record NetworkInfo(
     public string AddressSummary => string.Join(", ", Addresses);
     public string InterfaceSummary => string.Join(", ", Interfaces);
     public string MacAddressSummary => string.Join(", ", MacAddresses ?? []);
+    public string DnsSummary => string.Join(", ", DnsServers);
 }
 
 public sealed record RuntimeInfo(
@@ -172,11 +173,21 @@ public sealed record RuntimeInfo(
 public sealed record PackageSummaryInfo(
     int? TotalPackages,
     string? PackageListSummary,
-    IReadOnlyList<string>? PackageNames = null);
+    IReadOnlyList<string>? PackageNames = null,
+    int? InstalledCount = null,
+    int? DisabledCount = null,
+    int? EnabledCount = null,
+    int? UserPackageCount = null,
+    int? SystemPackageCount = null,
+    int? UninstalledForUserCount = null,
+    int? ActiveLauncherCount = null,
+    int? AccessibilityServiceCount = null,
+    int? DeviceOwnerCount = null);
 
 public sealed record ServiceSummaryInfo(
     int? RunningServiceCount,
-    string? ServiceListSummary);
+    string? ServiceListSummary,
+    IReadOnlyList<ServiceInfo>? Entries = null);
 
 public enum AdvancedFlowAvailability
 {
@@ -231,4 +242,9 @@ public sealed record DeviceInspectionResult(
     InspectionSection<DeveloperVerificationInfo> DeveloperVerification,
     IReadOnlyDictionary<string, string> RawProperties,
     IReadOnlyList<DeviceCapability> Capabilities,
-    IReadOnlyList<InspectionCommandEvidence> Commands);
+    IReadOnlyList<InspectionCommandEvidence> Commands,
+    InspectionSection<OemUnlockInfo>? OemUnlock = null,
+    InspectionSection<RootInfo>? Root = null,
+    InspectionSection<BluetoothInfo>? Bluetooth = null,
+    InspectionSection<HdmiInfo>? Hdmi = null,
+    InspectionSection<DrmInfo>? Drm = null);

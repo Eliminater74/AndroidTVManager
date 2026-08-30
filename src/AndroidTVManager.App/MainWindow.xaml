@@ -285,14 +285,17 @@
                                                 Padding="12" Margin="0,0,0,6">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="220"/>
-                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="190"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="90"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
                                                 <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="{StaticResource CyanAccent}"
                                                            FontWeight="Bold"/>
-                                                <TextBlock Grid.Column="2" Text="{Binding Summary}" Foreground="{StaticResource TextSecondary}"
+                                                <TextBlock Grid.Column="2" Text="{Binding Evidence[0].Confidence}"
+                                                           Foreground="{StaticResource TextMuted}" FontSize="10"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding Summary}" Foreground="{StaticResource TextSecondary}"
                                                            TextWrapping="Wrap"/>
                                             </Grid>
                                         </Border>
@@ -306,6 +309,24 @@
                                     <TextBlock Text="{Binding Inspection.Packages.Value.TotalPackages, StringFormat=Visible packages: {0}}"/>
                                     <TextBlock Text="{Binding Inspection.Packages.State, StringFormat=Scan state: {0}}"
                                                Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.InstalledCount, StringFormat=Installed: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.DisabledCount, StringFormat=Disabled: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.EnabledCount, StringFormat=Enabled: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.UninstalledForUserCount, StringFormat=Uninstalled for user: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.UserPackageCount, StringFormat=User packages: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.SystemPackageCount, StringFormat=System packages: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.ActiveLauncherCount, StringFormat=Active launcher packages: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.AccessibilityServiceCount, StringFormat=Accessibility services: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Packages.Value.DeviceOwnerCount, StringFormat=Device owners: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
                                     <ListBox ItemsSource="{Binding Inspection.Packages.Value.PackageNames}"
                                              Height="230" Margin="0,10,0,0"
                                              ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -318,6 +339,109 @@
                                     <TextBlock Text="{Binding Inspection.Services.Value.RunningServiceCount, StringFormat=Running services: {0}}"/>
                                     <TextBlock Text="{Binding Inspection.Services.State, StringFormat=Scan state: {0}}"
                                                Foreground="{StaticResource TextSecondary}" Margin="0,5,0,0"/>
+                                    <ListBox ItemsSource="{Binding Inspection.Services.Value.Entries}" Height="180"
+                                             Margin="0,10,0,0"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             VirtualizingStackPanel.IsVirtualizing="True"
+                                             VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,2">
+                                                    <TextBlock Text="{Binding Name}" FontSize="11"/>
+                                                    <TextBlock Text="{Binding PackageName}" Foreground="{StaticResource TextSecondary}"
+                                                               FontSize="10"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="OEM UNLOCK AND BOOTLOADER" IsExpanded="True" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.OemUnlock.Value.Option, StringFormat=OEM unlock option: {0}}"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Inspection.OemUnlock.Value.Setting, StringFormat=OEM unlock setting: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.OemUnlock.Value.ActualUnlockCapability, StringFormat=Actual unlock capability: {0}}"
+                                               Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="ADB cannot verify a real bootloader unlock operation. Fastboot has not been tested."
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                    <ItemsControl ItemsSource="{Binding Inspection.OemUnlock.Value.Evidence}" Margin="0,8,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Explanation}" Foreground="{StaticResource TextMuted}"
+                                                           FontSize="10" TextWrapping="Wrap"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="ROOT AND PRIVILEGE FEASIBILITY" IsExpanded="True" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Root.Value.CurrentShellRoot, StringFormat=Current shell root: {0}}"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Inspection.Root.Value.SuAvailability, StringFormat=su availability: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Root.Value.AdbRootFeasibility, StringFormat=ADB root feasibility: {0}}"
+                                               Foreground="{StaticResource AmberAccent}"/>
+                                    <TextBlock Text="{Binding Inspection.Root.Value.Guidance}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                    <ItemsControl ItemsSource="{Binding Inspection.Root.Value.Blockers}" Margin="0,8,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" Foreground="{StaticResource AmberAccent}"
+                                                           FontSize="10" TextWrapping="Wrap" Margin="0,0,0,3"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="BLUETOOTH" IsExpanded="False" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Bluetooth.Value.Support, StringFormat=Support: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Bluetooth.Value.IsEnabled, StringFormat=Enabled: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Bluetooth.Value.AdapterState, StringFormat=Adapter: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Bluetooth.Value.ConnectedDevices.Count, StringFormat=Connected devices: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="HDMI, CEC AND AUDIO" IsExpanded="False" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Hdmi.Value.Support, StringFormat=Support: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Hdmi.Value.CecState, StringFormat=CEC state: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Hdmi.Value.ActiveInput, StringFormat=Active input: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Hdmi.Value.AudioRoute, StringFormat=Audio route: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Expander>
+                        </UniformGrid>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Expander Header="DRM AND MEDIA PROTECTION" IsExpanded="False" Margin="0,0,7,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Drm.Value.Availability, StringFormat=Availability: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Drm.Value.Schemes, StringFormat=Schemes: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Drm.Value.SecurityLevels, StringFormat=Security levels: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Drm.Value.Hdcp, StringFormat=HDCP: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                </StackPanel>
+                            </Expander>
+                            <Expander Header="NETWORK DETAILS" IsExpanded="False" Margin="7,0,0,0">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Inspection.Network.Value.Gateway, StringFormat=Gateway: {0}}"/>
+                                    <TextBlock Text="{Binding Inspection.Network.Value.DnsSummary, StringFormat=DNS: {0}}"
+                                               Foreground="{StaticResource TextSecondary}"/>
+                                    <TextBlock Text="{Binding Inspection.Network.Value.LinkSummary}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Expander>
                         </UniformGrid>
@@ -466,6 +590,10 @@
                                     <TextBlock Text="{Binding Inspection.Runtime.Value.Uptime, StringFormat=Uptime: {0}}"/>
                                     <TextBlock Text="{Binding Inspection.Runtime.Value.BatterySummary, StringFormat=Battery: {0}}"
                                                Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Inspection.Runtime.Value.TemperatureSummary, StringFormat=Thermal status: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Inspection.Runtime.Value.RunningProcesses, StringFormat=Process snapshot: {0}}"
+                                               Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" MaxHeight="80"/>
                                     <TextBlock Text="{Binding Inspection.Features.Value.Count, StringFormat=Features detected: {0}}"
                                                Foreground="{StaticResource TextSecondary}"/>
                                     <TextBlock Text="{Binding Inspection.Gsi.Value.Assessment, StringFormat=GSI assessment: {0}}"
@@ -513,6 +641,25 @@
                             </StackPanel>
                         </Border>
                         <Expander Header="RAW ADB EVIDENCE (EXPERT)" IsExpanded="False" Margin="0,14,0,0">
+                            <StackPanel>
+                            <Expander Header="RAW PROPERTIES" IsExpanded="False" Margin="0,0,0,10">
+                                <ItemsControl ItemsSource="{Binding Inspection.RawProperties}" Margin="0,10,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="240"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Key}" Foreground="{StaticResource TextSecondary}"
+                                                           FontSize="10"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="10"
+                                                           TextWrapping="Wrap"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Expander>
                             <ItemsControl ItemsSource="{Binding Inspection.Commands}" Margin="0,10,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -530,6 +677,7 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            </StackPanel>
                         </Expander>
                     </StackPanel>
                 </StackPanel>

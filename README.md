@@ -59,7 +59,16 @@ These files are runtime data and are intentionally excluded from Git.
 Device Status runs standard ADB diagnostics asynchronously and records command evidence,
 including partial failures. A value shown as `Unknown` is intentionally not inferred from
 an absent package or a vendor-specific property. Expert diagnostics can inspect the source
-command for each section.
+command for each section. The report includes merged package-state views (including packages
+uninstalled for User 0), OEM unlock option/setting/capability as separate states, current root
+evidence, conservative root guidance, network routes/DNS, Bluetooth, HDMI/CEC/audio, DRM,
+services, processes, and thermal status where the connected build exposes them.
+
+ADB properties cannot prove that a bootloader can actually be unlocked. Android TV Manager
+does not run `adb root`, `su -c`, unlock commands, reboot into bootloader, or fastboot checks
+during passive inspection. A later explicit fastboot workflow may provide stronger evidence,
+but manufacturer policy and exact firmware support still determine what is possible. Root
+guidance is informational and must not be treated as an unlock procedure.
 
 Debloat always targets one captured serial, creates a preview, prefers disabling for User 0,
 and rechecks package state before execution. Critical, active-role, and Unknown packages are

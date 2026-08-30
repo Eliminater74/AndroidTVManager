@@ -1,6 +1,8 @@
+using System.Text.RegularExpressions;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Infrastructure.Packages;
 
 namespace AndroidTVManager.Infrastructure.Adb;
 
@@ -10,15 +12,18 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
     private readonly IAdbProcessRunner _runner;
     private readonly IDeviceSnapshotRepository _snapshots;
     private readonly IAppLogger _logger;
+    private readonly IRootGuidanceProvider _rootGuidance;
 
     public DeviceInspectionService(
         IAdbProcessRunner runner,
         IDeviceSnapshotRepository snapshots,
-        IAppLogger logger)
+        IAppLogger logger,
+        IRootGuidanceProvider? rootGuidance = null)
     {
         _runner = runner;
         _snapshots = snapshots;
         _logger = logger;
+        _rootGuidance = rootGuidance ?? new RootGuidanceProvider();
     }
 
     public async Task<DeviceInspectionResult> InspectAsync(
@@ -43,15 +48,34 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             ["selinux"] = (["shell", "getenforce"], ReadTimeout),
             ["root"] = (["shell", "sh", "-c", "id; which su"], ReadTimeout),
             ["network"] = (["shell", "ip", "addr"], ReadTimeout),
+            ["routes"] = (["shell", "ip", "route"], ReadTimeout),
             ["device-name"] = (["shell", "settings", "get", "global", "device_name"], ReadTimeout),
             ["mac-address"] = (["shell", "ip", "link"], ReadTimeout),
             ["hostname"] = (["shell", "hostname"], ReadTimeout),
+            ["oem-unlock-setting"] = (["shell", "settings", "get", "global", "oem_unlock_allowed"], ReadTimeout),
+            ["bluetooth-on"] = (["shell", "settings", "get", "global", "bluetooth_on"], ReadTimeout),
+            ["bluetooth"] = (["shell", "dumpsys", "bluetooth_manager"], ReadTimeout),
+            ["hdmi"] = (["shell", "dumpsys", "hdmi_control"], ReadTimeout),
+            ["audio"] = (["shell", "dumpsys", "audio"], ReadTimeout),
+            ["drm"] = (["shell", "dumpsys", "media.drm"], ReadTimeout),
             ["verifier"] = (["shell", "pm", "list", "packages", "com.google.android.verifier"], ReadTimeout),
             ["verifier-details"] = (["shell", "dumpsys", "package", "com.google.android.verifier"], ReadTimeout),
             ["gsi-tool"] = (["shell", "sh", "-c", "which gsi_tool && gsi_tool status"], ReadTimeout),
-            ["packages"] = (["shell", "pm", "list", "packages"], ReadTimeout),
+            ["packages"] = (["shell", "pm", "list", "packages", "-f"], ReadTimeout),
+            ["packages-system"] = (["shell", "pm", "list", "packages", "-s"], ReadTimeout),
+            ["packages-user"] = (["shell", "pm", "list", "packages", "-3"], ReadTimeout),
+            ["packages-disabled"] = (["shell", "pm", "list", "packages", "-d"], ReadTimeout),
+            ["packages-enabled"] = (["shell", "pm", "list", "packages", "-e"], ReadTimeout),
+            ["packages-uninstalled"] = (["shell", "pm", "list", "packages", "-u"], ReadTimeout),
+            ["packages-launcher"] = (["shell", "cmd", "package", "resolve-activity", "--brief", "-a",
+                "android.intent.action.MAIN", "-c", "android.intent.category.HOME"], ReadTimeout),
+            ["packages-input"] = (["shell", "settings", "get", "secure", "default_input_method"], ReadTimeout),
+            ["packages-accessibility"] = (["shell", "settings", "get", "secure", "enabled_accessibility_services"], ReadTimeout),
+            ["packages-owner"] = (["shell", "dumpsys", "device_policy"], ReadTimeout),
             ["battery"] = (["shell", "dumpsys", "battery"], ReadTimeout),
             ["uptime"] = (["shell", "cat", "/proc/uptime"], ReadTimeout),
+            ["thermal"] = (["shell", "dumpsys", "thermalservice"], ReadTimeout),
+            ["processes"] = (["shell", "ps", "-A"], ReadTimeout),
             ["surfaceflinger"] = (["shell", "dumpsys", "SurfaceFlinger"], ReadTimeout),
             ["services"] = (["shell", "dumpsys", "activity", "services"], ReadTimeout)
         };
@@ -89,7 +113,16 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Get(props, "ro.hardware"),
             Get(props, "ro.board.platform"));
         var security = AdbInspectionParsers.ParseSecurity(props, Output(results, "selinux"), Output(results, "root"));
+        var oemUnlock = AdbInspectionParsers.ParseOemUnlock(props, Output(results, "oem-unlock-setting"));
+        var root = AdbInspectionParsers.ParseRoot(props, Output(results, "root"));
+        root = root with { Guidance = _rootGuidance.GetGuidance(device, oemUnlock, security, root) };
         var boot = AdbInspectionParsers.ParseBoot(props);
+        var bluetooth = AdbInspectionParsers.ParseBluetooth(
+            Output(results, "features"),
+            Output(results, "bluetooth-on"),
+            Output(results, "bluetooth"));
+        var hdmi = AdbInspectionParsers.ParseHdmi(Output(results, "hdmi"), Output(results, "audio"));
+        var drm = AdbInspectionParsers.ParseDrm(Output(results, "drm"));
         var verifier = AdbInspectionParsers.ParseDeveloperVerification(
             Output(results, "verifier"), Output(results, "verifier-details"), props,
             results["verifier"].FirstOrDefault()?.State == InspectionSectionState.Completed);
@@ -117,30 +150,33 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Section("Security", results, ["getprop", "selinux", "root"], security),
             Section("Boot", results, ["getprop"], boot),
             Section("Treble / GSI", results, ["getprop", "gsi-tool", "packages"], gsi),
-            Section("Network", results, ["network", "hostname", "mac-address"],
-                AdbInspectionParsers.ParseNetwork(Output(results, "network"), Output(results, "hostname"))),
-            Section("Runtime", results, ["uptime", "battery", "services"],
-                new RuntimeInfo(Output(results, "uptime"), Summarize(Output(results, "battery")), null, null,
+            Section("Network", results, ["network", "routes", "hostname", "mac-address"],
+                AdbInspectionParsers.ParseNetwork(Output(results, "network"), Output(results, "hostname"),
+                    Output(results, "routes"), props)),
+            Section("Runtime", results, ["uptime", "battery", "thermal", "processes", "services"],
+                new RuntimeInfo(Output(results, "uptime"), Summarize(Output(results, "battery")),
+                    Summarize(Output(results, "thermal")), Summarize(Output(results, "processes")),
                     Summarize(Output(results, "services")))),
             Section("Features", results, ["features"], AdbInspectionParsers.ParseFeatures(Output(results, "features"))),
-            Section("Packages", results, ["packages"],
-                new PackageSummaryInfo(
-                    CountLines(Output(results, "packages"), "package:"),
-                    "All packages visible to the connected ADB user.",
-                    Output(results, "packages").Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-                        .Where(line => line.StartsWith("package:", StringComparison.OrdinalIgnoreCase))
-                        .Select(line => line["package:".Length..].Trim())
-                        .Where(name => name.Length > 0)
-                        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
-                        .ToArray())),
+            Section("Packages", results, ["packages", "packages-system", "packages-user",
+                "packages-disabled", "packages-enabled", "packages-uninstalled", "packages-launcher",
+                "packages-input", "packages-accessibility", "packages-owner"],
+                ParsePackageSummary(results)),
             Section("Services", results, ["services"],
                 new ServiceSummaryInfo(
                     CountLines(Output(results, "services"), "ServiceRecord{"),
-                    Summarize(Output(results, "services")))),
+                    Summarize(Output(results, "services")),
+                    AdbInspectionParsers.ParseServices(Output(results, "services")))),
             Section("Developer Verification", results, ["verifier", "verifier-details"], verifier),
             props,
-            BuildCapabilities(device, cpu, security, boot, gsi, verifier, Output(results, "features")),
-            results.Values.SelectMany(value => value).ToArray());
+            BuildCapabilities(device, cpu, security, boot, gsi, verifier, oemUnlock, root,
+                bluetooth, hdmi, drm, Output(results, "features")),
+            results.Values.SelectMany(value => value).ToArray(),
+            Section("OEM Unlock", results, ["getprop", "oem-unlock-setting"], oemUnlock),
+            Section("Root Feasibility", results, ["getprop", "root"], root),
+            Section("Bluetooth", results, ["features", "bluetooth-on", "bluetooth"], bluetooth),
+            Section("HDMI / CEC", results, ["hdmi", "audio"], hdmi),
+            Section("DRM", results, ["drm"], drm));
 
         try
         {
@@ -202,6 +238,11 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         BootInfo boot,
         GsiInfo gsi,
         DeveloperVerificationInfo verifier,
+        OemUnlockInfo oemUnlock,
+        RootInfo root,
+        BluetoothInfo bluetooth,
+        HdmiInfo hdmi,
+        DrmInfo drm,
         string features)
         =>
         [
@@ -231,6 +272,22 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 gsi.Assessment.ToString(),
                 gsi.Evidence),
             new("ADB Root", security.AdbRoot, "ADB root is separate from root binary availability.", security.Evidence),
+            new("OEM Unlock Option", oemUnlock.Option == OemUnlockOptionState.Present
+                ? CapabilityState.Supported
+                : oemUnlock.Option == OemUnlockOptionState.Absent
+                    ? CapabilityState.Unsupported : CapabilityState.Unknown,
+                oemUnlock.Option.ToString(), oemUnlock.Evidence),
+            new("Actual Bootloader Unlock Capability", oemUnlock.ActualUnlockCapability,
+                "ADB properties cannot prove an unlock operation is supported.", oemUnlock.Evidence),
+            new("Root Feasibility", root.AdbRootFeasibility,
+                root.Guidance, root.Evidence),
+            new("Bluetooth", bluetooth.Support,
+                bluetooth.IsEnabled is true ? "Bluetooth is enabled." : "Bluetooth state is device-dependent.",
+                bluetooth.Evidence),
+            new("HDMI / CEC", hdmi.Support,
+                "HDMI and CEC support is vendor/API dependent.", hdmi.Evidence),
+            new("DRM", drm.Availability,
+                "DRM service evidence is available where the device exposes it.", drm.Evidence),
             new("Android Developer Verifier", verifier.VerifierPresent is true ? CapabilityState.Supported
                 : CapabilityState.Unknown,
                 verifier.VerifierPresent is true ? "Verifier evidence detected" : "Verifier state is not proven",
@@ -251,6 +308,48 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
         string key)
         => AdbInspectionParsers.ParseProperties(Output(results, key));
+
+    private static PackageSummaryInfo ParsePackageSummary(
+        IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results)
+    {
+        var paths = PackageInventoryParser.ParsePackagePaths(Output(results, "packages"));
+        var installed = paths.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var known = PackageInventoryParser.ParsePackageNames(Output(results, "packages-uninstalled"))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        known.UnionWith(installed);
+        var system = PackageInventoryParser.ParsePackageNames(Output(results, "packages-system"));
+        var user = PackageInventoryParser.ParsePackageNames(Output(results, "packages-user"));
+        var disabled = PackageInventoryParser.ParsePackageNames(Output(results, "packages-disabled"));
+        var enabled = PackageInventoryParser.ParsePackageNames(Output(results, "packages-enabled"));
+        var uninstalled = known.Except(installed, StringComparer.OrdinalIgnoreCase).Count();
+        return new(
+            known.Count,
+            "Package views are merged from installed, system, user, enabled, disabled, and uninstalled-for-user queries.",
+            known.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
+            CountIfSucceeded(results, "packages", installed.Count),
+            CountIfSucceeded(results, "packages-disabled", disabled.Count),
+            CountIfSucceeded(results, "packages-enabled", enabled.Count),
+            CountIfSucceeded(results, "packages-user", user.Count),
+            CountIfSucceeded(results, "packages-system", system.Count),
+            CountIfSucceeded(results, "packages-uninstalled", uninstalled),
+            CountIfSucceeded(results, "packages-launcher", CountPackageTokens(Output(results, "packages-launcher"))),
+            CountIfSucceeded(results, "packages-accessibility", CountPackageTokens(Output(results, "packages-accessibility"))),
+            CountIfSucceeded(results, "packages-owner", CountPackageTokens(Output(results, "packages-owner"))));
+    }
+
+    private static int? CountIfSucceeded(
+        IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
+        string key,
+        int count)
+        => results.GetValueOrDefault(key)?.All(item => item.State == InspectionSectionState.Completed) == true
+            ? count
+            : null;
+
+    private static int CountPackageTokens(string output)
+        => Regex.Matches(output, @"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+")
+            .Select(match => match.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
 
     private static string Output(
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,

@@ -39,8 +39,8 @@ public static class AdbInspectionParsers
             board,
             hardware,
             null,
-            null,
-            null);
+            Get(values, "cpu MHz") ?? Get(values, "CPU MHz"),
+            Get(values, "scaling governor") ?? Get(values, "governor"));
     }
 
     public static MemoryInfo ParseMemory(string output)
@@ -94,6 +94,194 @@ public static class AdbInspectionParsers
             .Select(line => line["feature:".Length..].Trim())
             .Where(line => line.Length > 0)
             .ToArray();
+
+    public static OemUnlockInfo ParseOemUnlock(
+        IReadOnlyDictionary<string, string> properties,
+        string settingOutput)
+    {
+        var supported = BoolProperty(properties, "ro.oem_unlock_supported");
+        var setting = BoolProperty(properties, "sys.oem_unlock_allowed")
+            ?? ParseBoolean(settingOutput);
+        var option = supported is true || setting is not null
+            ? OemUnlockOptionState.Present
+            : supported is false ? OemUnlockOptionState.Absent : OemUnlockOptionState.Unknown;
+        var locked = setting is false
+            && string.Equals(Get(properties, "ro.boot.flash.locked"), "1", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(Get(properties, "ro.boot.vbmeta.device_state"), "locked", StringComparison.OrdinalIgnoreCase);
+        var settingState = setting is true
+            ? OemUnlockSettingState.Enabled
+            : locked ? OemUnlockSettingState.LockedByDevice
+            : setting is false ? OemUnlockSettingState.Disabled
+            : OemUnlockSettingState.Unknown;
+        var actualCapability = supported is false
+            ? CapabilityState.Unsupported
+            : CapabilityState.Unknown;
+        return new(
+            option,
+            settingState,
+            actualCapability,
+            [
+                Evidence("ro.oem_unlock_supported", Get(properties, "ro.oem_unlock_supported"),
+                    "Android-reported OEM unlock option support."),
+                Evidence("sys.oem_unlock_allowed / settings", setting is null ? null : setting.ToString(),
+                    locked
+                        ? "Unlock is reported not allowed while the bootloader is locked; the policy cause is not independently proven."
+                        : "Current Android-reported OEM unlock setting."),
+                Evidence("bootloader properties",
+                    $"{Get(properties, "ro.boot.flash.locked") ?? "unknown"} / {Get(properties, "ro.boot.vbmeta.device_state") ?? "unknown"}",
+                    "Bootloader state does not prove that an unlock operation is supported.",
+                    EvidenceConfidence.Medium)
+            ]);
+    }
+
+    public static RootInfo ParseRoot(
+        IReadOnlyDictionary<string, string> properties,
+        string rootCheck)
+    {
+        var shellRoot = rootCheck.Contains("uid=0", StringComparison.OrdinalIgnoreCase)
+            ? CapabilityState.Supported
+            : rootCheck.Contains("uid=", StringComparison.OrdinalIgnoreCase)
+                ? CapabilityState.Unsupported
+                : CapabilityState.Unknown;
+        var su = rootCheck.Contains("permission denied", StringComparison.OrdinalIgnoreCase)
+            ? CapabilityState.PermissionDenied
+            : rootCheck.Contains("not found", StringComparison.OrdinalIgnoreCase)
+                ? CapabilityState.Unsupported
+                : rootCheck.Contains("/su", StringComparison.OrdinalIgnoreCase)
+                    ? CapabilityState.Partial
+                    : CapabilityState.Unknown;
+        var isDebuggable = string.Equals(Get(properties, "ro.debuggable"), "1", StringComparison.OrdinalIgnoreCase);
+        var buildType = Get(properties, "ro.build.type");
+        var adbRoot = isDebuggable
+            ? CapabilityState.Partial
+            : string.Equals(buildType, "user", StringComparison.OrdinalIgnoreCase)
+                ? CapabilityState.Unsupported
+                : CapabilityState.Unknown;
+        var blockers = new List<string>();
+        if (string.Equals(buildType, "user", StringComparison.OrdinalIgnoreCase))
+            blockers.Add("Production user build normally rejects adb root.");
+        if (string.Equals(Get(properties, "ro.boot.verifiedbootstate"), "green", StringComparison.OrdinalIgnoreCase))
+            blockers.Add("Verified Boot reports a trusted state; this does not prove unlock support.");
+        if (shellRoot != CapabilityState.Supported)
+            blockers.Add("Current ADB shell is not root.");
+        return new(
+            shellRoot,
+            su,
+            adbRoot,
+            blockers,
+            "ADB cannot prove a safe root path. Verify the exact model, firmware, bootloader policy, and vendor documentation before considering any modification.",
+            [
+                Evidence("shell id", rootCheck, "Current ADB shell identity and visible su binary."),
+                Evidence("ro.debuggable", Get(properties, "ro.debuggable"), "Debug build signal; it does not prove adb root will succeed."),
+                Evidence("ro.build.type", buildType, "Build type used as a conservative root feasibility signal.")
+            ]);
+    }
+
+    public static BluetoothInfo ParseBluetooth(
+        string features,
+        string enabledOutput,
+        string bluetoothDump)
+    {
+        var supported = features.Contains("bluetooth", StringComparison.OrdinalIgnoreCase);
+        bool? enabled = ParseBoolean(enabledOutput);
+        var state = MatchValue(bluetoothDump, @"(?im)\bstate\s*[:=]\s*(?<value>[A-Z_]+)");
+        var connected = bluetoothDump.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => (line.StartsWith("Device ", StringComparison.OrdinalIgnoreCase)
+                    || line.StartsWith("Remote device", StringComparison.OrdinalIgnoreCase))
+                && line.Contains("connected", StringComparison.OrdinalIgnoreCase))
+            .Take(25)
+            .ToArray();
+        return new(
+            supported ? CapabilityState.Supported : CapabilityState.Unknown,
+            enabled,
+            state,
+            connected,
+            [
+                Evidence("pm list features", supported ? "bluetooth feature detected" : "bluetooth feature not detected",
+                    "Bluetooth hardware feature evidence."),
+                Evidence("settings get global bluetooth_on", enabledOutput.Trim(),
+                    "Current Bluetooth enabled setting."),
+                Evidence("dumpsys bluetooth_manager", bluetoothDump, "Optional adapter and connection state.")
+            ]);
+    }
+
+    public static HdmiInfo ParseHdmi(string hdmiDump, string audioDump)
+    {
+        var unavailable = string.IsNullOrWhiteSpace(hdmiDump)
+            || hdmiDump.Contains("not found", StringComparison.OrdinalIgnoreCase)
+            || hdmiDump.Contains("unknown service", StringComparison.OrdinalIgnoreCase);
+        var cec = MatchValue(hdmiDump, @"(?im)(?:cec|hdmi)[^\r\n]*(?:state|enabled)\s*[:=]\s*(?<value>[^\r\n, ]+)");
+        var activeInput = MatchValue(hdmiDump, @"(?im)active\s+input\s*[:=]\s*(?<value>[^\r\n]+)");
+        var displays = hdmiDump.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => line.Contains("display", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("port", StringComparison.OrdinalIgnoreCase))
+            .Take(20)
+            .ToArray();
+        return new(
+            unavailable ? CapabilityState.Unknown : CapabilityState.Partial,
+            cec,
+            activeInput,
+            MatchValue(audioDump, @"(?im)(?:current|active|device)\s+(?:audio\s+)?(?:route|output)\s*[:=]\s*(?<value>[^\r\n]+)"),
+            displays,
+            [
+                Evidence("dumpsys hdmi_control", hdmiDump, "Vendor/API-dependent HDMI and CEC evidence."),
+                Evidence("dumpsys audio", audioDump, "Current audio route evidence.", EvidenceConfidence.Medium)
+            ]);
+    }
+
+    public static DrmInfo ParseDrm(string output)
+    {
+        var unavailable = string.IsNullOrWhiteSpace(output)
+            || output.Contains("not found", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("unknown service", StringComparison.OrdinalIgnoreCase);
+        var schemes = Regex.Matches(output, @"(?i)\b(?:Widevine|ClearKey|PlayReady)\b")
+            .Select(match => match.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var levels = Regex.Matches(output, @"(?i)(?:security level|securityLevel)\s*[:=]\s*(?<value>[A-Z0-9._-]+)")
+            .Select(match => match.Groups["value"].Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return new(
+            unavailable ? CapabilityState.Unknown : CapabilityState.Partial,
+            schemes.Length == 0 ? null : string.Join(", ", schemes),
+            levels.Length == 0 ? null : string.Join(", ", levels),
+            MatchValue(output, @"(?im)HDCP[^\r\n]*[:=]\s*(?<value>[^\r\n]+)"),
+            [Evidence("dumpsys media.drm", output, "DRM service output is device/API dependent; identifiers are not extracted.")]);
+    }
+
+    public static IReadOnlyList<ServiceInfo> ParseServices(string output)
+        => output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => line.Contains("ServiceRecord{", StringComparison.OrdinalIgnoreCase))
+            .Select(line =>
+            {
+                var name = line[(line.IndexOf("ServiceRecord{", StringComparison.OrdinalIgnoreCase)
+                    + "ServiceRecord{".Length)..].Split([' ', '}'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
+                    ?? "Unknown service";
+                var package = Regex.Match(line, @"(?<package>[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)/")
+                    .Groups["package"].Value;
+                return new ServiceInfo(name, package.Length == 0 ? null : package, null);
+            })
+            .DistinctBy(service => $"{service.Name}|{service.PackageName}", StringComparer.OrdinalIgnoreCase)
+            .Take(250)
+            .ToArray();
+
+    private static bool? ParseBoolean(string output)
+    {
+        var value = output.Trim();
+        return value.Equals("1", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("true", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("enabled", StringComparison.OrdinalIgnoreCase)
+            ? true
+            : value.Equals("0", StringComparison.OrdinalIgnoreCase)
+                || value.Equals("false", StringComparison.OrdinalIgnoreCase)
+                || value.Equals("disabled", StringComparison.OrdinalIgnoreCase)
+                ? false
+                : null;
+    }
 
     public static SecurityInfo ParseSecurity(IReadOnlyDictionary<string, string> properties, string selinux, string rootCheck)
     {
@@ -167,7 +355,11 @@ public static class AdbInspectionParsers
             ]);
     }
 
-    public static NetworkInfo ParseNetwork(string output, string hostname)
+    public static NetworkInfo ParseNetwork(
+        string output,
+        string hostname,
+        string? routeOutput = null,
+        IReadOnlyDictionary<string, string>? properties = null)
     {
         var addresses = Regex.Matches(output, @"inet6?\s+(?<address>[0-9a-fA-F:.]+)")
             .Select(match => match.Groups["address"].Value).Distinct().ToArray();
@@ -178,7 +370,21 @@ public static class AdbInspectionParsers
                 @"(?<![0-9A-Fa-f])(?<mac>[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})(?![0-9A-Fa-f])")
             .Select(match => match.Groups["mac"].Value.ToUpperInvariant())
             .Distinct().ToArray();
-        return new(addresses, interfaces, hostname.Trim(), null, [], null, macAddresses);
+        var gateway = MatchValue(routeOutput ?? string.Empty, @"(?im)^default\s+via\s+(?<value>[0-9a-fA-F:.]+)");
+        IReadOnlyList<string> dns = properties is null
+            ? []
+            : Enumerable.Range(1, 4)
+                .Select(index => Get(properties, $"net.dns{index}"))
+                .Where(value => value is not null)
+                .Select(value => value!)
+                .Distinct()
+                .ToArray();
+        var links = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(line => line.Contains("state ", StringComparison.OrdinalIgnoreCase))
+            .Select(line => line.Trim())
+            .Take(30)
+            .ToArray();
+        return new(addresses, interfaces, hostname.Trim(), gateway, dns, string.Join("; ", links), macAddresses);
     }
 
     public static DeveloperVerificationInfo ParseDeveloperVerification(

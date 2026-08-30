@@ -227,6 +227,15 @@ public interface IDeveloperVerificationPolicyProvider
     DeveloperVerificationPolicy GetPolicy(AndroidDevice? device);
 }
 
+public interface IRootGuidanceProvider
+{
+    string GetGuidance(
+        AndroidDevice? device,
+        OemUnlockInfo oemUnlock,
+        SecurityInfo security,
+        RootInfo root);
+}
+
 public interface IScriptExecutionService
 {
     Task<ScriptExecutionResult> ExecuteAsync(
