@@ -18,6 +18,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>AndroidTVManager</AssemblyName>
+    <ApplicationIcon>Assets\AndroidTVManager.ico</ApplicationIcon>
     <RootNamespace>AndroidTVManager.App</RootNamespace>
     <Product>Android TV Manager</Product>
     <Authors>Eliminater74</Authors>
@@ -29,5 +30,9 @@
     <InformationalVersion>1.0.0-B2</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="Assets\AndroidTVManager.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

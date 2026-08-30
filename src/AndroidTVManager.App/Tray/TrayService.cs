@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.IO;
 using System.Windows;
 using AndroidTVManager.Core.Abstractions;
 using Forms = System.Windows.Forms;
@@ -12,6 +13,7 @@ public sealed class TrayService : IDisposable
     private readonly ISettingsStore _settings;
     private readonly Forms.NotifyIcon _notifyIcon;
     private readonly Forms.ContextMenuStrip _menu;
+    private readonly Icon? _customIcon;
     private bool _allowClose;
     private bool _disposed;
     private bool _minimizeToTray = true;
@@ -23,9 +25,10 @@ public sealed class TrayService : IDisposable
         _runner = runner;
         _settings = settings;
         _menu = BuildMenu();
+        _customIcon = TryLoadIcon();
         _notifyIcon = new Forms.NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = _customIcon ?? SystemIcons.Application,
             Text = "Android TV Manager",
             Visible = true,
             ContextMenuStrip = _menu
@@ -54,6 +57,7 @@ public sealed class TrayService : IDisposable
         ThemeManager.ThemeChanged -= OnThemeChanged;
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
+        _customIcon?.Dispose();
     }
 
     private Forms.ContextMenuStrip BuildMenu()
@@ -70,6 +74,19 @@ public sealed class TrayService : IDisposable
         ApplyMenuTheme(menu);
         ThemeManager.ThemeChanged += OnThemeChanged;
         return menu;
+    }
+
+    private static Icon? TryLoadIcon()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Assets", "AndroidTVManager.ico");
+        try
+        {
+            return File.Exists(path) ? new Icon(path) : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void OnThemeChanged(object? sender, EventArgs e) => ApplyMenuTheme(_menu);
