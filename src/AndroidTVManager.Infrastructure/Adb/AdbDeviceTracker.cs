@@ -42,6 +42,22 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
         return Task.CompletedTask;
     }
 
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    {
+        var adbPath = _toolsManager.AdbPath;
+        if (adbPath is null)
+        {
+            Publish([]);
+            return;
+        }
+
+        var result = await _runner.RunAsync(["devices", "-l"], TimeSpan.FromSeconds(20), cancellationToken);
+        if (result.IsSuccess)
+            Publish(AdbParsers.ParseTrackedDevices(result.StandardOutput));
+        else
+            _logger.Warning("Tracker", $"Could not refresh the ADB device list: {result.StandardError.Trim()}");
+    }
+
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         Task? trackingTask;

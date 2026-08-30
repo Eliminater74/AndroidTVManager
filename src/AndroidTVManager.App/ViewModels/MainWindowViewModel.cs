@@ -217,7 +217,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(AdbStatus));
         OnPropertyChanged(nameof(AdbVersion));
         if (status.IsReady)
+        {
             await _deviceTracker.StartAsync(cancellationToken);
+            await _deviceTracker.RefreshAsync(cancellationToken);
+        }
     }
 
     private async void OnDevicesChanged(object? sender, IReadOnlyList<AndroidDevice> devices)

@@ -21,6 +21,20 @@ public sealed class AdbParserTests
         devices[1].State.Should().Be(DeviceState.Unauthorized);
     }
 
+    [Fact]
+    public void Parses_usb_emulator_from_adb_device_list()
+    {
+        var devices = AdbParsers.ParseTrackedDevices(
+            "List of devices attached\n" +
+            "emulator-5554\tdevice product:sdk_gphone64_x86_64 model:sdk_gphone64_x86_64 device:emu64xa transport_id:1\n");
+
+        devices.Should().ContainSingle();
+        devices[0].Serial.Should().Be("emulator-5554");
+        devices[0].State.Should().Be(DeviceState.Device);
+        devices[0].ConnectionType.Should().Be(ConnectionType.Usb);
+        devices[0].Endpoint.Should().BeNull();
+    }
+
     [Theory]
     [InlineData("192.168.1.20", "5555", "192.168.1.20:5555")]
     [InlineData("2001:db8::20", "37099", "[2001:db8::20]:37099")]

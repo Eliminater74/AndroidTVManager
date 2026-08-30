@@ -41,6 +41,7 @@ public interface IAdbDeviceTracker : IAsyncDisposable
     event EventHandler<IReadOnlyList<AndroidDevice>>? DevicesChanged;
     IReadOnlyList<AndroidDevice> CurrentDevices { get; }
     Task StartAsync(CancellationToken cancellationToken = default);
+    Task RefreshAsync(CancellationToken cancellationToken = default);
     Task StopAsync(CancellationToken cancellationToken = default);
 }
 
