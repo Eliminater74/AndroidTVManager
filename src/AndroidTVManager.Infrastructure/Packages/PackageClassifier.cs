@@ -7,7 +7,7 @@ namespace AndroidTVManager.Infrastructure.Packages;
 
 public sealed class PackageClassifier : IPackageClassifier
 {
-    public const string RulesetVersion = "starter-2026-08-29";
+    public const string RulesetVersion = "vendor-tv-2026-08-30";
     private readonly IReadOnlyList<PackageKnowledgeRule> _rules;
 
     public PackageClassifier()

@@ -68,5 +68,95 @@
         "description": "Android security and application verification behavior may be affected."
       }
     ]
+  },
+  {
+    "package": "fusion.android.tv.demo",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Philips demo",
+    "description": "Philips EPOP/demo application located under /system_ext/app/EPOP/EPOP.apk.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Demo mode",
+        "description": "Retail/demo presentation behavior may be unavailable."
+      }
+    ],
+    "manufacturer": "Philips"
+  },
+  {
+    "package": "com.coocaa.demonow.lightining",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Philips vendor feature",
+    "description": "Philips/Coocaa vendor feature component. Review its role before changing it.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Vendor features",
+        "description": "A vendor-specific feature or shortcut may no longer be available."
+      }
+    ],
+    "manufacturer": "Philips"
+  },
+  {
+    "package": "com.smartdevice.recommendation",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Recommendations",
+    "description": "Philips SmartDevice recommendation component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Home screen",
+        "description": "Vendor recommendations or suggested content may change."
+      }
+    ],
+    "manufacturer": "Philips"
+  },
+  {
+    "package": "com.smartdevice.dailyshortcut",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Shortcuts",
+    "description": "Philips SmartDevice daily shortcut component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Shortcuts",
+        "description": "Vendor-provided daily shortcuts may no longer appear."
+      }
+    ],
+    "manufacturer": "Philips"
+  },
+  {
+    "package": "com.realtek.power",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "Power service",
+    "description": "Privileged Philips/Realtek power service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Power management",
+        "description": "Power, standby, wake, or hardware control behavior may fail."
+      }
+    ],
+    "manufacturer": "Philips"
+  },
+  {
+    "package": "com.vt.tvservice",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "Hisense TV service",
+    "description": "Privileged Hisense TV service adjacent to the TV provider.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Television service",
+        "description": "Tuner, TV provider, input, or vendor television functions may fail."
+      }
+    ],
+    "manufacturer": "Hisense"
   }
 ]
