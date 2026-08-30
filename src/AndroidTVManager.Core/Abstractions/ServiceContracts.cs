@@ -387,6 +387,17 @@ public interface ISettingsStore
     Task SetAsync(string key, string value, CancellationToken cancellationToken = default);
 }
 
+public interface IUpdateService
+{
+    Task<UpdateCheckResult> CheckAsync(
+        string currentVersion,
+        CancellationToken cancellationToken = default);
+
+    Task<UpdateInstallResult> DownloadAndInstallAsync(
+        UpdateRelease release,
+        CancellationToken cancellationToken = default);
+}
+
 public interface ILocalAppDataPaths
 {
     string Root { get; }

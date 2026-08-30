@@ -6,6 +6,7 @@ using AndroidTVManager.Infrastructure.Scripts;
 using AndroidTVManager.Core.Scripts;
 using AndroidTVManager.Infrastructure.Packages;
 using AndroidTVManager.Infrastructure.Storage;
+using AndroidTVManager.Infrastructure.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AndroidTVManager.Infrastructure;
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.AddSingleton<IDisplayDiagnosticsService, DisplayDiagnosticsService>();
         services.AddSingleton<IDisplayDiagnosticsSnapshotStore, DisplayDiagnosticsSnapshotStore>();
         services.AddSingleton<ITransportDoctorService, TransportDoctorService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IConfigurationExplorerService, ConfigurationExplorerService>();
         services.AddSingleton<IConfigurationSnapshotStore, ConfigurationSnapshotStore>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();

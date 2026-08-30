@@ -2103,6 +2103,47 @@
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
                             BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,28,0,0">
                         <StackPanel>
+                            <TextBlock Text="APPLICATION UPDATES" Style="{StaticResource SectionLabelStyle}"/>
+                            <TextBlock Text="Check GitHub for installer updates and review the attached release notes before installing."
+                                       Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                            <CheckBox Content="Enable automatic update checks"
+                                      IsChecked="{Binding UpdatesEnabled}" Margin="0,14,0,0"/>
+                            <CheckBox Content="Check when the application starts"
+                                      IsChecked="{Binding CheckForUpdatesOnStartup}" Margin="0,10,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <TextBlock Text="Periodic check:" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondary}" Margin="0,0,10,0"/>
+                                <ComboBox ItemsSource="{Binding UpdateIntervals}"
+                                          DisplayMemberPath="Label"
+                                          SelectedItem="{Binding SelectedUpdateInterval}"
+                                          Width="150"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                <Button Content="Check now" Style="{StaticResource GhostButtonStyle}"
+                                        Command="{Binding CheckForUpdatesCommand}" Margin="0,0,8,0"/>
+                                <Button Content="Download and install" Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding InstallUpdateCommand}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding UpdateStatus}" Foreground="{StaticResource TextSecondary}"
+                                       TextWrapping="Wrap" Margin="0,10,0,0"/>
+                            <Border Background="{StaticResource SurfaceSecondaryBrush}"
+                                    BorderBrush="{StaticResource AccentPrimaryBrush}"
+                                    BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding AvailableRelease.Name}" FontWeight="SemiBold"/>
+                                    <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto"
+                                                  Margin="0,6,0,0">
+                                        <TextBlock Text="{Binding AvailableRelease.ReleaseNotes}"
+                                                   Foreground="{StaticResource TextSecondary}"
+                                                   TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                            BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,28,0,0">
+                        <StackPanel>
                             <TextBlock Text="ADB RUNTIME" FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource VioletAccent}"/>
                             <TextBlock Text="Official Google Platform-Tools" FontSize="19" FontWeight="SemiBold"

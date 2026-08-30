@@ -14,6 +14,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace AndroidTVManager.App.ViewModels;
 
 public sealed record NavigationEntry(string Label, string Glyph);
+public sealed record UpdateIntervalOption(int Hours, string Label);
 
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -45,6 +46,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IPackagePreferenceRepository _packagePreferences;
     private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
     private readonly ILogViewerService _logViewer;
+    private readonly IUpdateService _updates;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
@@ -79,7 +81,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IPackageIconService packageIconService,
         IDeveloperVerificationPolicyProvider verificationPolicy,
         IPackagePreferenceRepository packagePreferences,
-        ILogViewerService logViewer)
+        ILogViewerService logViewer,
+        IUpdateService updates)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -108,6 +111,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _packagePreferences = packagePreferences;
         _verificationPolicy = verificationPolicy;
         _logViewer = logViewer;
+        _updates = updates;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -169,7 +173,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
         "Logs" => new LogPageViewModel(_logViewer, _confirmation),
-        "Settings" => new SettingsPageViewModel(_toolsManager, _paths, _settingsStore),
+        "Settings" => new SettingsPageViewModel(
+            _toolsManager,
+            _paths,
+            _settingsStore,
+            _updates,
+            _deviceTracker,
+            _confirmation),
         "About" => new AboutPageViewModel(_toolsManager, _paths),
         _ => new PageViewModel(entry.Label)
     };
@@ -1804,15 +1814,24 @@ public sealed partial class SettingsPageViewModel : PageViewModel
     private readonly IAdbToolsManager _toolsManager;
     private readonly ILocalAppDataPaths _paths;
     private readonly ISettingsStore _settings;
+    private readonly IUpdateService _updates;
+    private readonly IAdbDeviceTracker _deviceTracker;
+    private readonly IConfirmationService _confirmation;
 
     public SettingsPageViewModel(
         IAdbToolsManager toolsManager,
         ILocalAppDataPaths paths,
-        ISettingsStore settings) : base("Settings")
+        ISettingsStore settings,
+        IUpdateService updates,
+        IAdbDeviceTracker deviceTracker,
+        IConfirmationService confirmation) : base("Settings")
     {
         _toolsManager = toolsManager;
         _paths = paths;
         _settings = settings;
+        _updates = updates;
+        _deviceTracker = deviceTracker;
+        _confirmation = confirmation;
         _paths.EnsureCreated();
         _ = LoadAsync();
     }
@@ -1820,6 +1839,9 @@ public sealed partial class SettingsPageViewModel : PageViewModel
     public string DataPath => Path.GetDirectoryName(_paths.DatabasePath) ?? _paths.Root;
     public string ToolsPath => _paths.ToolsPath;
     public string LogsPath => _paths.LogsPath;
+    public IReadOnlyList<UpdateIntervalOption> UpdateIntervals { get; } =
+        [new(0, "Never"), new(6, "Every 6 hours"), new(12, "Every 12 hours"),
+         new(24, "Every day"), new(168, "Every week")];
 
     [ObservableProperty]
     private string _status = "Platform-Tools status is checked on startup.";
@@ -1841,6 +1863,21 @@ public sealed partial class SettingsPageViewModel : PageViewModel
     [ObservableProperty]
     private AppTheme _selectedTheme = AppTheme.Dark;
 
+    [ObservableProperty]
+    private bool _updatesEnabled = true;
+
+    [ObservableProperty]
+    private bool _checkForUpdatesOnStartup = true;
+
+    [ObservableProperty]
+    private UpdateIntervalOption _selectedUpdateInterval = new(24, "Every day");
+
+    [ObservableProperty]
+    private string _updateStatus = "Update checks have not run yet.";
+
+    [ObservableProperty]
+    private UpdateRelease? _availableRelease;
+
     private async Task LoadAsync()
     {
         StartMinimized = await ReadBoolAsync("general.startMinimized", false);
@@ -1849,6 +1886,16 @@ public sealed partial class SettingsPageViewModel : PageViewModel
         RememberSelectedDevice = await ReadBoolAsync("general.rememberSelectedDevice", true);
         if (Enum.TryParse<AppTheme>(await _settings.GetAsync("appearance.theme"), true, out var theme))
             SelectedTheme = theme;
+        UpdatesEnabled = await ReadBoolAsync("updates.enabled", true);
+        CheckForUpdatesOnStartup = await ReadBoolAsync("updates.checkOnStartup", true);
+        var intervalHours = int.TryParse(await _settings.GetAsync("updates.intervalHours"), out var parsed)
+            ? parsed
+            : 24;
+        SelectedUpdateInterval = UpdateIntervals.FirstOrDefault(item => item.Hours == intervalHours)
+            ?? UpdateIntervals[3];
+        if (UpdatesEnabled && CheckForUpdatesOnStartup)
+            _ = CheckForUpdatesIfDueAsync(force: false);
+        _ = MonitorUpdateIntervalAsync();
     }
 
     partial void OnStartMinimizedChanged(bool value) => _ = SaveBoolAsync("general.startMinimized", value);
@@ -1861,10 +1908,79 @@ public sealed partial class SettingsPageViewModel : PageViewModel
         _ = _settings.SetAsync("appearance.theme", value.ToString());
     }
 
+    partial void OnUpdatesEnabledChanged(bool value)
+        => _ = SaveBoolAsync("updates.enabled", value);
+
+    partial void OnCheckForUpdatesOnStartupChanged(bool value)
+        => _ = SaveBoolAsync("updates.checkOnStartup", value);
+
+    partial void OnSelectedUpdateIntervalChanged(UpdateIntervalOption value)
+        => _ = _settings.SetAsync("updates.intervalHours", value.Hours.ToString());
+
     private async Task<bool> ReadBoolAsync(string key, bool fallback)
         => bool.TryParse(await _settings.GetAsync(key), out var value) ? value : fallback;
 
     private Task SaveBoolAsync(string key, bool value) => _settings.SetAsync(key, value.ToString());
+
+    [RelayCommand]
+    private Task CheckForUpdatesAsync() => CheckForUpdatesIfDueAsync(force: true);
+
+    [RelayCommand]
+    private async Task InstallUpdateAsync()
+    {
+        if (AvailableRelease is null)
+        {
+            UpdateStatus = "Check for updates before installing.";
+            return;
+        }
+        if (!_confirmation.Confirm(
+                $"Install {AvailableRelease.Version}",
+                $"{AvailableRelease.Name}\n\n{AvailableRelease.ReleaseNotes}\n\nAndroid TV Manager will close, stop adb.exe, and run the verified installer. Continue?"))
+        {
+            UpdateStatus = "Update canceled.";
+            return;
+        }
+
+        UpdateStatus = "Stopping device tracking and adb.exe before update…";
+        await _deviceTracker.StopAsync();
+        var result = await _updates.DownloadAndInstallAsync(AvailableRelease);
+        UpdateStatus = result.Message;
+        if (result.Started)
+            System.Windows.Application.Current.Shutdown();
+    }
+
+    private async Task CheckForUpdatesIfDueAsync(bool force)
+    {
+        if (!force && !UpdatesEnabled)
+            return;
+        if (!force && !CheckForUpdatesOnStartup && SelectedUpdateInterval.Hours == 0)
+            return;
+        var lastValue = await _settings.GetAsync("updates.lastCheckedUtc");
+        if (!force && DateTimeOffset.TryParse(lastValue, out var last)
+            && SelectedUpdateInterval.Hours > 0
+            && DateTimeOffset.UtcNow - last < TimeSpan.FromHours(SelectedUpdateInterval.Hours))
+            return;
+        UpdateStatus = "Checking GitHub for updates…";
+        var result = await _updates.CheckAsync(AppInfo.Version);
+        await _settings.SetAsync("updates.lastCheckedUtc", result.CheckedUtc.ToString("O"));
+        AvailableRelease = result.Release;
+        UpdateStatus = result.ErrorMessage is not null
+            ? $"Update check failed: {result.ErrorMessage}"
+            : result.IsUpdateAvailable
+                ? $"Update available: {result.Release!.Version}."
+                : $"You are running the latest version ({result.CurrentVersion}).";
+    }
+
+    private async Task MonitorUpdateIntervalAsync()
+    {
+        while (true)
+        {
+            var hours = SelectedUpdateInterval.Hours;
+            await Task.Delay(hours > 0 ? TimeSpan.FromHours(hours) : TimeSpan.FromMinutes(5));
+            if (UpdatesEnabled && hours > 0)
+                await CheckForUpdatesIfDueAsync(force: false);
+        }
+    }
 
     [RelayCommand]
     private async Task RepairPlatformToolsAsync()
