@@ -5,11 +5,24 @@ namespace AndroidTVManager.App;
 
 public static class AppInfo
 {
+    private static Assembly CurrentAssembly => Assembly.GetExecutingAssembly();
+
+    public static string ProductName =>
+        CurrentAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product
+        ?? "Android TV Manager";
+
+    public static string DeveloperName =>
+        CurrentAssembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company
+        ?? "Eliminater74";
+
+    public static string Description =>
+        CurrentAssembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description
+        ?? "Android TV / Google TV device management toolbox.";
+
     public static string InformationalVersion =>
-        Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-        ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-        ?? "1.0.0-B2";
+        CurrentAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? CurrentAssembly.GetName().Version?.ToString()
+        ?? "Unknown";
 
     public static string Version => InformationalVersion.Split('+')[0];
 
@@ -24,7 +37,7 @@ public static class AppInfo
         {
             var match = Regex.Match(InformationalVersion, @"-B(?<number>\d+)",
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            return match.Success ? $"BETA {match.Groups["number"].Value}" : "RELEASE";
+            return match.Success ? $"Beta {match.Groups["number"].Value}" : "Stable";
         }
     }
 }

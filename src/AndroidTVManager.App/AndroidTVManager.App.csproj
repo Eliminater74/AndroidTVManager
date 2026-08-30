@@ -19,6 +19,10 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>AndroidTVManager</AssemblyName>
     <RootNamespace>AndroidTVManager.App</RootNamespace>
+    <Product>Android TV Manager</Product>
+    <Authors>Eliminater74</Authors>
+    <Company>Eliminater74</Company>
+    <Description>Android TV / Google TV Device Management Toolbox</Description>
     <Version>1.0.0-B2</Version>
     <AssemblyVersion>1.0.0.2</AssemblyVersion>
     <FileVersion>1.0.0.2</FileVersion>

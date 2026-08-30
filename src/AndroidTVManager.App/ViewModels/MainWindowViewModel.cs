@@ -7,6 +7,7 @@ using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
 using AndroidTVManager.Core.Scripts;
+using AndroidTVManager.Infrastructure.Database;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -132,7 +133,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
         "Logs" => new LogPageViewModel(_logViewer, _confirmation),
         "Settings" => new SettingsPageViewModel(_toolsManager, _paths, _settingsStore),
-        "About" => new AboutPageViewModel(),
+        "About" => new AboutPageViewModel(_toolsManager, _paths),
         _ => new PageViewModel(entry.Label)
     };
     public object CurrentPage
@@ -813,15 +814,77 @@ public sealed partial class DevicesPageViewModel : ObservableObject
     }
 }
 
-public sealed class AboutPageViewModel : PageViewModel
+public sealed partial class AboutPageViewModel : PageViewModel
 {
-    public AboutPageViewModel() : base("About")
+    private readonly IAdbToolsManager _toolsManager;
+    private readonly ILocalAppDataPaths _paths;
+
+    public AboutPageViewModel(IAdbToolsManager toolsManager, ILocalAppDataPaths paths) : base("About")
     {
+        _toolsManager = toolsManager;
+        _paths = paths;
+        _ = LoadPlatformToolsAsync();
     }
 
-    public string ProductLine => "Android TV / Google TV Device Management Toolbox";
-    public string Mission => "A faster, safer, more modern way to manage the ADB-capable devices in your living room.";
-    public string PlatformToolsNote => "Official Android SDK Platform-Tools are downloaded directly from Google and kept in LocalAppData.";
+    public string ProductName => AppInfo.ProductName;
+    public string DeveloperName => AppInfo.DeveloperName;
+    public string ProductDescription => AppInfo.Description;
+    public string ReleaseChannel => AppInfo.ReleaseChannel;
+    public string InformationalVersion => AppInfo.InformationalVersion;
+    public string Build => string.IsNullOrWhiteSpace(AppInfo.BuildIdentifier)
+        ? "Build information unavailable"
+        : AppInfo.BuildIdentifier;
+    public string RuntimeVersion => Environment.Version.ToString();
+    public string Platform => $"Windows {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture}";
+    public int DatabaseSchemaVersion => DatabaseMigrations.CurrentVersion;
+    public string ManagedToolsLocation => _paths.ToolsPath;
+    public string ProductLine => "Independent Android TV / Google TV device management toolbox";
+    public string Mission => "Inspect, understand, and safely manage ADB-capable devices in your living room.";
+
+    [ObservableProperty]
+    private string _platformToolsVersion = "Checking managed Platform-Tools…";
+
+    [ObservableProperty]
+    private string _copyStatus = string.Empty;
+
+    [RelayCommand]
+    private void CopyAppInformation()
+    {
+        var summary = string.Join(Environment.NewLine,
+            ProductName,
+            $"Developer: {DeveloperName}",
+            $"Version: {Version}",
+            $"Release: {ReleaseChannel}",
+            $"Build: {Build}",
+            $".NET: {RuntimeVersion}",
+            $"Platform: {Platform}",
+            $"ADB: {PlatformToolsVersion}",
+            $"Database Schema: {DatabaseSchemaVersion}");
+        try
+        {
+            System.Windows.Clipboard.SetText(summary);
+            CopyStatus = "Application information copied.";
+        }
+        catch (Exception exception)
+        {
+            CopyStatus = $"Could not copy application information: {exception.Message}";
+        }
+    }
+
+    private async Task LoadPlatformToolsAsync()
+    {
+        try
+        {
+            var status = await _toolsManager.GetStatusAsync();
+            PlatformToolsVersion = status.IsReady && !string.IsNullOrWhiteSpace(status.Version)
+                ? status.Version
+                : "Not installed";
+        }
+        catch
+        {
+            PlatformToolsVersion = "Not installed";
+        }
+    }
 }
 
 public sealed partial class ConnectionsPageViewModel : PageViewModel
