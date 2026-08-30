@@ -8,6 +8,7 @@
 - SQLite devices, sessions, events, package inventory, and inspection history
 - Device intelligence, Configuration Explorer, and capability evidence
 - Display / HDMI Diagnostics with named captures, comparison, and change watching
+- ADB Transport Doctor with repeated stability probes and transport failure evidence
 - APK installation and complete package management
 - Conservative debloat planning with transaction restore
 - System tray, settings, logs, themes, scripts, screenshots, and device tools

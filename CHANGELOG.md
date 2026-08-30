@@ -39,6 +39,7 @@ The initial Beta 1 foundation established managed Platform-Tools, ADB connection
 ## Unreleased
 
 - Added first-pass conservative Hisense and Philips package rules using vendor-specific evidence and feature-impact explanations.
+- Added the ADB Transport Doctor with selectable 10, 25, and 50-probe stability tests and per-probe latency/failure results.
 - Added the Display / HDMI Diagnostics page with Good State, Bad State, comparison, capture history, HDR/HDCP/CEC/audio evidence, SurfaceFlinger modes, vendor display properties, export, and a 10-second watcher.
 - Added the Backup / Restore page with capability-aware report, configuration, APK/split-APK, shared-storage, legacy app-data, and APK restore workflows.
 - Added visible Debloat preset choices with preselected known candidates and manual selection for reviewed Unknown/private packages.

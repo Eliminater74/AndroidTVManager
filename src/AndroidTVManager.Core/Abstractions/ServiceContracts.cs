@@ -145,6 +145,12 @@ public interface IDisplayDiagnosticsService
         DisplayCaptureLabel label = DisplayCaptureLabel.Unlabeled,
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<DisplayDiagnosticSnapshot> CaptureLightweightAsync(
+        string serial,
+        string? friendlyDeviceName = null,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IDisplayDiagnosticsSnapshotStore
@@ -156,6 +162,14 @@ public interface IDisplayDiagnosticsSnapshotStore
     Task<IReadOnlyList<DisplayDiagnosticSnapshot>> GetRecentAsync(
         string serial,
         int limit = 20,
+        CancellationToken cancellationToken = default);
+}
+
+public interface ITransportDoctorService
+{
+    Task<TransportDoctorResult> RunAsync(
+        AndroidDevice device,
+        int probeCount = 10,
         CancellationToken cancellationToken = default);
 }
 

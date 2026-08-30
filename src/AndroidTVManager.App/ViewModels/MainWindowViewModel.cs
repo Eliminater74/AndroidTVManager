@@ -34,6 +34,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDeviceBackupService _backupService;
     private readonly IDisplayDiagnosticsService _displayDiagnosticsService;
     private readonly IDisplayDiagnosticsSnapshotStore _displaySnapshots;
+    private readonly ITransportDoctorService _transportDoctorService;
     private readonly IConfigurationExplorerService _configurationService;
     private readonly IConfigurationSnapshotStore _configurationSnapshots;
     private readonly IDebloatPlanner _debloatPlanner;
@@ -68,6 +69,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDeviceBackupService backupService,
         IDisplayDiagnosticsService displayDiagnosticsService,
         IDisplayDiagnosticsSnapshotStore displaySnapshots,
+        ITransportDoctorService transportDoctorService,
         IConfigurationExplorerService configurationService,
         IConfigurationSnapshotStore configurationSnapshots,
         IDebloatPlanner debloatPlanner,
@@ -95,6 +97,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _backupService = backupService;
         _displayDiagnosticsService = displayDiagnosticsService;
         _displaySnapshots = displaySnapshots;
+        _transportDoctorService = transportDoctorService;
         _configurationService = configurationService;
         _configurationSnapshots = configurationSnapshots;
         _debloatPlanner = debloatPlanner;
@@ -111,6 +114,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Devices", "◉"),
             new("Device Status", "◈"),
             new("Display Diagnostics", "▣"),
+            new("ADB Transport Doctor", "⌁"),
             new("Configuration Explorer", "≋"),
             new("Connections", "↔"),
             new("Install APK", "＋"),
@@ -146,6 +150,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Display Diagnostics" => new DisplayDiagnosticsPageViewModel(
             _displayDiagnosticsService,
             _displaySnapshots,
+            Devices),
+        "ADB Transport Doctor" => new TransportDoctorPageViewModel(
+            _transportDoctorService,
             Devices),
         "Configuration Explorer" => new ConfigurationPageViewModel(
             _configurationService,
@@ -201,6 +208,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             if (_pages.TryGetValue("Display Diagnostics", out var displayPage)
                 && displayPage is DisplayDiagnosticsPageViewModel display)
                 display.SelectedDevice = value;
+            if (_pages.TryGetValue("ADB Transport Doctor", out var transportPage)
+                && transportPage is TransportDoctorPageViewModel transport)
+                transport.SelectedDevice = value;
         }
     }
 
@@ -216,6 +226,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Devices" => "Connected and saved Android devices.",
         "Device Status" => "Evidence-backed hardware, Android, security, and capability information.",
         "Display Diagnostics" => "Capture, compare, and monitor display, HDMI, HDR, HDCP, and CEC evidence.",
+        "ADB Transport Doctor" => "Measure ADB transport stability and capture failed probe evidence.",
         "Configuration Explorer" => "Read-only runtime properties, partition files, and configuration provenance.",
         "Connections" => "Connect over network or pair Android Wireless Debugging.",
         "Install APK" => "Install applications on the selected device.",

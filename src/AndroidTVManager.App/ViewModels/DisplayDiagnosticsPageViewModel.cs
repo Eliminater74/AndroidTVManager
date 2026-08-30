@@ -235,7 +235,28 @@ public sealed partial class DisplayDiagnosticsPageViewModel : PageViewModel
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                 if (device.State != DeviceState.Device || SelectedDevice?.Serial != device.Serial)
                     break;
-                await CaptureAsync(DisplayCaptureLabel.Unlabeled);
+                var previous = CurrentSnapshot;
+                var snapshot = await _service.CaptureLightweightAsync(
+                    device.Serial,
+                    device.FriendlyName,
+                    cancellationToken: cancellationToken);
+                if (SelectedDevice?.Serial != device.Serial)
+                    break;
+                CurrentSnapshot = snapshot;
+                Comparison = previous is null
+                    ? null
+                    : DisplayDiagnosticsParser.Compare(previous, snapshot);
+                if (Comparison?.HasChanges == true)
+                {
+                    var detected = Comparison;
+                    await _snapshots.SaveAsync(snapshot, cancellationToken);
+                    await LoadHistoryAsync(device, preserveStatus: true);
+                    Status = $"Watcher detected {detected.Changes.Count} display change(s) at {snapshot.CapturedUtc.LocalDateTime:t}.";
+                }
+                else
+                {
+                    Status = $"Watcher checked display state at {snapshot.CapturedUtc.LocalDateTime:t}; no changes detected.";
+                }
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

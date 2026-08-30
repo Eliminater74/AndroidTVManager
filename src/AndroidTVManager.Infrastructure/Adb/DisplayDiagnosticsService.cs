@@ -20,6 +20,28 @@ public sealed class DisplayDiagnosticsService : IDisplayDiagnosticsService
         DisplayCaptureLabel label = DisplayCaptureLabel.Unlabeled,
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
+        => await CaptureCoreAsync(serial, friendlyDeviceName, label, lightweight: false, progress, cancellationToken);
+
+    public async Task<DisplayDiagnosticSnapshot> CaptureLightweightAsync(
+        string serial,
+        string? friendlyDeviceName = null,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
+        => await CaptureCoreAsync(
+            serial,
+            friendlyDeviceName,
+            DisplayCaptureLabel.Unlabeled,
+            lightweight: true,
+            progress,
+            cancellationToken);
+
+    private async Task<DisplayDiagnosticSnapshot> CaptureCoreAsync(
+        string serial,
+        string? friendlyDeviceName,
+        DisplayCaptureLabel label,
+        bool lightweight,
+        IProgress<string>? progress,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(serial))
             throw new ArgumentException("A device serial is required.", nameof(serial));
@@ -27,14 +49,17 @@ public sealed class DisplayDiagnosticsService : IDisplayDiagnosticsService
 
         var commands = new Dictionary<string, IReadOnlyList<string>>
         {
-            ["getprop"] = ["shell", "getprop"],
             ["wm-size"] = ["shell", "wm", "size"],
-            ["wm-density"] = ["shell", "wm", "density"],
             ["display"] = ["shell", "dumpsys", "display"],
             ["surfaceflinger"] = ["shell", "dumpsys", "SurfaceFlinger"],
-            ["hdmi"] = ["shell", "dumpsys", "hdmi_control"],
-            ["audio"] = ["shell", "dumpsys", "audio"]
+            ["hdmi"] = ["shell", "dumpsys", "hdmi_control"]
         };
+        if (!lightweight)
+        {
+            commands["getprop"] = ["shell", "getprop"];
+            commands["wm-density"] = ["shell", "wm", "density"];
+            commands["audio"] = ["shell", "dumpsys", "audio"];
+        }
         var results = new Dictionary<string, AdbCommandResult>();
         foreach (var pair in commands)
         {

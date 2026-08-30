@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddSingleton<IDeviceBackupService, DeviceBackupService>();
         services.AddSingleton<IDisplayDiagnosticsService, DisplayDiagnosticsService>();
         services.AddSingleton<IDisplayDiagnosticsSnapshotStore, DisplayDiagnosticsSnapshotStore>();
+        services.AddSingleton<ITransportDoctorService, TransportDoctorService>();
         services.AddSingleton<IConfigurationExplorerService, ConfigurationExplorerService>();
         services.AddSingleton<IConfigurationSnapshotStore, ConfigurationSnapshotStore>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
