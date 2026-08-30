@@ -19,5 +19,6 @@ public sealed class AppInfoTests
         AppInfo.Version.Should().Be("1.0.0-B2");
         AppInfo.ReleaseChannel.Should().Be("Beta 2");
         AppInfo.Version.Should().NotContain("B1");
+        Assert.InRange(AppInfo.BuildIdentifier.Length, 0, 8);
     }
 }

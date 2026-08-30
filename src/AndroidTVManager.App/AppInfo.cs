@@ -27,9 +27,17 @@ public static class AppInfo
     public static string Version => InformationalVersion.Split('+')[0];
 
     public static string BuildIdentifier
-        => InformationalVersion.Contains('+', StringComparison.Ordinal)
-            ? InformationalVersion[(InformationalVersion.IndexOf('+') + 1)..]
-            : string.Empty;
+    {
+        get
+        {
+            var separator = InformationalVersion.IndexOf('+', StringComparison.Ordinal);
+            if (separator < 0 || separator == InformationalVersion.Length - 1)
+                return string.Empty;
+
+            var identifier = InformationalVersion[(separator + 1)..];
+            return identifier.Length > 8 ? identifier[..8] : identifier;
+        }
+    }
 
     public static string ReleaseChannel
     {
