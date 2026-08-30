@@ -32,7 +32,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="Assets\AndroidTVManager.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Remove="Assets\AndroidTVManager.ico" />
+    <Resource Include="Assets\AndroidTVManager.ico" />
+    <Content Include="Assets\AndroidTVManager.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

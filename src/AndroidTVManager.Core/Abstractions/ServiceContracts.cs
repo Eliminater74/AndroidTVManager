@@ -112,6 +112,31 @@ public interface IDeviceInspectionService
         CancellationToken cancellationToken = default);
 }
 
+public interface IConfigurationExplorerService
+{
+    Task<ConfigurationSnapshot> InspectAsync(
+        string serial,
+        string? friendlyDeviceName = null,
+        IProgress<ConfigurationInspectionProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IConfigurationSnapshotStore
+{
+    Task SaveAsync(
+        ConfigurationSnapshot snapshot,
+        CancellationToken cancellationToken = default);
+
+    Task<ConfigurationSnapshot?> GetLatestAsync(
+        string serial,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ConfigurationSnapshot>> GetRecentAsync(
+        string serial,
+        int limit = 10,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IDeviceSnapshotRepository
 {
     Task<long> SaveAsync(DeviceInspectionResult inspection, CancellationToken cancellationToken = default);

@@ -31,6 +31,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ISettingsStore _settingsStore;
     private readonly IScriptExecutionService _scriptExecutionService;
     private readonly IDeviceInspectionService _inspectionService;
+    private readonly IConfigurationExplorerService _configurationService;
+    private readonly IConfigurationSnapshotStore _configurationSnapshots;
     private readonly IDebloatPlanner _debloatPlanner;
     private readonly IDebloatExecutionService _debloatExecutionService;
     private readonly IAdbCommandService _commandService;
@@ -60,6 +62,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ISettingsStore settingsStore,
         IScriptExecutionService scriptExecutionService,
         IDeviceInspectionService inspectionService,
+        IConfigurationExplorerService configurationService,
+        IConfigurationSnapshotStore configurationSnapshots,
         IDebloatPlanner debloatPlanner,
         IDebloatExecutionService debloatExecutionService,
         IAdbCommandService commandService,
@@ -82,6 +86,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsStore = settingsStore;
         _scriptExecutionService = scriptExecutionService;
         _inspectionService = inspectionService;
+        _configurationService = configurationService;
+        _configurationSnapshots = configurationSnapshots;
         _debloatPlanner = debloatPlanner;
         _debloatExecutionService = debloatExecutionService;
         _commandService = commandService;
@@ -95,6 +101,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Dashboard", "⌂"),
             new("Devices", "◉"),
             new("Device Status", "◈"),
+            new("Configuration Explorer", "≋"),
             new("Connections", "↔"),
             new("Install APK", "＋"),
             new("Applications", "▦"),
@@ -114,8 +121,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     public ObservableCollection<NavigationEntry> Navigation { get; }
-    public IEnumerable<NavigationEntry> MainNavigation => Navigation.Take(11);
-    public IEnumerable<NavigationEntry> SecondaryNavigation => Navigation.Skip(11);
+    public IEnumerable<NavigationEntry> MainNavigation
+        => Navigation.Where(item => item.Label != "Settings" && item.Label != "About");
+    public IEnumerable<NavigationEntry> SecondaryNavigation
+        => Navigation.Where(item => item.Label == "Settings" || item.Label == "About");
     public ObservableCollection<AndroidDevice> Devices { get; }
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
@@ -123,6 +132,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Dashboard" => new DashboardPageViewModel(Devices, _deviceRepository),
         "Devices" => new DevicesPageViewModel(Devices, _deviceRepository, _connectionService, _confirmation),
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
+        "Configuration Explorer" => new ConfigurationPageViewModel(
+            _configurationService,
+            _configurationSnapshots,
+            Devices,
+            device => SelectedDevice = device),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packageIconService,
@@ -158,7 +172,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public AndroidDevice? SelectedDevice
     {
         get => _selectedDevice;
-        set => SetProperty(ref _selectedDevice, value);
+        set
+        {
+            if (!SetProperty(ref _selectedDevice, value))
+                return;
+            if (_pages.TryGetValue("Configuration Explorer", out var page)
+                && page is ConfigurationPageViewModel configuration)
+                configuration.SelectedDevice = value;
+        }
     }
 
     public int ConnectedDeviceCount => Devices.Count(device => device.State == DeviceState.Device);
@@ -172,6 +193,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Dashboard" => "Your connected Android TV and Google TV devices, at a glance.",
         "Devices" => "Connected and saved Android devices.",
         "Device Status" => "Evidence-backed hardware, Android, security, and capability information.",
+        "Configuration Explorer" => "Read-only runtime properties, partition files, and configuration provenance.",
         "Connections" => "Connect over network or pair Android Wireless Debugging.",
         "Install APK" => "Install applications on the selected device.",
         "Applications" => "Inspect and manage installed packages.",

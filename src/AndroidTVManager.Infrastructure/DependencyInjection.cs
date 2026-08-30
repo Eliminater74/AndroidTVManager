@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddSingleton<ILogViewerService>(services => services.GetRequiredService<FileLogger>());
         services.AddSingleton<IDeviceSnapshotRepository, DeviceSnapshotRepository>();
         services.AddSingleton<IDeviceInspectionService, DeviceInspectionService>();
+        services.AddSingleton<IConfigurationExplorerService, ConfigurationExplorerService>();
+        services.AddSingleton<IConfigurationSnapshotStore, ConfigurationSnapshotStore>();
         services.AddSingleton<IPackageInventoryService, PackageInventoryService>();
         services.AddSingleton<IPackageIconService, PackageIconService>();
         services.AddSingleton<IPackageInventoryRepository, PackageInventoryRepository>();
