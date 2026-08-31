@@ -8,6 +8,13 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B4] - 2026-08-30
+
+### Fixed
+
+- Restored a permanently visible About navigation action.
+- Made the About screen explicitly identify Eliminater74 and the current application identity.
+
 ## [1.0.0-B3] - 2026-08-30
 
 ### Added in Beta 3

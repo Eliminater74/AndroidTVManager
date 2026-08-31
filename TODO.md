@@ -13,7 +13,7 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Verify installer upgrade and uninstall behavior.
 - [ ] Add code signing when a release certificate is available.
 
-## Beta 3 follow-up
+## Beta 4 follow-up
 
 - [x] Add source-attributed package knowledge with conservative vendor and device-family rules.
 - [x] Add layered Reference Baseline Catalog with AOSP TV generations, Google TV, SoC, and OEM references.
