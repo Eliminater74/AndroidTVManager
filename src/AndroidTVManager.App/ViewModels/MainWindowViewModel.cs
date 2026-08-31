@@ -195,7 +195,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<NavigationEntry> Navigation { get; }
     public IEnumerable<NavigationEntry> MainNavigation
-        => Navigation.Where(item => item.Label != "Settings" && item.Label != "About");
+        => Navigation.Where(item => item.Label != "Settings");
     public IEnumerable<NavigationEntry> SecondaryNavigation
         => Navigation.Where(item => item.Label == "Settings");
     public ObservableCollection<AndroidDevice> Devices { get; }

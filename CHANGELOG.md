@@ -8,6 +8,12 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B7] - 2026-08-31
+
+### Fixed
+
+- Moved About into the normal scrollable Main navigation list and simplified its label to `About`.
+
 ## [1.0.0-B6] - 2026-08-31
 
 ### Fixed
