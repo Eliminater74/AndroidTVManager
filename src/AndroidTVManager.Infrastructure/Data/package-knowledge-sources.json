@@ -1,0 +1,226 @@
+[
+  {
+    "id": "uad-chromecast-100",
+    "title": "Universal Android Debloater NG: Google TV with Google Chromecast GA01919-US package dump",
+    "url": "https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/issues/100",
+    "sourceType": "community-package-dump",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Universal-Debloater-Alliance issue contributor"
+  },
+  {
+    "id": "shield-packages-gist",
+    "title": "NVIDIA Shield TV 2017 ADB package dump",
+    "url": "https://gist.github.com/roblav96/340991668988cba1591ce4bad3fad66e",
+    "sourceType": "community-package-dump",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "roblav96"
+  },
+  {
+    "id": "shield-optimizer",
+    "title": "Shield Optimizer package and risk/action research",
+    "url": "https://github.com/bryanroscoe/shield_optimizer",
+    "sourceType": "community-tool",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "bryanroscoe"
+  },
+  {
+    "id": "sony-x850d-guide",
+    "title": "Sony XBR-55X850D Android TV Debloating Guide",
+    "url": "https://gist.github.com/sarabveer/f5dd6c1a443549d708603cc85cadb009",
+    "sourceType": "community-tested-guide",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "sarabveer"
+  },
+  {
+    "id": "sony-bravia-scripts",
+    "title": "Sony Bravia ADB scripts",
+    "url": "https://github.com/supermarsx/sony-bravia-adb-scripts",
+    "sourceType": "community-tool",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "supermarsx"
+  },
+  {
+    "id": "tcl-65c7k-guide",
+    "title": "TCL Android TV debloat list for TCL 65C7K",
+    "url": "https://gist.github.com/llaumgui/e39fdbafc920edacf42fdff6d8ab3a0a",
+    "sourceType": "community-tested-guide",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "llaumgui"
+  },
+  {
+    "id": "tcl-conservative-debloater",
+    "title": "TCL TV conservative debloater with important-package warnings",
+    "url": "https://gist.github.com/0x4f53/27bee9a0069f7bd6a2aa9eb60bb10d1e",
+    "sourceType": "community-tested-guide",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "0x4f53"
+  },
+  {
+    "id": "android-tv-debloat-toolkit",
+    "title": "Android TV Debloat Toolkit",
+    "url": "https://github.com/seun-novodev/android-tv-debloat-toolkit",
+    "sourceType": "community-tool",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "seun-novodev"
+  },
+  {
+    "id": "uad-cultraview-1259",
+    "title": "Universal Android Debloater NG: Cultraview/Zeasn applications research",
+    "url": "https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/issues/1259",
+    "sourceType": "community-package-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Universal-Debloater-Alliance issue contributor"
+  },
+  {
+    "id": "uad-debloat-wiki",
+    "title": "Universal Android Debloater NG removal definitions",
+    "url": "https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/wiki/Debloat-Lists",
+    "sourceType": "community-knowledge-base",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Universal-Debloater-Alliance"
+  },
+  {
+    "id": "sony-katniss-regression",
+    "title": "Sony Android TV debloat report noting voice-search regression",
+    "url": "https://gist.github.com/atais/f3f4544bb668c4c2e8b0335f878bb3f5",
+    "sourceType": "community-regression-report",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "atais"
+  },
+  {
+    "id": "homatics-4pda-atv14",
+    "title": "Homatics Box R 4K Plus Android TV 14 package and hardware research",
+    "url": "https://4pda.to/forum/index.php?showtopic=1080563&st=7320",
+    "sourceType": "community-hardware-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "4PDA Homatics Box R 4K Plus community thread"
+  },
+  {
+    "id": "tivo-stream4k-gist",
+    "title": "TiVo Stream 4K debloat and setup package inventory",
+    "url": "https://gist.github.com/justintime/b8354a57b1f266b8e82c480b2f013d68",
+    "sourceType": "community-package-inventory",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "justintime"
+  },
+  {
+    "id": "xiaomi-tv-debloater",
+    "title": "Xiaomi TV Debloater with model detection and reversible levels",
+    "url": "https://github.com/brm-src/xiaomi-tv-debloater",
+    "sourceType": "community-tool",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "brm-src"
+  },
+  {
+    "id": "firestick-tweak",
+    "title": "Fire TV Stick 4K Max real-hardware package research",
+    "url": "https://github.com/26zl/firestick-tweak",
+    "sourceType": "community-hardware-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "26zl"
+  },
+  {
+    "id": "firestrip",
+    "title": "Firestrip multi-device Fire TV package profiles",
+    "url": "https://github.com/WB2024/firestrip",
+    "sourceType": "community-tool",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "WB2024"
+  },
+  {
+    "id": "onn-4k-plus-report",
+    "title": "ONN 4K Plus package inventory discussion",
+    "url": "https://www.reddit.com/r/OnnStreamingTV/comments/1v15360/which_packages_are_safe_to_disable_on_my_onn_4k/",
+    "sourceType": "anecdotal-inventory-report",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "ONN Streaming TV community discussion"
+  },
+  {
+    "id": "google-streamer-launcher-report",
+    "title": "Google TV Streamer launcher and casting dependency discussion",
+    "url": "https://www.reddit.com/r/Projectivy_Launcher/comments/1v0ky51/google_tv_streamer_projectivy_as_true_default/",
+    "sourceType": "anecdotal-regression-report",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Projectivy Launcher community discussion"
+  },
+  {
+    "id": "yandex-tv-report",
+    "title": "Yandex TV Android TV package and role research",
+    "url": "https://pikabu.ru/tag/Android%20TV%2C%D0%94%D0%BB%D0%B8%D0%BD%D0%BD%D0%BE%D0%BF%D0%BE%D1%81%D1%82",
+    "sourceType": "community-package-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Pikabu Android TV community posts"
+  },
+  {
+    "id": "tcl-guide",
+    "title": "TCL Android TV community guide",
+    "url": "https://github.com/mojothemonkey2/TCL_Guide",
+    "sourceType": "community-device-guide",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "mojothemonkey2"
+  },
+  {
+    "id": "philips-input-regression",
+    "title": "Philips TV source/input regression discussion",
+    "url": "https://gathering.tweakers.net/forum/list_messages/1647382/57",
+    "sourceType": "community-regression-report",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Gathering of Tweakers community discussion"
+  },
+  {
+    "id": "skyworth-tianci-report",
+    "title": "Skyworth TV package and launcher behavior discussion",
+    "url": "https://www.znds.com/tv-1271782-1-1.html",
+    "sourceType": "community-package-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "ZNDS community discussion"
+  },
+  {
+    "id": "skyworth-tv-products",
+    "title": "SKYWORTH North America Google TV product information",
+    "url": "https://www.skyworthusa.com/pages/compare",
+    "sourceType": "manufacturer-product-reference",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "SKYWORTH North America"
+  },
+  {
+    "id": "sharp-google-tv-research",
+    "title": "Sharp Android 14/Google TV ADB setup research",
+    "url": "https://github.com/gerontec/kodi_android14",
+    "sourceType": "community-device-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "gerontec"
+  },
+  {
+    "id": "jvc-android-tv-guide",
+    "title": "JVC Android TV debloat instructions",
+    "url": "https://tweakdroid.com/bloatware/jvc-4k-edition-android-tv-box/",
+    "sourceType": "generic-community-guide",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "TweakDroid"
+  },
+  {
+    "id": "firetv-device-codes",
+    "title": "Fire TV and Fire OS device model-code reference",
+    "url": "https://github.com/drogers0/tailscale-firetv-fireos5/blob/main/docs/DEVICES.md",
+    "sourceType": "device-compatibility-reference",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "drogers0"
+  },
+  {
+    "id": "hisense-google-tv-research",
+    "title": "Hisense Google TV ADB integration research",
+    "url": "https://github.com/ltomes/ha-hisense-tv",
+    "sourceType": "community-device-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "ltomes"
+  },
+  {
+    "id": "tv-control-center",
+    "title": "Universal Smart TV Management Suite device profile research",
+    "url": "https://github.com/ashishdungdung/tv-control-center",
+    "sourceType": "secondary-community-research",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "ashishdungdung"
+  }
+]

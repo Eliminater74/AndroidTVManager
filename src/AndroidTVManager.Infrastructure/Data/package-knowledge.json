@@ -6,6 +6,13 @@
     "category": "Recommendations",
     "description": "Google TV recommendation service.",
     "recommendedAction": "Disable",
+    "sourceIds": [
+      "android-tv-debloat-toolkit",
+      "tcl-conservative-debloater",
+      "uad-chromecast-100"
+    ],
+    "observedModels": "Generic Android TV; Chromecast with Google TV; TCL families",
+    "evidenceNotes": "Multiple sources treat this as an optional recommendation surface, but home-screen behavior varies by launcher.",
     "impacts": [
       {
         "area": "Home screen",
@@ -15,11 +22,18 @@
   },
   {
     "package": "com.google.android.katniss",
-    "risk": "Caution",
-    "confidence": "Medium",
+    "risk": "HighRisk",
+    "confidence": "High",
     "category": "Voice",
     "description": "Google TV search and voice-related component.",
     "recommendedAction": "Disable",
+    "sourceIds": [
+      "sony-x850d-guide",
+      "sony-katniss-regression",
+      "tcl-conservative-debloater"
+    ],
+    "observedModels": "Sony Bravia XBR-55X850D; TCL families",
+    "evidenceNotes": "Conflicting community reports: one tested guide disabled it while another reported that voice search stopped. Never treat as Safe.",
     "impacts": [
       {
         "area": "Voice search",
@@ -82,7 +96,13 @@
         "description": "Retail/demo presentation behavior may be unavailable."
       }
     ],
-    "manufacturer": "Philips"
+    "sourceIds": [
+      "sony-x850d-guide",
+      "sony-katniss-regression",
+      "tcl-conservative-debloater"
+    ],
+    "observedModels": "Sony Bravia XBR-55X850D; TCL families",
+    "evidenceNotes": "Conflicting community reports: one tested guide disabled it while another reported that voice search stopped. Never treat as Safe."
   },
   {
     "package": "com.coocaa.demonow.lightining",
@@ -158,5 +178,1257 @@
       }
     ],
     "manufacturer": "Hisense"
+  },
+  {
+    "package": "com.google.android.chromecast.chromecastservice",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Chromecast platform",
+    "description": "Chromecast platform service observed on Google TV with Chromecast GA01919-US.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Casting and platform",
+        "description": "Casting, device integration, or platform behavior may fail."
+      }
+    ],
+    "manufacturer": "Google",
+    "Product": "sabrina",
+    "sourceIds": ["uad-chromecast-100"],
+    "observedModels": "Chromecast with Google TV GA01919-US",
+    "evidenceNotes": "Observed in a real package dump; package role was not independently tested by Android TV Manager."
+  },
+  {
+    "package": "com.google.android.tv.dfuservice",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Chromecast updates",
+    "description": "Google TV device firmware/update service observed on Chromecast.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Updates",
+        "description": "Firmware or system update workflows may stop working."
+      }
+    ],
+    "manufacturer": "Google",
+    "Product": "sabrina",
+    "sourceIds": ["uad-chromecast-100"],
+    "observedModels": "Chromecast with Google TV GA01919-US"
+  },
+  {
+    "package": "com.android.bluetooth.chromecast",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Chromecast Bluetooth",
+    "description": "Chromecast-specific Bluetooth component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Bluetooth and remote",
+        "description": "Bluetooth accessories or remote controls may stop working."
+      }
+    ],
+    "manufacturer": "Google",
+    "Product": "sabrina",
+    "sourceIds": ["uad-chromecast-100"],
+    "observedModels": "Chromecast with Google TV GA01919-US"
+  },
+  {
+    "package": "com.google.android.tv.remote.service",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "Android TV remote",
+    "description": "Android TV remote service observed on Chromecast and other TV builds.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Remote control",
+        "description": "Remote discovery, control, or accessory behavior may fail."
+      }
+    ],
+    "manufacturer": "Google",
+    "sourceIds": ["uad-chromecast-100", "sony-x850d-guide"],
+    "observedModels": "Chromecast with Google TV; Sony Bravia family",
+    "evidenceNotes": "Observed in package dumps and listed among Sony components that should be reviewed carefully."
+  },
+  {
+    "package": "com.google.android.apps.tv.netoscope",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Chromecast diagnostics",
+    "description": "Google TV network diagnostic application observed on Chromecast.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Network diagnostics",
+        "description": "Built-in network troubleshooting screens may no longer be available."
+      }
+    ],
+    "manufacturer": "Google",
+    "Product": "sabrina",
+    "sourceIds": ["uad-chromecast-100"],
+    "observedModels": "Chromecast with Google TV GA01919-US",
+    "evidenceNotes": "Package presence is verified by a dump; optional status is inferred from its apparent diagnostic role."
+  },
+  {
+    "package": "com.google.android.backdrop",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Ambient display",
+    "description": "Google TV ambient/backdrop application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Screensaver",
+        "description": "Ambient mode or backdrop images may be unavailable."
+      }
+    ],
+    "manufacturer": "Google",
+    "sourceIds": ["uad-chromecast-100", "android-tv-debloat-toolkit", "tcl-conservative-debloater"],
+    "observedModels": "Chromecast with Google TV; generic Android TV; TCL families"
+  },
+  {
+    "package": "com.nvidia.shieldservice",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "NVIDIA Shield platform",
+    "description": "NVIDIA Shield platform service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Shield platform",
+        "description": "NVIDIA-specific platform features and integrations may fail."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist", "shield-optimizer"],
+    "observedModels": "NVIDIA Shield TV 2017/2019",
+    "evidenceNotes": "Present in enabled system packages in a real Shield dump; behavior remains device-specific."
+  },
+  {
+    "package": "com.nvidia.NvCPLSvc",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "NVIDIA control plane",
+    "description": "NVIDIA control-plane service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "NVIDIA system control",
+        "description": "Display, performance, or Shield-specific control features may fail."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist", "shield-optimizer"],
+    "observedModels": "NVIDIA Shield TV 2017/2019"
+  },
+  {
+    "package": "com.nvidia.nvaudiosvc",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "NVIDIA audio",
+    "description": "NVIDIA audio service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Audio",
+        "description": "Audio output, synchronization, or vendor audio features may fail."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist", "shield-optimizer"],
+    "observedModels": "NVIDIA Shield TV 2017/2019"
+  },
+  {
+    "package": "com.nvidia.packagemanagerservice",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "NVIDIA package management",
+    "description": "NVIDIA package-management service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Application management",
+        "description": "NVIDIA application update or package operations may fail."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist"],
+    "observedModels": "NVIDIA Shield TV 2017/2019"
+  },
+  {
+    "package": "com.nvidia.shield.appselector",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "NVIDIA launcher",
+    "description": "NVIDIA Shield application selector.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Launcher",
+        "description": "Application selection or home-screen behavior may fail."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist", "shield-optimizer"],
+    "observedModels": "NVIDIA Shield TV 2017/2019"
+  },
+  {
+    "package": "com.nvidia.shield.remote.server",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "NVIDIA remote",
+    "description": "NVIDIA Shield remote server component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Remote control",
+        "description": "Remote-control integration may stop working."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist", "shield-optimizer"],
+    "observedModels": "NVIDIA Shield TV 2017/2019"
+  },
+  {
+    "package": "com.nvidia.ota",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "NVIDIA updates",
+    "description": "NVIDIA Shield OTA update component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Updates",
+        "description": "Shield firmware updates and update notifications may fail."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist", "shield-optimizer"],
+    "observedModels": "NVIDIA Shield TV 2017/2019",
+    "evidenceNotes": "The source dump shows this package disabled; that is evidence of a device state, not proof that disabling is safe."
+  },
+  {
+    "package": "com.nvidia.blakepairing",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "NVIDIA pairing",
+    "description": "NVIDIA accessory/controller pairing component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Accessory pairing",
+        "description": "Controller or accessory pairing may be affected."
+      }
+    ],
+    "manufacturer": "NVIDIA",
+    "sourceIds": ["shield-packages-gist"],
+    "observedModels": "NVIDIA Shield TV 2017/2019"
+  },
+  {
+    "package": "com.sony.dtv.tvplayer",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Sony television",
+    "description": "Sony television player and input framework.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Television and HDMI",
+        "description": "TV playback, source selection, or input behavior may fail."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D",
+    "evidenceNotes": "Listed in the tested keep-enabled section."
+  },
+  {
+    "package": "com.sony.dtv.tvinput.external",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Sony HDMI input",
+    "description": "Sony external TV input provider.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "HDMI",
+        "description": "External input detection or switching may fail."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.sony.dtv.braviasyncservice",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Sony BRAVIA Sync",
+    "description": "Sony BRAVIA Sync/HDMI-CEC service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "HDMI-CEC",
+        "description": "BRAVIA Sync and connected-device control may fail."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.sony.dtv.braviasyncmenu",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Sony BRAVIA Sync",
+    "description": "Sony BRAVIA Sync menu component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "HDMI-CEC",
+        "description": "BRAVIA Sync menus and CEC settings may disappear."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.sony.dtv.audiooutput",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Sony audio",
+    "description": "Sony audio output service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Audio",
+        "description": "Audio output selection or sound settings may fail."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.sony.dtv.b2b.hotelmode",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "Sony settings dependency",
+    "description": "Sony hotel-mode package with a documented Settings regression when disabled.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Settings",
+        "description": "Settings may stop opening when this package is disabled on the tested model."
+      }
+    ],
+    "manufacturer": "Sony",
+    "ModelContains": "XBR-55X850D",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D",
+    "evidenceNotes": "The source explicitly reports that disabling this package broke Settings."
+  },
+  {
+    "package": "com.sony.dtv.imanual",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Sony help",
+    "description": "Sony built-in manual/help application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Help",
+        "description": "Built-in product help may be unavailable."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D",
+    "evidenceNotes": "Reported disabled successfully in the tested dumb-display setup."
+  },
+  {
+    "package": "com.sony.dtv.osat.album",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Sony media",
+    "description": "Sony OSAT album application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Media",
+        "description": "Sony album browsing may be unavailable."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.sony.dtv.osat.music",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Sony media",
+    "description": "Sony OSAT music application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Media",
+        "description": "Sony music browsing may be unavailable."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.sony.dtv.osat.video",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Sony media",
+    "description": "Sony OSAT video application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Media",
+        "description": "Sony video browsing may be unavailable."
+      }
+    ],
+    "manufacturer": "Sony",
+    "sourceIds": ["sony-x850d-guide"],
+    "observedModels": "Sony XBR-55X850D"
+  },
+  {
+    "package": "com.tcl.tv",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "TCL television",
+    "description": "TCL television framework associated with TV and HDMI elements.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Television and HDMI",
+        "description": "TV controls, HDMI/AV switching, or source behavior may fail."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families",
+    "evidenceNotes": "A conservative TCL source explicitly marks this package as important."
+  },
+  {
+    "package": "com.tcl.framework.custom",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "TCL framework",
+    "description": "TCL custom framework associated with important UI and volume behavior.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "System UI and volume",
+        "description": "Important UI, volume controls, or framework behavior may fail."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater"],
+    "observedModels": "TCL families",
+    "evidenceNotes": "The source explicitly leaves this package commented out because it affects important UI."
+  },
+  {
+    "package": "com.tcl.guard",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL security",
+    "description": "TCL Guard/antivirus component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Vendor security",
+        "description": "TCL Guard warnings or vendor security checks may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL 65C7K; TCL families",
+    "evidenceNotes": "Multiple sources identify it as optional/security-related, but this is not Android TV Manager hardware-verified."
+  },
+  {
+    "package": "com.tcl.dashboard",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL recommendations",
+    "description": "TCL dashboard component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Home screen",
+        "description": "TCL dashboard rows or vendor recommendations may change."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+    "observedModels": "TCL 65C7K; TCL families"
+  },
+  {
+    "package": "com.tcl.partnercustomizer",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL partner setup",
+    "description": "TCL partner customization component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Partner configuration",
+        "description": "Partner-specific defaults or setup customization may change."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+    "observedModels": "TCL 65C7K; TCL families"
+  },
+  {
+    "package": "com.tcl.smartalexa",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL voice integration",
+    "description": "TCL Alexa integration.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Voice control",
+        "description": "Alexa integration or related TV controls may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+    "observedModels": "TCL 65C7K; TCL families"
+  },
+  {
+    "package": "com.tcl.ui_mediaCenter",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL media center",
+    "description": "TCL media-center and USB file-explorer component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "USB and media",
+        "description": "TCL USB browsing or built-in media-center functions may stop working."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+    "observedModels": "TCL 65C7K; TCL families",
+    "evidenceNotes": "One source disables it while another identifies it as the USB file explorer; keep this as Caution, never Safe."
+  },
+  {
+    "package": "com.tcl.gallery",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL media",
+    "description": "TCL gallery application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Media",
+        "description": "TCL gallery browsing may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.appmarket2",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL app store",
+    "description": "TCL application market.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "App installation",
+        "description": "The TCL app store may no longer be available."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.bootadservice",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL advertising",
+    "description": "TCL boot advertising service.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Advertising",
+        "description": "TCL boot advertisements may no longer appear."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.usercenter",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL account",
+    "description": "TCL user-center component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Vendor account",
+        "description": "TCL account or vendor personalization features may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "android.cultraview.tv.service",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Cultraview television",
+    "description": "Cultraview TV service used by Live TV and related applications.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Live TV",
+        "description": "Live TV, tuner, or vendor television functions may fail."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform",
+    "evidenceNotes": "UAD labels removal Expert and describes this as shared infrastructure."
+  },
+  {
+    "package": "com.cultraview.livetv",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Cultraview Live TV",
+    "description": "Cultraview Live TV application for tuner and external inputs.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Live TV and inputs",
+        "description": "Tuner, composite, HDMI, or Live TV behavior may fail."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform"
+  },
+  {
+    "package": "com.cultraview.setting",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Cultraview settings",
+    "description": "Cultraview Settings app for network, accessibility, inputs, and tuner configuration.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Settings and inputs",
+        "description": "Network, accessibility, tuner, HDMI, or device settings may be inaccessible."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform"
+  },
+  {
+    "package": "com.cultraview.settingsoverlay",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Cultraview settings",
+    "description": "Cultraview settings overlay used over Live TV.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "On-screen settings",
+        "description": "Settings overlays may disappear or fail to open."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform"
+  },
+  {
+    "package": "com.cultraview.tvboot",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Cultraview boot",
+    "description": "Cultraview startup service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Startup",
+        "description": "Startup initialization or vendor boot behavior may fail."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform"
+  },
+  {
+    "package": "com.cultraview.osupdate",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Cultraview updates",
+    "description": "Cultraview operating-system update application.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Updates",
+        "description": "Cultraview OS update workflows may fail."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform"
+  },
+  {
+    "package": "com.cultraview.filemanager",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Cultraview file manager",
+    "description": "Cultraview file manager.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Files",
+        "description": "Built-in file browsing and local media access may be unavailable."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform",
+    "evidenceNotes": "UAD describes it as navigable by remote/keyboard and labels removal Expert."
+  },
+  {
+    "package": "com.cultraview.boefactorytest",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Cultraview factory",
+    "description": "Cultraview factory-test application.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Service diagnostics",
+        "description": "Factory/service diagnostics may be unavailable."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform",
+    "evidenceNotes": "The package is unconfirmed but UAD labels removal Expert."
+  },
+  {
+    "package": "com.cultraview.retail",
+    "risk": "HighRisk",
+    "confidence": "Low",
+    "category": "Cultraview retail",
+    "description": "Possible Cultraview retail/demo-mode component.",
+    "recommendedAction": "Review manually",
+    "impacts": [
+      {
+        "area": "Retail mode",
+        "description": "Demo or retail behavior may change; exact role is unconfirmed."
+      }
+    ],
+    "manufacturer": "Cultraview",
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Cultraview/Zeasn TV platform",
+    "evidenceNotes": "The source marks this description as unconfirmed; it remains non-automatic."
+  },
+  {
+    "package": "com.zeasn.launcher",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Zeasn launcher",
+    "description": "Zeasn TV launcher.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Launcher",
+        "description": "Home navigation may fail and some remote buttons may stop working."
+      }
+    ],
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Zeasn TV platform",
+    "evidenceNotes": "UAD notes that removal can affect remote Source behavior; runtime active-launcher detection still takes precedence."
+  },
+  {
+    "package": "zeasn.open.technical.tv.store",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Zeasn app store",
+    "description": "Zeasn third-party TV application store.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "App installation",
+        "description": "The Zeasn store may be unavailable."
+      }
+    ],
+    "sourceIds": ["uad-cultraview-1259"],
+    "observedModels": "Zeasn TV platform",
+    "evidenceNotes": "Source recommends caution around installing from this store for security reasons."
+  },
+  {
+    "package": "com.nes.tvglobalkeyhandler",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "SEI remote input",
+    "description": "SEI/TiVo global remote-key handler.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Remote control",
+        "description": "Remote buttons and device-wide key handling may fail."
+      }
+    ],
+    "sourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+    "observedModels": "Homatics Box R 4K Plus; TiVo Stream 4K",
+    "evidenceNotes": "Observed across related SEI ecosystem devices; hardware behavior remains unverified here."
+  },
+  {
+    "package": "com.nes.daemonservice",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "SEI platform service",
+    "description": "SEI/TiVo background daemon service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Platform services",
+        "description": "Background device integration or vendor functions may fail."
+      }
+    ],
+    "sourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+    "observedModels": "Homatics Box R 4K Plus; TiVo Stream 4K"
+  },
+  {
+    "package": "com.nes.skywayclient",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "SEI platform service",
+    "description": "SEI/TiVo Skyway client service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Device integration",
+        "description": "Vendor service integration or setup behavior may fail."
+      }
+    ],
+    "sourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+    "observedModels": "Homatics Box R 4K Plus; TiVo Stream 4K"
+  },
+  {
+    "package": "com.tivo.atom",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TiVo service",
+    "description": "TiVo Stream application/service.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "TiVo features",
+        "description": "TiVo-branded content or integrations may be unavailable."
+      }
+    ],
+    "modelContains": "TiVo Stream 4K",
+    "sourceIds": ["tivo-stream4k-gist"],
+    "observedModels": "TiVo Stream 4K",
+    "evidenceNotes": "The source disables this package after setup; it is not a generic Android TV recommendation."
+  },
+  {
+    "package": "com.tivo.tivoplusplayer",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TiVo media",
+    "description": "TiVo Plus streaming player.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "TiVo streaming",
+        "description": "TiVo Plus content may no longer be available."
+      }
+    ],
+    "modelContains": "TiVo Stream 4K",
+    "sourceIds": ["tivo-stream4k-gist"],
+    "observedModels": "TiVo Stream 4K",
+    "evidenceNotes": "The source lists it for uninstall, but Android TV Manager prefers reversible disable first."
+  },
+  {
+    "package": "com.tivo.tvlaunchercustomization",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "TiVo launcher",
+    "description": "TiVo launcher customization component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Launcher",
+        "description": "Home-screen behavior or TiVo button integration may change."
+      }
+    ],
+    "modelContains": "TiVo Stream 4K",
+    "sourceIds": ["tivo-stream4k-gist"],
+    "observedModels": "TiVo Stream 4K",
+    "evidenceNotes": "Launcher-related package; active launcher runtime detection takes precedence."
+  },
+  {
+    "package": "com.limark.deviqcoreagent",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TiVo telemetry",
+    "description": "Device IQ monitoring agent identified in the TiVo package inventory.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Device monitoring",
+        "description": "Device IQ diagnostics or telemetry may be unavailable."
+      }
+    ],
+    "modelContains": "TiVo Stream 4K",
+    "sourceIds": ["tivo-stream4k-gist"],
+    "observedModels": "TiVo Stream 4K",
+    "evidenceNotes": "Role is inferred from the source description and has not been independently validated."
+  },
+  {
+    "package": "com.utsmta.app",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TiVo updates",
+    "description": "MOTA/device-management application identified in the TiVo inventory.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Updates",
+        "description": "Vendor management or update behavior may change."
+      }
+    ],
+    "manufacturer": "TiVo",
+    "sourceIds": ["tivo-stream4k-gist"],
+    "observedModels": "TiVo Stream 4K",
+    "evidenceNotes": "Do not disable before reviewing update requirements for the device."
+  },
+  {
+    "package": "com.droidlogic.overlay",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Droidlogic platform",
+    "description": "Droidlogic system overlay found on SEI/Homatics-family Android TV devices.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Hardware integration",
+        "description": "Display, audio, input, or SoC-specific behavior may fail."
+      }
+    ],
+    "sourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+    "observedModels": "Homatics Box R 4K Plus; TiVo Stream 4K",
+    "evidenceNotes": "System overlay presence does not by itself reveal its complete role."
+  },
+  {
+    "package": "com.droidlogic.SubTitleService",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Droidlogic media",
+    "description": "Droidlogic subtitle service.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Media playback",
+        "description": "Subtitle rendering or vendor media playback behavior may be affected."
+      }
+    ],
+    "sourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+    "observedModels": "Homatics Box R 4K Plus; TiVo Stream 4K"
+  },
+  {
+    "package": "com.xiaomi.mitv.advertise",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Xiaomi advertising",
+    "description": "Xiaomi TV advertising component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Advertising",
+        "description": "Xiaomi TV advertisements or promotional surfaces may change."
+      }
+    ],
+    "manufacturer": "Xiaomi",
+    "sourceIds": ["xiaomi-tv-debloater"],
+    "observedModels": "Mi Box S; Mi TV Stick; Mi Box 4",
+    "evidenceNotes": "The source places this in its softest level, but also warns that lists are model-specific."
+  },
+  {
+    "package": "com.xiaomi.mitv.osstatistic",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Xiaomi telemetry",
+    "description": "Xiaomi TV OS statistics component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Telemetry",
+        "description": "Xiaomi usage statistics may no longer be collected."
+      }
+    ],
+    "manufacturer": "Xiaomi",
+    "sourceIds": ["xiaomi-tv-debloater"],
+    "observedModels": "Mi Box S; Mi TV Stick; Mi Box 4",
+    "evidenceNotes": "Candidate from the source's soft level; no Android TV Manager hardware verification."
+  },
+  {
+    "package": "com.miui.systemAdSolution",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Xiaomi advertising",
+    "description": "MIUI system advertising solution used by Xiaomi TV builds.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Advertising",
+        "description": "System promotional content may change."
+      }
+    ],
+    "manufacturer": "Xiaomi",
+    "sourceIds": ["xiaomi-tv-debloater"],
+    "observedModels": "Mi Box S; Mi TV Stick; Mi Box 4",
+    "evidenceNotes": "Candidate from the source's soft level; a separate boot-loop report is why it remains Caution."
+  },
+  {
+    "package": "com.miui.analytics",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "Xiaomi telemetry",
+    "description": "MIUI analytics component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Telemetry",
+        "description": "Xiaomi analytics and diagnostic reporting may be unavailable."
+      }
+    ],
+    "manufacturer": "Xiaomi",
+    "sourceIds": ["xiaomi-tv-debloater"],
+    "observedModels": "Mi Box S; Mi TV Stick; Mi Box 4",
+    "evidenceNotes": "Use only after reviewing the exact model; the source cautions that package lists are not universal."
+  },
+  {
+    "package": "com.google.android.apps.tv.launcherx",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Google TV launcher",
+    "description": "Google TV launcher component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Launcher and casting",
+        "description": "Home navigation or Google Home/casting behavior may break when launcher dependencies are changed."
+      }
+    ],
+    "manufacturer": "Google",
+    "sourceIds": ["google-streamer-launcher-report", "uad-chromecast-100"],
+    "observedModels": "Google TV Streamer; Chromecast with Google TV",
+    "evidenceNotes": "Runtime active-launcher detection is required; do not disable as generic bloat."
+  },
+  {
+    "package": "com.google.android.tungsten.setupwraith",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Google TV setup",
+    "description": "Google TV setup/provisioning component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Setup and casting",
+        "description": "Device setup, account linkage, or Google Home/casting behavior may be affected."
+      }
+    ],
+    "manufacturer": "Google",
+    "sourceIds": ["google-streamer-launcher-report", "uad-chromecast-100"],
+    "observedModels": "Google TV Streamer; Chromecast with Google TV",
+    "evidenceNotes": "Dependency evidence is anecdotal; this remains protected until exact runtime behavior is confirmed."
+  },
+  {
+    "package": "com.yandex.tv.settings",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Yandex TV settings",
+    "description": "Yandex TV system settings application.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Settings",
+        "description": "System configuration and device management may become inaccessible."
+      }
+    ],
+    "manufacturer": "Yandex",
+    "sourceIds": ["yandex-tv-report"],
+    "observedModels": "Yandex TV builds",
+    "evidenceNotes": "The source explicitly identifies this package as critical."
+  },
+  {
+    "package": "ru.yandex.androidkeyboard.tv",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Yandex keyboard",
+    "description": "Yandex TV keyboard identified as the only keyboard on some builds.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Text input",
+        "description": "On-screen text entry may stop working."
+      }
+    ],
+    "manufacturer": "Yandex",
+    "sourceIds": ["yandex-tv-report"],
+    "observedModels": "Yandex TV builds",
+    "evidenceNotes": "Protect until an active/default IME scan proves another usable keyboard exists."
+  },
+  {
+    "package": "com.yandex.tv.home",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "Yandex launcher",
+    "description": "Yandex TV home application.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Launcher",
+        "description": "Home navigation and device UI may fail; active-launcher detection takes precedence."
+      }
+    ],
+    "manufacturer": "Yandex",
+    "sourceIds": ["yandex-tv-report"],
+    "observedModels": "Yandex TV builds"
+  },
+  {
+    "package": "com.yandex.tv.alice",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Yandex voice assistant",
+    "description": "Yandex Alice TV voice assistant.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Voice assistant",
+        "description": "Alice voice features may be unavailable."
+      }
+    ],
+    "manufacturer": "Yandex",
+    "sourceIds": ["yandex-tv-report"],
+    "observedModels": "Yandex TV builds"
+  },
+  {
+    "package": "com.yandex.tv.music",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Yandex media",
+    "description": "Yandex TV music application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Media",
+        "description": "Yandex music features may be unavailable."
+      }
+    ],
+    "manufacturer": "Yandex",
+    "sourceIds": ["yandex-tv-report"],
+    "observedModels": "Yandex TV builds"
+  },
+  {
+    "package": "com.yandex.browser.tv",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "Yandex browser",
+    "description": "Yandex TV browser application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Browser",
+        "description": "Yandex browser functionality may be unavailable."
+      }
+    ],
+    "manufacturer": "Yandex",
+    "sourceIds": ["yandex-tv-report"],
+    "observedModels": "Yandex TV builds"
+  },
+  {
+    "package": "com.tianci.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Skyworth/Coocaa research",
+    "description": "Skyworth/Coocaa package namespace observed in community TV research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.tianci.",
+    "sourceIds": ["skyworth-tianci-report"],
+    "observedModels": "Skyworth/Coocaa Android TV families",
+    "evidenceNotes": "Namespace recognition only. No package in this namespace is automatically considered safe."
+  },
+  {
+    "package": "com.coocaa.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Skyworth/Coocaa research",
+    "description": "Coocaa package namespace reserved for future device-specific research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.coocaa.",
+    "sourceIds": ["skyworth-tianci-report", "skyworth-tv-products"],
+    "observedModels": "Skyworth/Coocaa Android TV families",
+    "evidenceNotes": "Recognition metadata only; package behavior is not established."
+  },
+  {
+    "package": "com.skyworth.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Skyworth research",
+    "description": "Skyworth package namespace reserved for future device-specific research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.skyworth.",
+    "sourceIds": ["skyworth-tv-products"],
+    "observedModels": "Skyworth Android/Google TV families",
+    "evidenceNotes": "Recognition metadata only; package behavior is not established."
+  },
+  {
+    "package": "com.sharp.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Sharp research",
+    "description": "Sharp package namespace reserved for future Google TV research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.sharp.",
+    "sourceIds": ["sharp-google-tv-research"],
+    "observedModels": "Sharp/AQUOS Android TV families",
+    "evidenceNotes": "ADB/device support evidence only; no safe debloat behavior has been established."
+  },
+  {
+    "package": "com.jvc.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "JVC research",
+    "description": "JVC package namespace reserved for future Android TV research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.jvc.",
+    "sourceIds": ["jvc-android-tv-guide"],
+    "observedModels": "JVC Android TV families",
+    "evidenceNotes": "Generic guide evidence only; no safe package classification is claimed."
   }
 ]

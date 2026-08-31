@@ -8,6 +8,10 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ### Added
 
+- Source-attributed knowledge rules for Chromecast, NVIDIA Shield, Sony Bravia, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Google TV Streamer dependencies, and Yandex TV.
+- A maintained source catalog with retrieval dates and attribution, separating inventory evidence, tested behavior, regression reports, and anecdotal reports.
+- Added Homatics/SEI, TiVo, Xiaomi, Fire TV, ONN, Google TV Streamer, and Yandex source references; only the package roles supported by evidence received actionable rules.
+- Added Skyworth/Coocaa namespace recognition and provenance for Sharp, JVC, Philips input regressions, Fire TV television model codes, Hisense, and secondary TV-control research without creating unverified Safe rules.
 - Deployment Profiles with managed APK assets, SHA-256 identity, split-package deployment, compatibility checks, preview/confirmation, and step-level execution history.
 - A typed ADB Remote with D-pad, media, volume, text entry, repeat actions, and favorite app launch buttons.
 - A streaming device Logcat page with bounded buffering, filters, save, clear, and problem capture.

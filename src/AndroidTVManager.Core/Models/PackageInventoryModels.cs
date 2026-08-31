@@ -77,7 +77,20 @@ public sealed record PackageKnowledgeRule(
     string? Product = null,
     string? ModelContains = null,
     int? MinApi = null,
-    int? MaxApi = null);
+    int? MaxApi = null,
+    IReadOnlyList<string>? SourceIds = null,
+    string? ObservedModels = null,
+    string? EvidenceNotes = null,
+    bool HardwareVerified = false,
+    string? PackagePrefix = null);
+
+public sealed record PackageKnowledgeSource(
+    string Id,
+    string Title,
+    string Url,
+    string SourceType,
+    string RetrievedUtc,
+    string Attribution);
 
 public enum DebloatPreset
 {

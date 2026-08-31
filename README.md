@@ -43,6 +43,14 @@ The installer is currently unsigned. Windows SmartScreen may display a warning u
 - ADB Command Center, scripts, screenshots, live application logs, and system-tray controls
 - Dark, Pure Black, and White themes
 
+## Debloat knowledge provenance
+
+The package knowledge database is conservative and source-attributed. It currently cross-references Android TV / Google TV, Chromecast, NVIDIA Shield, Sony Bravia, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, and related Fire TV/ONN research. The source catalog is stored in `src/AndroidTVManager.Infrastructure/Data/package-knowledge-sources.json`.
+
+Public package dumps and community guides are treated as evidence, not as proof that an action is safe. Each rule can record observed models, source type, impact notes, and whether Android TV Manager has verified the behavior on hardware. Internet-derived rules are never marked hardware-verified automatically; unknown packages remain unknown, active device roles override database suggestions, and disable is preferred over uninstall.
+
+Actionable rules currently cover the strongest evidence for TCL, Philips, Hisense, Sony, NVIDIA Shield, Chromecast/Google TV, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, and Yandex families. Fire TV/ONN device research and Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba identifiers are retained as research provenance or namespace recognition until package behavior is independently verified.
+
 ## Requirements
 
 - Windows 10 or later, x64

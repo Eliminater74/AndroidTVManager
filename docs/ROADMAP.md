@@ -17,6 +17,8 @@
 - Streaming device Logcat with bounded filtering, save, and problem capture
 - Redacted Diagnostic Bundles with inspection, display, transport, network, codec, and checksum evidence
 - Advanced diagnostics for boot/Fastboot state, shared storage, network, codecs, device comparison, and screen recording
+- Source-attributed debloat knowledge for Chromecast, Shield, Sony, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, Fire TV, and ONN research
+- Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
 - Release automation, self-contained Windows packaging, and installer distribution
 
 ## Next
