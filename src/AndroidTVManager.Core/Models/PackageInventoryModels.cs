@@ -260,7 +260,8 @@ public sealed record DebloatPlanItem(
     PackageAssessment Assessment,
     DebloatAction Action,
     bool Selected,
-    string? SelectionBlockReason);
+    string? SelectionBlockReason,
+    PackageReferenceAnalysisItem? Reference = null);
 
 public sealed record DebloatPlan(
     string Serial,
@@ -269,4 +270,5 @@ public sealed record DebloatPlan(
     DebloatPreset Preset,
     string? BaselineSnapshotHash,
     IReadOnlyList<DebloatPlanItem> Items,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    PackageReferenceSummary? ReferenceSummary = null);

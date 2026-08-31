@@ -505,6 +505,7 @@ public interface IDebloatPlanner
     Task<DebloatPlan> CreatePlanAsync(
         string serial,
         DebloatPreset preset,
+        AndroidDevice? targetDevice = null,
         CancellationToken cancellationToken = default);
 }
 

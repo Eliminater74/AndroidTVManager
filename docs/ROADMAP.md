@@ -20,6 +20,7 @@
 - Source-attributed debloat knowledge for Chromecast, Shield, Sony, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, Fire TV, and ONN research
 - Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
 - Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
+- Debloat previews use selected-device identity, reference-profile evidence, and current runtime-role checks before execution
 - Read-only reference package dump export for device contributors
 - Scrollable About navigation labeled simply `About`, with developer identity on the About page
 - Release automation, self-contained Windows packaging, installer distribution, and metadata validation

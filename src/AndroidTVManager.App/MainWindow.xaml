@@ -1226,6 +1226,8 @@
                 <StackPanel Grid.Row="2">
                     <StackPanel>
                         <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
+                        <TextBlock Text="{Binding PlanProfileSummary}" Foreground="{StaticResource CyanAccent}"
+                                   FontWeight="SemiBold" Margin="0,0,0,8"/>
                         <TextBlock Text="{Binding IconStatus}" Foreground="{StaticResource TextMuted}"
                                    FontSize="11" Margin="0,0,0,8"/>
                         <ItemsControl ItemsSource="{Binding Plan.Warnings}">
@@ -1271,6 +1273,10 @@
                                                     <StackPanel Grid.Column="2">
                                                         <TextBlock Text="{Binding Package.PackageName}"
                                                                FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding ProfileSummary}"
+                                                                   Foreground="{StaticResource CyanAccent}"
+                                                                   FontSize="11" TextWrapping="Wrap"
+                                                                   Margin="0,3,0,0"/>
                                                         <TextBlock Text="{Binding Assessment.Description}"
                                                                    Foreground="{StaticResource TextSecondary}"
                                                                    TextWrapping="Wrap" Margin="0,3,0,0"/>
@@ -1288,6 +1294,9 @@
                                                                    TextWrapping="Wrap"/>
                                                         <TextBlock Text="{Binding ImpactSummary}"
                                                                Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                                        <TextBlock Text="{Binding EvidenceSummary}"
+                                                               Foreground="{StaticResource TextMuted}" TextWrapping="Wrap"
+                                                               Margin="0,3,0,0"/>
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>

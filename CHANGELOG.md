@@ -8,6 +8,18 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+### Fixed
+
+- Tightened package role parsing so packages mentioned in `dumpsys device_policy` policy lists are not misclassified as device owners.
+- Debloat previews now use the selected device identity when applying manufacturer/model rules instead of relying only on a cached inspection snapshot.
+- Debloat preview rows now carry reference-profile origin, role, observed-device, dependency, and match-count evidence.
+- Reference-protected TV core/framework roles are locked in debloat previews even when they are not present in the flat package-rule list.
+- Debloat execution now rechecks selected packages against current runtime-role protection before running disable actions.
+
+### Tests
+
+- Added regression coverage for IPTV/player apps that appear in non-owner policy output, selected-device profile matching, and reference-protected TV core packages.
+
 ## [1.0.0-B9] - 2026-08-31
 
 ### Fixed

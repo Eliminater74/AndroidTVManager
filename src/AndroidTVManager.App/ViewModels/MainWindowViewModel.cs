@@ -684,6 +684,10 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     public bool IsMediumPreset => SelectedPreset == DebloatPreset.Medium;
     public bool IsAggressivePreset => SelectedPreset == DebloatPreset.Aggressive;
     public int SelectedCount => PlanItems.Count(item => item.IsSelected);
+    public string PlanProfileSummary => Plan?.ReferenceSummary is { } summary
+        ? $"{summary.TotalPackages} packages · {summary.BaselineMatches} reference matches · " +
+          $"{summary.UnknownPackages} unknown"
+        : "No device profile analysis has been generated yet.";
 
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
@@ -704,6 +708,9 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         Status = $"Preset set to {value}. Create a new preview to apply its defaults.";
     }
 
+    partial void OnPlanChanged(DebloatPlan? value)
+        => OnPropertyChanged(nameof(PlanProfileSummary));
+
     [RelayCommand]
     private void SelectPreset(DebloatPreset preset)
     {
@@ -722,7 +729,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         {
             Status = $"Analyzing packages on {SelectedDevice.Serial}…";
             await _settingsLoaded;
-            Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset);
+            Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset, SelectedDevice);
             PlanItems.Clear();
             foreach (var item in Plan.Items)
             {
@@ -1551,18 +1558,7 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         var device = Devices.FirstOrDefault(candidate =>
             string.Equals(candidate.Serial, TargetSerial.Trim(), StringComparison.OrdinalIgnoreCase))
             ?? new AndroidDevice { Serial = TargetSerial.Trim() };
-        var context = new PackageClassificationContext(
-            device,
-            inventory.Packages.FirstOrDefault(package => package.IsActiveLauncher)?.PackageName,
-            inventory.Packages.Where(package => package.IsDefaultInputMethod)
-                .Select(package => package.PackageName)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase),
-            inventory.Packages.Where(package => package.IsEnabledAccessibilityService)
-                .Select(package => package.PackageName)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase),
-            inventory.Packages.Where(package => package.IsDeviceOwner)
-                .Select(package => package.PackageName)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase));
+        var context = PackageClassificationContexts.FromInventory(device, inventory.Packages);
         _assessments = inventory.Packages
             .Select(package => _classifier.Classify(package, context))
             .ToDictionary(assessment => assessment.PackageName, StringComparer.OrdinalIgnoreCase);

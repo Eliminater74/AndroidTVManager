@@ -7,15 +7,18 @@ namespace AndroidTVManager.Infrastructure.Packages;
 public sealed class DebloatExecutionService : IDebloatExecutionService
 {
     private readonly IPackageInventoryService _inventory;
+    private readonly IPackageClassifier _classifier;
     private readonly IScriptExecutionService _scripts;
     private readonly IDeviceInspectionService _inspection;
 
     public DebloatExecutionService(
         IPackageInventoryService inventory,
+        IPackageClassifier classifier,
         IScriptExecutionService scripts,
         IDeviceInspectionService inspection)
     {
         _inventory = inventory;
+        _classifier = classifier;
         _scripts = scripts;
         _inspection = inspection;
     }
@@ -42,6 +45,27 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
             .ToArray();
         if (!expected.SequenceEqual(actual))
             throw new InvalidOperationException("The device package state changed since the debloat plan was created. Refresh and review the plan.");
+
+        var device = live.Overview.Value ?? new AndroidDevice
+        {
+            Serial = plan.Serial,
+            State = DeviceState.Device,
+            ConnectionType = ConnectionType.Unknown,
+            BuildFingerprint = liveFingerprint
+        };
+        var context = PackageClassificationContexts.FromInventory(device, current.Packages);
+        var blocked = current.Packages
+            .Where(package => expected.Any(item => item.PackageName.Equals(
+                package.PackageName,
+                StringComparison.OrdinalIgnoreCase)))
+            .Select(package => _classifier.Classify(package, context))
+            .Where(assessment => assessment.IsProtected || assessment.Risk == PackageRiskLevel.Critical)
+            .Select(assessment => assessment.PackageName)
+            .OrderBy(package => package, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (blocked.Length > 0)
+            throw new InvalidOperationException(
+                $"Selected package(s) became protected after preview: {string.Join(", ", blocked)}. Refresh and review the plan.");
 
         var actions = plan.Items.Where(item => item.Selected).Select(item => new ScriptAction
         {

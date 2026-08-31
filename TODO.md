@@ -19,6 +19,13 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [x] Cover tabs, tables, list views, default buttons, scrollbars, and the native window chrome with Dark, Pure Black, and White theme behavior.
 - [x] Add regression checks for page-view initialization and shared native-control theme coverage.
 
+## Debloat profile hardening
+
+- [x] Prevent non-owner `dumpsys device_policy` package lists from marking normal apps as device owners.
+- [x] Build debloat previews from the selected device identity, not only from the last cached inspection snapshot.
+- [x] Surface reference-profile origin, role, observed-on, dependency, and match-count evidence in debloat preview rows.
+- [x] Recheck runtime-role protection immediately before executing a debloat plan.
+
 ## Beta 8 follow-up
 
 - [x] Complete repository maintenance audit and harden privacy, backups, scripts, process lifecycle, and release validation.
