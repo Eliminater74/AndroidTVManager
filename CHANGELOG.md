@@ -8,6 +8,10 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B10] - 2026-08-31
+
+Beta 10 focuses on debloat intelligence, source attribution, and safety locks for Android TV core packages.
+
 ### Fixed
 
 - Tightened package role parsing so packages mentioned in `dumpsys device_policy` policy lists are not misclassified as device owners.

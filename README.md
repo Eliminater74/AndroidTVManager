@@ -4,6 +4,8 @@
 [![Release](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml/badge.svg)](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/Eliminater74/AndroidTVManager)](https://github.com/Eliminater74/AndroidTVManager/releases)
 [![Downloads](https://img.shields.io/github/downloads/Eliminater74/AndroidTVManager/total?label=downloads)](https://github.com/Eliminater74/AndroidTVManager/releases)
+[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=Eliminater74.AndroidTVManager)](https://github.com/Eliminater74/AndroidTVManager)
+[![Stars](https://img.shields.io/github/stars/Eliminater74/AndroidTVManager?style=flat&label=stars)](https://github.com/Eliminater74/AndroidTVManager/stargazers)
 [![License](https://img.shields.io/github/license/Eliminater74/AndroidTVManager)](LICENSE)
 
 Android TV Manager is a Windows-first Android TV / Google TV device management toolbox. It provides a native WPF interface for ADB device discovery, saved devices, device intelligence, package management, cautious debloating, APK installation, scripts, configuration inspection, and connection history.
@@ -12,18 +14,18 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B9 — Beta 9
+### 1.0.0-B10 — Beta 10
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 9 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 10 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B9/AndroidTVManager-Setup.exe) — current Beta 9 installer link
-- `AndroidTVManager-1.0.0-B9-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B9-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B10/AndroidTVManager-Setup.exe) — current Beta 10 installer link
+- `AndroidTVManager-1.0.0-B10-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B10-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 9 is a visual hotfix for the Beta 8 page-rendering and native-control theme regressions.
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 10 is a debloat intelligence and safety release that promotes reviewed reference evidence into cautious recommendations while keeping Android TV core packages locked.
 
 ## Highlights
 
@@ -104,7 +106,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B9 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B10 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.
