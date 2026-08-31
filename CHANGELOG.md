@@ -8,6 +8,19 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B9] - 2026-08-31
+
+### Fixed
+
+- Restored rendered page bodies for Deployment Profiles, Remote, Device Logcat, Diagnostic Bundles, Advanced Diagnostics, and Device Comparison.
+- Removed light-theme fallback surfaces from native WPF tabs, data grids, list views, table headers, scrollbars, and plain buttons.
+- Applied the current Dark, Pure Black, or White theme to the native Windows title bar where supported.
+- Prevented long top-bar page descriptions from overlapping the target selector.
+
+### Tests
+
+- Added regression checks for page-view XAML initialization and shared native-control theme coverage.
+
 ## [1.0.0-B8] - 2026-08-31
 
 ### Fixed

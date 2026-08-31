@@ -13,6 +13,12 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Verify installer upgrade and uninstall behavior.
 - [ ] Add code signing when a release certificate is available.
 
+## Beta 9 hotfix
+
+- [x] Restore separate WPF page views that rendered blank because their XAML content was never initialized.
+- [x] Cover tabs, tables, list views, default buttons, scrollbars, and the native window chrome with Dark, Pure Black, and White theme behavior.
+- [x] Add regression checks for page-view initialization and shared native-control theme coverage.
+
 ## Beta 8 follow-up
 
 - [x] Complete repository maintenance audit and harden privacy, backups, scripts, process lifecycle, and release validation.

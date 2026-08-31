@@ -1,7 +1,9 @@
 ﻿using System.Windows;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using AndroidTVManager.App.Tray;
 using AndroidTVManager.App.ViewModels;
@@ -11,6 +13,9 @@ namespace AndroidTVManager.App;
 
 public partial class MainWindow : Window
 {
+    private const int DwmwaUseImmersiveDarkMode = 20;
+    private const int DwmwaUseImmersiveDarkModeLegacy = 19;
+
     private readonly TrayService _trayService;
     private readonly ISettingsStore _settings;
 
@@ -20,12 +25,45 @@ public partial class MainWindow : Window
         ViewModel = viewModel;
         DataContext = ViewModel;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        SourceInitialized += OnSourceInitialized;
+        ThemeManager.ThemeChanged += OnThemeChanged;
         _settings = settings;
         _trayService = new TrayService(this, runner, settings);
-        Closed += (_, _) => ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        Closed += OnClosed;
     }
 
     public MainWindowViewModel ViewModel { get; }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        SourceInitialized -= OnSourceInitialized;
+        ThemeManager.ThemeChanged -= OnThemeChanged;
+    }
+
+    private void OnSourceInitialized(object? sender, EventArgs e) => ApplyWindowChromeTheme();
+
+    private void OnThemeChanged(object? sender, EventArgs e) => ApplyWindowChromeTheme();
+
+    private void ApplyWindowChromeTheme()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero)
+            return;
+
+        var useDarkMode = ThemeManager.CurrentTheme == AppTheme.White ? 0 : 1;
+        try
+        {
+            if (DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref useDarkMode, sizeof(int)) != 0)
+                DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkModeLegacy, ref useDarkMode, sizeof(int));
+        }
+        catch (DllNotFoundException)
+        {
+        }
+        catch (EntryPointNotFoundException)
+        {
+        }
+    }
 
     private void OnViewModelPropertyChanged(
         object? sender,
@@ -91,4 +129,11 @@ public partial class MainWindow : Window
         var apks = files.Where(path => string.Equals(Path.GetExtension(path), ".apk", StringComparison.OrdinalIgnoreCase));
         installer.ApkPath = string.Join(Environment.NewLine, apks);
     }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(
+        IntPtr hwnd,
+        int dwAttribute,
+        ref int pvAttribute,
+        int cbAttribute);
 }

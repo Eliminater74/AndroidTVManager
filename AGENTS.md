@@ -25,6 +25,6 @@ Use MVVM and dependency injection. ADB, SQLite, file, network, and package opera
 
 ## Product conventions
 
-The current version is `1.0.0-B8`. Keep the UI flashy but legible: dark navy/black surfaces, cyan and violet accents, clear sidebar navigation, restrained animation, strong focus states, and a useful About page. Preserve native WPF behavior and accessibility.
+The current version is `1.0.0-B9`. Keep the UI flashy but legible: dark navy/black surfaces, cyan and violet accents, clear sidebar navigation, restrained animation, strong focus states, and a useful About page. Preserve native WPF behavior and accessibility.
 
 Before each commit, run the relevant restore/build/test commands, inspect the staged diff, and confirm that generated files, binaries, runtime data, and `/TEMP/` are not staged. Use conventional commit subjects.

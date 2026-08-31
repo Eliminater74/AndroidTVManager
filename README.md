@@ -12,18 +12,18 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B8 — Beta 8
+### 1.0.0-B9 — Beta 9
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 8 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 9 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B8/AndroidTVManager-Setup.exe) — current Beta 8 installer link
-- `AndroidTVManager-1.0.0-B8-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B8-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B9/AndroidTVManager-Setup.exe) — current Beta 9 installer link
+- `AndroidTVManager-1.0.0-B9-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B9-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository.
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 9 is a visual hotfix for the Beta 8 page-rendering and native-control theme regressions.
 
 ## Highlights
 
@@ -104,7 +104,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B8 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B9 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.

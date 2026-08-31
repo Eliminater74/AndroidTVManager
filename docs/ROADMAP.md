@@ -1,6 +1,6 @@
 # Roadmap
 
-## Beta 8 — current
+## Beta 9 — current
 
 - Managed official Android SDK Platform-Tools bootstrap
 - USB, traditional network ADB, and Android Wireless Debugging pairing
@@ -24,6 +24,7 @@
 - Scrollable About navigation labeled simply `About`, with developer identity on the About page
 - Release automation, self-contained Windows packaging, installer distribution, and metadata validation
 - Privacy-redacted support bundles, isolated backups, reviewed script execution, and safer process lifecycle handling
+- Restored separate page bodies and closed native WPF control theme gaps for Dark, Pure Black, and White
 
 ## Next
 

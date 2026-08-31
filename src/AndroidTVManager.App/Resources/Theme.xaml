@@ -130,6 +130,8 @@
         <Setter Property="BorderBrush" Value="#71333F" />
     </Style>
 
+    <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}" />
+
     <Style x:Key="CardStyle" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource PanelBackground}" />
         <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
@@ -149,35 +151,174 @@
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
         <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
-        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource CardBorderBrush}" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource PanelBorder}" />
         <Setter Property="RowBackground" Value="{StaticResource PanelBackground}" />
         <Setter Property="AlternatingRowBackground" Value="{StaticResource PanelRaisedBackground}" />
         <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="RowHeaderWidth" Value="0" />
         <Setter Property="CanUserResizeRows" Value="False" />
         <Setter Property="EnableRowVirtualization" Value="True" />
         <Setter Property="EnableColumnVirtualization" Value="True" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
     </Style>
 
+    <Style TargetType="DataGrid" BasedOn="{StaticResource DataGridModernStyle}" />
+
     <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="#17243A" />
+        <Setter Property="Background" Value="{StaticResource PanelRaisedBackground}" />
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="FontSize" Value="11" />
         <Setter Property="Padding" Value="10,9" />
         <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridColumnHeader">
+                    <Border x:Name="HeaderBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HeaderBorder" Property="Background" Value="{StaticResource ControlHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="DataGridRow">
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="Background" Value="{StaticResource PanelBackground}" />
         <Setter Property="BorderThickness" Value="0" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource SelectionBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource SelectionForegroundBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="DataGridCell">
         <Setter Property="Padding" Value="10,7" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border x:Name="CellBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="CellBorder" Property="Background" Value="{StaticResource SelectionBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource SelectionForegroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="CellBorder" Property="BorderBrush" Value="{StaticResource CyanAccent}" />
+                            <Setter TargetName="CellBorder" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TabControl">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TabPanel x:Name="HeaderPanel"
+                                  IsItemsHost="True"
+                                  Panel.ZIndex="1"
+                                  Margin="0,0,0,-1"/>
+                        <Border Grid.Row="1"
+                                Background="{StaticResource PanelBackground}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="PART_SelectedContentHost"
+                                              ContentSource="SelectedContent"
+                                              KeyboardNavigation.DirectionalNavigation="Contained"
+                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TabItem">
+        <Setter Property="Background" Value="{StaticResource PanelRaisedBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,7" />
+        <Setter Property="Margin" Value="0,0,3,0" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="TabBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="5,5,0,0">
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource PanelBackground}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource CyanAccent}" />
+                            <Setter Property="Panel.ZIndex" Value="2" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource ControlHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="TextBox">
@@ -299,12 +440,15 @@
     <Style TargetType="ListBox">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     </Style>
 
     <Style TargetType="ListBoxItem">
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="{StaticResource SelectionBackgroundBrush}" />
@@ -316,15 +460,57 @@
         </Style.Triggers>
     </Style>
 
+    <Style TargetType="ListView" BasedOn="{StaticResource {x:Type ListBox}}">
+        <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    </Style>
+
+    <Style TargetType="ListViewItem" BasedOn="{StaticResource {x:Type ListBoxItem}}" />
+
+    <Style TargetType="GridViewColumnHeader">
+        <Setter Property="Background" Value="{StaticResource PanelRaisedBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorder}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GridViewColumnHeader">
+                    <Border x:Name="HeaderBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HeaderBorder" Property="Background" Value="{StaticResource ControlHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="ScrollBar">
         <Setter Property="Background" Value="{StaticResource ScrollBarTrackBrush}" />
         <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbBrush}" />
         <Setter Property="Width" Value="14" />
         <Setter Property="MinWidth" Value="14" />
+        <Setter Property="Height" Value="Auto" />
+        <Setter Property="MinHeight" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
-                    <Grid Width="14" Background="{TemplateBinding Background}">
+                    <Grid x:Name="Root" Background="{TemplateBinding Background}">
                         <Track x:Name="PART_Track"
                                Orientation="{TemplateBinding Orientation}"
                                Minimum="{TemplateBinding Minimum}"
@@ -333,32 +519,66 @@
                                ViewportSize="{TemplateBinding ViewportSize}"
                                IsDirectionReversed="True">
                             <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                <RepeatButton x:Name="DecreaseButton"
+                                              Command="{x:Static ScrollBar.PageUpCommand}"
                                               CommandTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                               Background="Transparent" BorderThickness="0"
-                                              IsTabStop="False"/>
+                                              Focusable="False" IsTabStop="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="{StaticResource ScrollBarTrackBrush}"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
                             </Track.DecreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb Background="{TemplateBinding Foreground}" MinHeight="34">
+                                <Thumb Background="{TemplateBinding Foreground}" MinHeight="34" MinWidth="34">
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Margin="2,3" CornerRadius="5"
+                                            <Border x:Name="ThumbBorder" Margin="2,3" CornerRadius="5"
                                                     Background="{TemplateBinding Background}"/>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource ScrollBarThumbHoverBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
                             </Track.Thumb>
                             <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                <RepeatButton x:Name="IncreaseButton"
+                                              Command="{x:Static ScrollBar.PageDownCommand}"
                                               CommandTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                               Background="Transparent" BorderThickness="0"
-                                              IsTabStop="False"/>
+                                              Focusable="False" IsTabStop="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="{StaticResource ScrollBarTrackBrush}"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
                             </Track.IncreaseRepeatButton>
                         </Track>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter TargetName="DecreaseButton" Property="Command" Value="{x:Static ScrollBar.PageLeftCommand}" />
+                            <Setter TargetName="IncreaseButton" Property="Command" Value="{x:Static ScrollBar.PageRightCommand}" />
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="14" />
+                <Setter Property="MinHeight" Value="14" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="ProgressBar">
