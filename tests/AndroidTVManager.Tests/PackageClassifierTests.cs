@@ -160,6 +160,10 @@ public sealed class PackageClassifierTests
         sources.Should().Contain(source => source.Id == "homatics-4pda-atv14");
         sources.Should().Contain(source => source.Id == "firestrip");
         sources.Should().Contain(source => source.Id == "onn-4k-plus-report");
+        sources.Single(source => source.Id == "homatics-4pda-atv14").SourceConfidence
+            .Should().Be(PackageSourceConfidence.RealHardwareDump);
+        sources.Single(source => source.Id == "nokia-live-tv-regression").SourceConfidence
+            .Should().Be(PackageSourceConfidence.SingleAnecdotalReport);
     }
 
     [Fact]
@@ -173,6 +177,18 @@ public sealed class PackageClassifierTests
         assessment.Confidence.Should().Be(PackageConfidence.Low);
         assessment.RecommendedAction.Should().Be("Review manually");
         assessment.Reasons.Should().Contain(reason => reason.Contains("skyworth-tianci-report", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Panasonic_and_Nokia_research_namespaces_never_become_automatic_candidates()
+    {
+        var panasonic = _classifier.Classify(Package("com.panasonic.tvservice"), Context("Panasonic", "TX-55LX650"));
+        var nokia = _classifier.Classify(Package("com.nokia.livetv"), Context("Nokia", "Nokia TV"));
+
+        panasonic.Risk.Should().Be(PackageRiskLevel.Unknown);
+        nokia.Risk.Should().Be(PackageRiskLevel.Unknown);
+        panasonic.RecommendedAction.Should().Be("Review manually");
+        nokia.RecommendedAction.Should().Be("Review manually");
     }
 
     [Fact]
