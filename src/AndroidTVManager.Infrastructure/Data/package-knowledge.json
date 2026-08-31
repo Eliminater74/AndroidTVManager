@@ -1430,5 +1430,242 @@
     "sourceIds": ["jvc-android-tv-guide"],
     "observedModels": "JVC Android TV families",
     "evidenceNotes": "Generic guide evidence only; no safe package classification is claimed."
+  },
+  {
+    "package": "com.tcl.exhibit",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL retail",
+    "description": "TCL exhibit/demo component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Demo mode",
+        "description": "Retail or exhibit behavior may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide"],
+    "observedModels": "TCL 65C7K"
+  },
+  {
+    "package": "com.tcl.magiconnectfree",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL casting",
+    "description": "TCL Magic Connect application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Casting",
+        "description": "TCL Magic Connect features may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide"],
+    "observedModels": "TCL 65C7K"
+  },
+  {
+    "package": "com.tcl.tv.tclhome_passive",
+    "risk": "Caution",
+    "confidence": "High",
+    "category": "TCL home screen",
+    "description": "TCL passive home-screen component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Home screen",
+        "description": "TCL home-screen content or passive recommendations may change."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+    "observedModels": "TCL 65C7K; TCL families"
+  },
+  {
+    "package": "com.tcl.notereminder",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL utilities",
+    "description": "TCL notes and reminders application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Utilities",
+        "description": "TCL notes or reminder features may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.messagebox",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL utilities",
+    "description": "TCL message-box application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Notifications",
+        "description": "Vendor message or notification surfaces may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.tvweishi",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL security overlay",
+    "description": "TCL Guard-related overlay or home-screen service.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Vendor security",
+        "description": "TCL Guard or related home-screen behavior may change."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families",
+    "evidenceNotes": "Role is inferred from independent package lists; keep as Caution."
+  },
+  {
+    "package": "com.tcl.videoplayer",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL media",
+    "description": "TCL video-player application.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Media",
+        "description": "TCL built-in video playback may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.overseasappshow",
+    "risk": "Caution",
+    "confidence": "Medium",
+    "category": "TCL advertising",
+    "description": "TCL overseas app-promotion component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "Promotions",
+        "description": "TCL promotional app surfaces may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.pvr.pvrplayer",
+    "risk": "HighRisk",
+    "confidence": "Medium",
+    "category": "TCL recording",
+    "description": "TCL PVR/player component.",
+    "recommendedAction": "Disable",
+    "impacts": [
+      {
+        "area": "TV recording",
+        "description": "PVR or local recording functionality may be unavailable."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+    "observedModels": "TCL families"
+  },
+  {
+    "package": "com.tcl.micmanager",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "TCL microphone",
+    "description": "TCL microphone-management component.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Voice control",
+        "description": "Microphone input or voice remote behavior may stop working."
+      }
+    ],
+    "manufacturer": "TCL",
+    "sourceIds": ["tcl-conservative-debloater"],
+    "observedModels": "TCL families",
+    "evidenceNotes": "The source explicitly leaves this package protected because it enables the TV remote microphone."
+  },
+  {
+    "package": "com.nokia.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Nokia TV research",
+    "description": "Nokia TV package namespace reserved for model-specific research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.nokia.",
+    "sourceIds": ["nokia-live-tv-regression"],
+    "observedModels": "Nokia Android TV families",
+    "evidenceNotes": "A Live TV removal report showed remote and smart-TV regressions; no package identity was reliable enough to classify."
+  },
+  {
+    "package": "com.panasonic.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Panasonic TV research",
+    "description": "Panasonic TV package namespace reserved for model-specific research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.panasonic.",
+    "sourceIds": ["panasonic-ui-regression"],
+    "observedModels": "Panasonic Android TV families",
+    "evidenceNotes": "A report describes a blank UI and lost settings/ADB path after system-package changes; no package identity was reliable enough to classify."
+  },
+  {
+    "package": "com.philips.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Philips TV research",
+    "description": "Philips TV package namespace reserved for model-specific evidence.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.philips.",
+    "sourceIds": ["philips-input-regression", "philips-clean-android-tv"],
+    "observedModels": "Philips Android/Google TV families",
+    "evidenceNotes": "Public reports show that TV, TV Guide, and Help components can affect source/input behavior; exact package roles remain model-specific."
+  },
+  {
+    "package": "com.changhong.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Changhong TV research",
+    "description": "Changhong TV package namespace reserved for model-specific research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.changhong.",
+    "sourceIds": ["changhong-giu6860-guide"],
+    "observedModels": "Changhong GIU6860 and related Android TV families",
+    "evidenceNotes": "ADB guidance exists, but no trustworthy package behavior map was found."
+  },
+  {
+    "package": "com.konka.*",
+    "risk": "Unknown",
+    "confidence": "Low",
+    "category": "Konka TV research",
+    "description": "Konka TV package namespace reserved for model-specific research.",
+    "recommendedAction": "Review manually",
+    "impacts": [],
+    "packagePrefix": "com.konka.",
+    "sourceIds": ["konka-tp701-guide"],
+    "observedModels": "Konka TP701 and related Android TV families",
+    "evidenceNotes": "ADB guidance exists, but no trustworthy package behavior map was found."
   }
 ]

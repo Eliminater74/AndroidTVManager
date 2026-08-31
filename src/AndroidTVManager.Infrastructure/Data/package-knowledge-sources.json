@@ -222,5 +222,68 @@
     "sourceType": "secondary-community-research",
     "retrievedUtc": "2026-08-30",
     "attribution": "ashishdungdung"
+  },
+  {
+    "id": "philips-clean-android-tv",
+    "title": "Clean Android TV tested Philips 2K Google TV optimization project",
+    "url": "https://github.com/celiobjunior/clean-android-tv",
+    "sourceType": "community-tested-guide",
+    "sourceConfidence": "TestedDeviceReport",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "celiobjunior"
+  },
+  {
+    "id": "nokia-live-tv-regression",
+    "title": "Nokia Android TV Live TV removal regression report",
+    "url": "https://www.reddit.com/r/AndroidTV/comments/jnpyn5",
+    "sourceType": "community-regression-report",
+    "sourceConfidence": "SingleAnecdotalReport",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Android TV community discussion"
+  },
+  {
+    "id": "panasonic-ui-regression",
+    "title": "Panasonic TX-55LX650 Android TV system-service regression discussion",
+    "url": "https://www.avforums.com/threads/panasonic-tx-55lx650bz-android-tv-service-menu.2440189",
+    "sourceType": "community-regression-report",
+    "sourceConfidence": "SingleAnecdotalReport",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "AVForums community discussion"
+  },
+  {
+    "id": "skyworth-device-guide",
+    "title": "Skyworth SW3 Android TV debloat/device recognition guide",
+    "url": "https://tweakdroid.com/bloatware/skyworth-north-america-swtv-sw3-atv",
+    "sourceType": "generic-community-guide",
+    "sourceConfidence": "GenericManufacturerEvidence",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "TweakDroid"
+  },
+  {
+    "id": "coocaa-assistant-report",
+    "title": "Coocaa Android TV Assistant behavior discussion",
+    "url": "https://www.reddit.com/r/AndroidTV/comments/gogf6u",
+    "sourceType": "community-regression-report",
+    "sourceConfidence": "SingleAnecdotalReport",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Android TV community discussion"
+  },
+  {
+    "id": "changhong-giu6860-guide",
+    "title": "Changhong GIU6860 Android TV ADB guide",
+    "url": "https://tweakdroid.com/bloatware/changhong-giu6860",
+    "sourceType": "generic-community-guide",
+    "sourceConfidence": "GenericManufacturerEvidence",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "TweakDroid"
+  },
+  {
+    "id": "konka-tp701-guide",
+    "title": "KONKA TP701 Android TV ADB guide",
+    "url": "https://tweakdroid.com/bloatware/konka-tp701",
+    "sourceType": "generic-community-guide",
+    "sourceConfidence": "GenericManufacturerEvidence",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "TweakDroid"
   }
 ]
