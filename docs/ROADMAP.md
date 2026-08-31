@@ -20,7 +20,8 @@
 - Source-attributed debloat knowledge for Chromecast, Shield, Sony, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, Fire TV, and ONN research
 - Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
 - Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
-- Debloat previews use selected-device identity, reference-profile evidence, and current runtime-role checks before execution
+- Debloat previews use selected-device identity, reference-profile recommendations, source evidence, and current runtime-role checks before execution
+- Android TV core settings/provider/framework packages and all Keep-side recommendations are locked across previews, execution, and direct package actions
 - Read-only reference package dump export for device contributors
 - Scrollable About navigation labeled simply `About`, with developer identity on the About page
 - Release automation, self-contained Windows packaging, installer distribution, and metadata validation
@@ -31,7 +32,7 @@
 
 - Profile export/import (`.atmprofile`) with optional APK assets
 - More hardware fixtures and physical-device validation
-- Reversible recommendation scoring with restore points and explicit package-data limitations
+- Explicit reversibility states, restore points, and package-data limitations for recommendation scoring
 
 ## Later
 

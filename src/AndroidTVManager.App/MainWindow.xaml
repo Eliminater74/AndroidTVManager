@@ -1931,7 +1931,7 @@
                                            Foreground="{StaticResource TextSecondary}"/>
                                 <TextBlock Text="{Binding SelectedAssessment.RecommendedAction, StringFormat=Suggested action: {0}}"
                                            Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding SelectedAssessment.IsProtected, StringFormat=Protected by runtime role: {0}}"
+                                <TextBlock Text="{Binding SelectedSafetyStatus}"
                                            Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
                                 <TextBlock Text="{Binding SelectedReference.Role, StringFormat=Known role: {0}}"
                                            Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>

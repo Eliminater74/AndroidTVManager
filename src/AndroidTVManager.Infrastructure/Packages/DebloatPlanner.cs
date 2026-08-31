@@ -48,7 +48,7 @@ public sealed class DebloatPlanner : IDebloatPlanner
             {
                 var reference = references.GetValueOrDefault(package.PackageName);
                 var assessment = _classifier.Classify(package, context);
-                assessment = ApplyReferenceProtection(assessment, reference);
+                assessment = PackageAssessmentReferenceEnricher.ApplyReferenceEvidence(assessment, reference);
                 assessment = ApplyOverride(assessment, overrides.GetValueOrDefault(package.PackageName));
                 return BuildItem(package, assessment, preset, reference);
             })
@@ -96,72 +96,45 @@ public sealed class DebloatPlanner : IDebloatPlanner
         DebloatPreset preset,
         PackageReferenceAnalysisItem? reference)
     {
+        var autoAction = PackageAssessmentReferenceEnricher.IsAutoDebloatAction(assessment);
         var allowed = assessment.Override == PackageOverride.UserApproved
-            || (assessment.Risk switch
+            || (autoAction && assessment.Risk switch
             {
                 PackageRiskLevel.Safe => true,
                 PackageRiskLevel.Caution => preset is DebloatPreset.Medium or DebloatPreset.Aggressive,
                 PackageRiskLevel.HighRisk => preset == DebloatPreset.Aggressive,
                 _ => false
-            });
-        var protectedPackage = assessment.IsProtected || assessment.Risk == PackageRiskLevel.Critical;
+        });
+        var protectedPackage = PackageAssessmentReferenceEnricher.IsSafetyLocked(assessment);
         var selected = allowed && !protectedPackage && package.IsInstalled;
-        var reason = selected
-            ? null
-            : protectedPackage
-                ? "Locked: critical package or active device role."
-                : assessment.Risk == PackageRiskLevel.Unknown
-                    ? "Not auto-selected: unknown package. You may select it manually after review."
-                : !package.IsInstalled
-                    ? "Package is not currently installed for the user."
-                    : $"Not included in {preset} preset.";
+        var reason = GetSelectionBlockReason(package, assessment, preset, selected, protectedPackage, autoAction);
         return new(package, assessment, DebloatAction.Disable, selected, reason, reference);
     }
 
-    private static PackageAssessment ApplyReferenceProtection(
+    private static string? GetSelectionBlockReason(
+        PackageInventoryEntry package,
         PackageAssessment assessment,
-        PackageReferenceAnalysisItem? reference)
+        DebloatPreset preset,
+        bool selected,
+        bool protectedPackage,
+        bool autoAction)
     {
-        if (reference is not { Matches.Count: > 0 }
-            || reference.Matches.All(match => !match.ActiveRoleProtection)
-            || assessment.IsProtected
-            || assessment.Risk == PackageRiskLevel.Critical)
-            return assessment;
-
-        var protectiveMatches = reference.Matches
-            .Where(match => match.ActiveRoleProtection)
-            .ToArray();
-        var role = protectiveMatches
-            .Select(match => match.Role)
-            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
-        var impacts = assessment.Impacts
-            .Concat(protectiveMatches.SelectMany(match => match.FeatureImpacts))
-            .DistinctBy(impact => (impact.Area, impact.Description, impact.IsKnownDependency))
-            .ToArray();
-        var reasons = assessment.Reasons
-            .Concat([
-                $"Reference profile protects this package as {role ?? "a core TV component"}; origin is {reference.Origin}."
-            ])
-            .ToArray();
-
-        return assessment with
-        {
-            Risk = PackageRiskLevel.Critical,
-            Confidence = Max(assessment.Confidence, protectiveMatches.Max(match => match.Confidence)),
-            Category = role ?? assessment.Category,
-            RecommendedAction = "Keep",
-            Reasons = reasons,
-            Impacts = impacts,
-            IsProtected = true
-        };
+        if (selected)
+            return null;
+        if (protectedPackage)
+            return "Locked: critical package, Keep rule, or active device role.";
+        if (assessment.Risk == PackageRiskLevel.Unknown)
+            return "Not auto-selected: unknown package. You may select it manually after review.";
+        if (!package.IsInstalled)
+            return "Package is not currently installed for the user.";
+        if (!autoAction)
+            return $"Not auto-selected: reviewed action is {assessment.RecommendedAction}.";
+        return $"Not included in {preset} preset.";
     }
 
     private static string BuildReferenceWarning(PackageReferenceSummary summary)
         => $"Device profile matched {summary.BaselineMatches} reference package record(s); "
            + $"{summary.UnknownPackages} of {summary.TotalPackages} package(s) remain Unknown.";
-
-    private static PackageConfidence Max(PackageConfidence left, PackageConfidence right)
-        => left > right ? left : right;
 
     private static AndroidDevice MergeDevice(
         AndroidDevice? selected,

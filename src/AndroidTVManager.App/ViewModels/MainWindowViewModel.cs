@@ -1437,6 +1437,17 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     public IReadOnlyList<PackageReferenceMatch> SelectedReferences
         => SelectedReference?.Matches ?? [];
 
+    public string SelectedSafetyStatus
+        => SelectedAssessment is null
+            ? "Safety: no package selected."
+            : PackageAssessmentReferenceEnricher.IsSafetyLocked(SelectedAssessment)
+                ? SelectedAssessment.IsProtected
+                    ? "Safety: locked by runtime or reference protection."
+                    : "Safety: locked by Critical/Keep rule."
+                : SelectedAssessment.Risk == PackageRiskLevel.Unknown
+                    ? "Safety: manual review required before changes."
+                    : "Safety: reviewed action can be confirmed manually.";
+
     public string SelectedObservedOn
         => SelectedReference is { ObservedOn.Count: > 0 }
             ? string.Join(", ", SelectedReference.ObservedOn)
@@ -1501,6 +1512,9 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         OnPropertyChanged(nameof(SelectedNeededBy));
     }
 
+    partial void OnSelectedAssessmentChanged(PackageAssessment? value)
+        => OnPropertyChanged(nameof(SelectedSafetyStatus));
+
     partial void OnSelectedReferenceChanged(PackageReferenceAnalysisItem? value)
     {
         OnPropertyChanged(nameof(SelectedReferences));
@@ -1559,12 +1573,14 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
             string.Equals(candidate.Serial, TargetSerial.Trim(), StringComparison.OrdinalIgnoreCase))
             ?? new AndroidDevice { Serial = TargetSerial.Trim() };
         var context = PackageClassificationContexts.FromInventory(device, inventory.Packages);
-        _assessments = inventory.Packages
-            .Select(package => _classifier.Classify(package, context))
-            .ToDictionary(assessment => assessment.PackageName, StringComparer.OrdinalIgnoreCase);
         var referenceAnalysis = await _referenceCatalog.AnalyzeAsync(device, inventory.Packages);
         _references = referenceAnalysis.Packages
             .ToDictionary(reference => reference.PackageName, StringComparer.OrdinalIgnoreCase);
+        _assessments = inventory.Packages
+            .Select(package => PackageAssessmentReferenceEnricher.ApplyReferenceEvidence(
+                _classifier.Classify(package, context),
+                _references.GetValueOrDefault(package.PackageName)))
+            .ToDictionary(assessment => assessment.PackageName, StringComparer.OrdinalIgnoreCase);
         ReferenceSummary = BuildReferenceSummary(referenceAnalysis.Summary);
         SelectedPackage = Packages.FirstOrDefault();
         OnPropertyChanged(nameof(FilteredPackages));
@@ -1773,6 +1789,14 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         }
         var serial = TargetSerial.Trim();
         var packageName = SelectedPackage.PackageName;
+        if (destructive
+            && SelectedAssessment is { } assessment
+            && PackageAssessmentReferenceEnricher.IsSafetyLocked(assessment))
+        {
+            Message = $"{action} blocked: {packageName} is classified as "
+                      + $"{assessment.Risk} with action {assessment.RecommendedAction}.";
+            return;
+        }
         if (destructive && !_confirmation.Confirm(
                 $"{action} · confirm target",
                 $"{action} applies to:\n\n{packageName}\n\nTarget device:\n{serial}\n\nContinue?"))

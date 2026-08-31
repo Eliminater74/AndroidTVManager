@@ -82,7 +82,7 @@
   {
     "id": "sony-katniss-regression",
     "title": "Sony Android TV debloat report noting voice-search regression",
-    "url": "https://gist.github.com/atais/f3f4544bb668c4c2e8b0335f878bb3f5",
+    "url": "https://gist.github.com/atais/f3f4544bb6685c4c2e8b0335f878bb3f",
     "sourceType": "community-regression-report",
     "retrievedUtc": "2026-08-30",
     "attribution": "atais"

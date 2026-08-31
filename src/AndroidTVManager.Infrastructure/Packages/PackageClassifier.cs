@@ -7,7 +7,7 @@ namespace AndroidTVManager.Infrastructure.Packages;
 
 public sealed class PackageClassifier : IPackageClassifier
 {
-    public const string RulesetVersion = "vendor-tv-sourced-2026-08-30-v2";
+    public const string RulesetVersion = "vendor-tv-sourced-2026-08-31-v3";
     private readonly IReadOnlyList<PackageKnowledgeRule> _rules;
     private readonly IReadOnlyDictionary<string, PackageKnowledgeSource> _sources;
 
@@ -44,11 +44,20 @@ public sealed class PackageClassifier : IPackageClassifier
             .FirstOrDefault();
         if (rule is null)
         {
-            reasons.Add(package.IsSystem
-                ? "System package is not covered by a verified starter rule."
-                : "No device-specific knowledge rule matches this package.");
+            if (package.IsSystem)
+            {
+                reasons.Add("System package is not covered by a reviewed Android TV knowledge rule. Keep it installed unless you have device-specific evidence.");
+                return Assessment(package, PackageRiskLevel.Unknown, PackageConfidence.Low,
+                    "Unreviewed system package",
+                    "Review manually",
+                    reasons,
+                    false,
+                    "This system package has not been mapped to a reviewed Android TV role yet.");
+            }
+
+            reasons.Add("No device-specific knowledge rule matches this package.");
             return Assessment(package, PackageRiskLevel.Unknown, PackageConfidence.Low,
-                "Unknown", "Review manually", reasons, false);
+                "Unknown user or preload", "Review manually", reasons, false);
         }
 
         reasons.Add($"Matched {Specificity(rule)}-level knowledge rule.");
@@ -58,14 +67,19 @@ public sealed class PackageClassifier : IPackageClassifier
             reasons.Add($"Observed models/families: {rule.ObservedModels}.");
         if (!string.IsNullOrWhiteSpace(rule.EvidenceNotes))
             reasons.Add($"Evidence note: {rule.EvidenceNotes}");
+        var hasOfficialSource = (rule.SourceIds ?? [])
+            .Any(sourceId => _sources.TryGetValue(sourceId, out var source)
+                && source.SourceConfidence == PackageSourceConfidence.OfficialAosp);
         reasons.Add(rule.HardwareVerified
             ? "Hardware behavior verified by Android TV Manager."
-            : "Community/source evidence only; Android TV Manager has not hardware-verified this behavior.");
+            : hasOfficialSource
+                ? "Official Android TV source evidence; Android TV Manager has not hardware-verified every OEM build."
+                : "Community/source evidence only; Android TV Manager has not hardware-verified this behavior.");
         foreach (var sourceId in rule.SourceIds ?? [])
         {
             if (_sources.TryGetValue(sourceId, out var source))
                 reasons.Add($"Source evidence [{source.Id}]: {source.Title} "
-                    + $"({source.SourceConfidence}, {source.SourceType}) — {source.Url}");
+                    + $"({source.SourceConfidence}, {source.SourceType}) - {source.Url}");
             else
                 reasons.Add($"Source evidence reference '{sourceId}' is unavailable.");
         }
@@ -181,13 +195,18 @@ public static class PackageKnowledgeLoader
     private static PackageSourceConfidence InferSourceConfidence(string sourceType)
         => sourceType switch
         {
+            "official-source-definition"
+                => PackageSourceConfidence.OfficialAosp,
             "community-package-dump" or "community-hardware-research"
+                or "community-package-inventory"
                 => PackageSourceConfidence.RealHardwareDump,
             "community-tested-guide" or "community-regression-report"
                 => PackageSourceConfidence.TestedDeviceReport,
             "community-tool" or "community-knowledge-base" or "community-package-research"
                 => PackageSourceConfidence.MultiSourceCommunityEvidence,
             "manufacturer-product-reference" or "device-compatibility-reference"
+                or "community-device-guide" or "community-device-research"
+                or "generic-community-guide" or "secondary-community-research"
                 => PackageSourceConfidence.GenericManufacturerEvidence,
             _ when sourceType.Contains("anecdotal", StringComparison.OrdinalIgnoreCase)
                 => PackageSourceConfidence.SingleAnecdotalReport,

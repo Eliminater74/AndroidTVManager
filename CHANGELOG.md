@@ -15,10 +15,17 @@ Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP
 - Debloat preview rows now carry reference-profile origin, role, observed-device, dependency, and match-count evidence.
 - Reference-protected TV core/framework roles are locked in debloat previews even when they are not present in the flat package-rule list.
 - Debloat execution now rechecks selected packages against current runtime-role protection before running disable actions.
+- Android TV Settings, Settings Provider, TV Provider, TV framework stubs, permission/package installers, and Live TV packages now have explicit Keep-side core rules.
+- Reference baseline matches can now contribute reviewed Caution/High Risk recommendations instead of only promoting protected packages to Critical.
+- Destructive package actions in Applications are blocked for Critical, protected, and Keep-side package assessments.
+- Corrected the Philips EPOP/demo rule so it no longer carries copied Sony Katniss/TCL source attribution.
+- Conflicting Google Katniss voice-search evidence now resolves to High Risk / Keep instead of an Aggressive preset candidate.
+- Debloat presets no longer auto-select packages whose reviewed action is Keep, even in Aggressive mode.
 
 ### Tests
 
 - Added regression coverage for IPTV/player apps that appear in non-owner policy output, selected-device profile matching, and reference-protected TV core packages.
+- Added coverage for reference-derived recommendations, imported Safe-to-Caution capping, Keep-rule locks, Android TV core classifications, and corrected Philips demo attribution.
 
 ## [1.0.0-B9] - 2026-08-31
 

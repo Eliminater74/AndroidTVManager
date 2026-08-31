@@ -53,7 +53,7 @@ public sealed class PackageReferenceCatalogTests
     }
 
     [Fact]
-    public async Task Origin_metadata_does_not_create_a_safe_debloat_assessment()
+    public async Task Google_tv_launcher_reference_is_keep_not_safe_candidate()
     {
         var device = Device("Google", "Chromecast with Google TV", "12");
         var analysis = await _catalog.AnalyzeAsync(
@@ -62,8 +62,40 @@ public sealed class PackageReferenceCatalogTests
 
         var match = analysis.Packages[0].Matches[0];
         match.ActiveRoleProtection.Should().BeTrue();
-        match.Risk.Should().BeNull();
-        match.RecommendedAction.Should().BeNull();
+        match.Risk.Should().Be(PackageRiskLevel.Critical);
+        match.RecommendedAction.Should().Be("Keep");
+    }
+
+    [Fact]
+    public async Task Reference_baseline_can_carry_reviewed_risk_and_action()
+    {
+        var device = Device("TCL", "65C7K", "11");
+
+        var analysis = await _catalog.AnalyzeAsync(device, [Package("com.tcl.initsetup")]);
+
+        var match = analysis.Packages.Single().Matches.Single();
+
+        match.Origin.Should().Be(PackageOrigin.Oem);
+        match.Risk.Should().Be(PackageRiskLevel.Caution);
+        match.RecommendedAction.Should().Be("Disable");
+        match.SourceConfidence.Should().Be(PackageSourceConfidence.MultiSourceCommunityEvidence);
+    }
+
+    [Fact]
+    public async Task Google_tv_reference_exact_packages_apply_across_oem_devices()
+    {
+        var device = Device("TCL", "65C7K", "11");
+
+        var analysis = await _catalog.AnalyzeAsync(
+            device,
+            [Package("com.google.android.tungsten.setupwraith")]);
+
+        var match = analysis.Packages.Single().Matches.Single();
+
+        match.Origin.Should().Be(PackageOrigin.GoogleTvGms);
+        match.Risk.Should().Be(PackageRiskLevel.HighRisk);
+        match.RecommendedAction.Should().Be("Keep");
+        match.ObservedOn.Should().Contain("Chromecast with Google TV GA01919-US");
     }
 
     [Fact]

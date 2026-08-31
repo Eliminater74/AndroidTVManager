@@ -15,8 +15,7 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
     public PackageInventoryEntry Package => Item.Package;
     public PackageAssessment Assessment => Item.Assessment;
     public PackageReferenceAnalysisItem? Reference => Item.Reference;
-    public bool CanSelect => !Assessment.IsProtected
-        && Assessment.Risk != PackageRiskLevel.Critical
+    public bool CanSelect => !PackageAssessmentReferenceEnricher.IsSafetyLocked(Assessment)
         && Package.IsInstalled;
     public bool RequiresManualReview => Assessment.Risk == PackageRiskLevel.Unknown;
     public string SelectionLabel => CanSelect
@@ -25,7 +24,7 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
             : IsSelected
                 ? "Selected"
                 : "Not selected"
-        : Assessment.IsProtected || Assessment.Risk == PackageRiskLevel.Critical
+        : PackageAssessmentReferenceEnricher.IsSafetyLocked(Assessment)
             ? "Locked for safety"
             : "Not installed for User 0";
     public string ImpactSummary => Assessment.Impacts.Count == 0
@@ -75,6 +74,8 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
         OnPropertyChanged(nameof(Item));
         OnPropertyChanged(nameof(Package));
         OnPropertyChanged(nameof(Reference));
+        OnPropertyChanged(nameof(CanSelect));
+        OnPropertyChanged(nameof(SelectionLabel));
         OnPropertyChanged(nameof(ProfileSummary));
         OnPropertyChanged(nameof(EvidenceSummary));
     }

@@ -63,6 +63,32 @@ public sealed class PackageClassifierTests
     }
 
     [Fact]
+    public void Android_tv_settings_and_framework_packages_are_keep_rules()
+    {
+        var tvSettings = _classifier.Classify(Package("com.android.tv.settings", isSystem: true), _context);
+        var settingsProvider = _classifier.Classify(Package("com.android.providers.settings", isSystem: true), _context);
+        var tvProvider = _classifier.Classify(Package("com.android.providers.tv", isSystem: true), _context);
+        var tvFrameworkStubs = _classifier.Classify(
+            Package("com.android.tv.frameworkpackagestubs", isSystem: true),
+            _context);
+        var settingsIntelligence = _classifier.Classify(
+            Package("com.android.settings.intelligence", isSystem: true),
+            _context);
+
+        tvSettings.Risk.Should().Be(PackageRiskLevel.Critical);
+        tvSettings.RecommendedAction.Should().Be("Keep");
+        tvSettings.Impacts.Should().Contain(impact => impact.Area == "Settings");
+        settingsProvider.Risk.Should().Be(PackageRiskLevel.Critical);
+        settingsProvider.RecommendedAction.Should().Be("Keep");
+        tvProvider.Risk.Should().Be(PackageRiskLevel.Critical);
+        tvProvider.RecommendedAction.Should().Be("Keep");
+        tvFrameworkStubs.Risk.Should().Be(PackageRiskLevel.Critical);
+        tvFrameworkStubs.RecommendedAction.Should().Be("Keep");
+        settingsIntelligence.Risk.Should().Be(PackageRiskLevel.HighRisk);
+        settingsIntelligence.RecommendedAction.Should().Be("Keep");
+    }
+
+    [Fact]
     public void Philips_demo_and_recommendation_rules_include_feature_impacts()
     {
         var context = Context("Philips", "55PUS9000");
@@ -74,6 +100,8 @@ public sealed class PackageClassifierTests
         demo.Confidence.Should().Be(PackageConfidence.High);
         demo.Impacts.Should().ContainSingle(impact => impact.Area == "Demo mode");
         demo.RecommendedAction.Should().Be("Disable");
+        demo.Reasons.Should().Contain(reason => reason.Contains("philips-clean-android-tv", StringComparison.Ordinal));
+        demo.Reasons.Should().NotContain(reason => reason.Contains("sony-katniss-regression", StringComparison.Ordinal));
         recommendations.Risk.Should().Be(PackageRiskLevel.Caution);
         recommendations.Impacts.Should().ContainSingle(impact => impact.Area == "Home screen");
     }
@@ -122,6 +150,7 @@ public sealed class PackageClassifierTests
         var assessment = _classifier.Classify(Package("com.google.android.katniss"), _context);
 
         assessment.Risk.Should().Be(PackageRiskLevel.HighRisk);
+        assessment.RecommendedAction.Should().Be("Keep");
         assessment.Impacts.Should().Contain(impact => impact.Area == "Voice search");
         assessment.Reasons.Should().Contain(reason => reason.Contains("Conflicting", StringComparison.Ordinal));
     }
@@ -160,10 +189,28 @@ public sealed class PackageClassifierTests
         sources.Should().Contain(source => source.Id == "homatics-4pda-atv14");
         sources.Should().Contain(source => source.Id == "firestrip");
         sources.Should().Contain(source => source.Id == "onn-4k-plus-report");
+        sources.Single(source => source.Id == "sony-katniss-regression").Url
+            .Should().Contain("f3f4544bb6685c4c2e8b0335f878bb3f");
         sources.Single(source => source.Id == "homatics-4pda-atv14").SourceConfidence
             .Should().Be(PackageSourceConfidence.RealHardwareDump);
+        sources.Single(source => source.Id == "aosp-atv-system-ext").SourceConfidence
+            .Should().Be(PackageSourceConfidence.OfficialAosp);
         sources.Single(source => source.Id == "nokia-live-tv-regression").SourceConfidence
             .Should().Be(PackageSourceConfidence.SingleAnecdotalReport);
+    }
+
+    [Fact]
+    public void Philips_demo_rule_uses_philips_evidence_not_katniss_copy_paste_metadata()
+    {
+        var rules = PackageKnowledgeLoader.Load();
+
+        var demo = rules.Single(rule => rule.Package == "fusion.android.tv.demo");
+
+        demo.SourceIds.Should().NotBeNull();
+        demo.SourceIds!.Should().ContainSingle(sourceId => sourceId == "philips-clean-android-tv");
+        demo.SourceIds.Should().NotContain("sony-katniss-regression");
+        demo.ObservedModels.Should().Contain("Philips");
+        demo.EvidenceNotes.Should().Contain("EPOP");
     }
 
     [Fact]
@@ -205,8 +252,8 @@ public sealed class PackageClassifierTests
         wrongVendor.Risk.Should().Be(PackageRiskLevel.Unknown);
     }
 
-    private static PackageInventoryEntry Package(string name)
-        => new(name, null, null, null, "0", false, false, true, true, false, [],
+    private static PackageInventoryEntry Package(string name, bool isSystem = false)
+        => new(name, null, null, null, "0", isSystem, false, true, true, false, [],
             DateTimeOffset.UtcNow, "tv-1", "14", "fingerprint");
 
     private static PackageClassificationContext Context(string manufacturer, string model, string? product = null)

@@ -26,7 +26,7 @@
     "confidence": "High",
     "category": "Voice",
     "description": "Google TV search and voice-related component.",
-    "recommendedAction": "Disable",
+    "recommendedAction": "Keep",
     "sourceIds": [
       "sony-x850d-guide",
       "sony-katniss-regression",
@@ -70,6 +70,174 @@
     ]
   },
   {
+    "package": "com.android.tv.settings",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "TV settings",
+    "description": "Android TV Settings application.",
+    "recommendedAction": "Keep",
+    "sourceIds": [
+      "aosp-atv-android10-base",
+      "aosp-atv-system-ext"
+    ],
+    "observedModels": "AOSP Android TV reference products across Android 10 and current generations",
+    "evidenceNotes": "AOSP Android TV product definitions include TvSettings in the TV base/system_ext platform image.",
+    "impacts": [
+      {
+        "area": "Settings",
+        "description": "Disabling this can remove access to Android TV settings, network, inputs, display, accessibility, and device configuration.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.providers.settings",
+    "risk": "Critical",
+    "confidence": "Verified",
+    "category": "Settings provider",
+    "description": "Android settings storage provider.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "System settings",
+        "description": "Disabling this can corrupt or prevent reads and writes of device settings.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.settings.intelligence",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "Settings intelligence",
+    "description": "Android/Android TV settings search and intelligence component.",
+    "recommendedAction": "Keep",
+    "sourceIds": [
+      "aosp-atv-master-product",
+      "aosp-atv-android10-base"
+    ],
+    "observedModels": "AOSP Android TV reference products",
+    "evidenceNotes": "AOSP Android TV product definitions include SettingsIntelligence in TV product contents.",
+    "impacts": [
+      {
+        "area": "Settings",
+        "description": "Settings search, suggestions, or related configuration UI can be degraded.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.providers.tv",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "TV provider",
+    "description": "Android TV provider for TV/input/channel data.",
+    "recommendedAction": "Keep",
+    "sourceIds": [
+      "aosp-atv-android10-base",
+      "aosp-atv-master-product"
+    ],
+    "observedModels": "AOSP Android TV reference products",
+    "evidenceNotes": "AOSP Android TV product definitions include TvProvider as part of the platform TV core.",
+    "impacts": [
+      {
+        "area": "TV inputs",
+        "description": "Live TV, channel metadata, input integrations, or guide data can break.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.tv.frameworkpackagestubs",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "TV framework compatibility",
+    "description": "Android TV framework package stubs used by the TV platform layer.",
+    "recommendedAction": "Keep",
+    "sourceIds": [
+      "aosp-atv-system-ext"
+    ],
+    "observedModels": "AOSP Android TV current system_ext reference products",
+    "evidenceNotes": "AOSP Android TV system_ext product definitions include TvFrameworkPackageStubs.",
+    "impacts": [
+      {
+        "area": "TV framework",
+        "description": "TV framework package compatibility and platform service binding can be affected.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.permissioncontroller",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Permission controller",
+    "description": "Android runtime permission controller.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Permissions",
+        "description": "App permission grants, prompts, and security controls can stop working.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.packageinstaller",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Package installer",
+    "description": "Android package install and uninstall UI component.",
+    "recommendedAction": "Keep",
+    "sourceIds": [
+      "aosp-atv-android10-base"
+    ],
+    "observedModels": "AOSP Android TV reference products",
+    "evidenceNotes": "AOSP Android TV base product definitions include PackageInstaller.",
+    "impacts": [
+      {
+        "area": "Package management",
+        "description": "Package installation, restoration, and system package flows can break.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.google.android.packageinstaller",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Package installer",
+    "description": "Google package install and uninstall UI component when present on TV builds.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Package management",
+        "description": "Package installation, restoration, and system package flows can break.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
+    "package": "com.android.tv",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "Live TV",
+    "description": "Android TV Live Channels / TV application when included by the device.",
+    "recommendedAction": "Keep",
+    "sourceIds": [
+      "aosp-atv-android10-base"
+    ],
+    "observedModels": "AOSP Android TV reference products without OEM TV app replacement",
+    "evidenceNotes": "AOSP Android TV can include the standard TV/Live TV package unless an OEM TV app replaces it.",
+    "impacts": [
+      {
+        "area": "Live TV",
+        "description": "Live TV, tuner input, guide, or remote-button behavior may stop working.",
+        "isKnownDependency": true
+      }
+    ]
+  },
+  {
     "package": "com.google.android.verifier",
     "risk": "Critical",
     "confidence": "Verified",
@@ -97,12 +265,10 @@
       }
     ],
     "sourceIds": [
-      "sony-x850d-guide",
-      "sony-katniss-regression",
-      "tcl-conservative-debloater"
+      "philips-clean-android-tv"
     ],
-    "observedModels": "Sony Bravia XBR-55X850D; TCL families",
-    "evidenceNotes": "Conflicting community reports: one tested guide disabled it while another reported that voice search stopped. Never treat as Safe."
+    "observedModels": "Philips 2K Google TV / Android 11 family",
+    "evidenceNotes": "Philips-specific EPOP/demo package evidence; not related to Sony Katniss voice-search reports."
   },
   {
     "package": "com.coocaa.demonow.lightining",

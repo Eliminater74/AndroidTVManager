@@ -24,6 +24,9 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [x] Prevent non-owner `dumpsys device_policy` package lists from marking normal apps as device owners.
 - [x] Build debloat previews from the selected device identity, not only from the last cached inspection snapshot.
 - [x] Surface reference-profile origin, role, observed-on, dependency, and match-count evidence in debloat preview rows.
+- [x] Let reviewed reference-profile risk/action metadata produce conservative debloat recommendations.
+- [x] Lock Keep-side, Critical, and reference-protected packages consistently across debloat previews, execution, and Applications actions.
+- [x] Correct copied Philips demo-package source attribution.
 - [x] Recheck runtime-role protection immediately before executing a debloat plan.
 
 ## Beta 8 follow-up
@@ -33,7 +36,8 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [x] Add source-attributed package knowledge with conservative vendor and device-family rules.
 - [x] Add layered Reference Baseline Catalog with AOSP TV generations, Google TV, SoC, and OEM references.
 - [x] Add read-only reference package dump export for device contributors.
-- [ ] Add reversible recommendation scoring with explicit Fully Reversible, Partially Reversible, and Not Reversible states.
+- [x] Add baseline reference recommendation scoring without treating imported evidence as automatic Safe.
+- [ ] Add explicit Fully Reversible, Partially Reversible, and Not Reversible states to recommendation scoring.
 - [ ] Add device restore points that capture package state, runtime roles, relevant settings, and the ruleset version before mutations.
 - [ ] Add package-data backup warnings so package-state restoration is not presented as application-data restoration.
 - [ ] Add Xiaomi, Yandex, Fire TV, and additional per-model reference baselines.

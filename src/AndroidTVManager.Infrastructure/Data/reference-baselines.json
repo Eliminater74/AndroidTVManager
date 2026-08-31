@@ -18,6 +18,8 @@
         "partitions": ["system"],
         "role": "TV provider",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-android10-base"],
@@ -32,6 +34,8 @@
         "partitions": ["system"],
         "role": "TV settings",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-android10-base"]
@@ -44,6 +48,8 @@
         "moduleName": "SettingsIntelligence",
         "partitions": ["system"],
         "role": "Settings search and intelligence",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-android10-base"]
@@ -57,6 +63,8 @@
         "partitions": ["system"],
         "role": "System UI",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-android10-base"]
@@ -82,6 +90,8 @@
         "partitions": ["system"],
         "role": "TV provider",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -95,6 +105,8 @@
         "partitions": ["system_ext"],
         "role": "TV settings",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-system-ext"]
@@ -108,6 +120,8 @@
         "partitions": ["system_ext"],
         "role": "TV framework compatibility",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-system-ext"]
@@ -133,6 +147,8 @@
         "partitions": ["system"],
         "role": "TV provider",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -146,6 +162,8 @@
         "partitions": ["system_ext"],
         "role": "TV settings",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -171,6 +189,8 @@
         "partitions": ["system"],
         "role": "TV provider",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -184,6 +204,8 @@
         "partitions": ["system_ext"],
         "role": "TV settings",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -209,6 +231,8 @@
         "partitions": ["system"],
         "role": "TV provider",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -222,6 +246,8 @@
         "partitions": ["system_ext"],
         "role": "TV settings",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -247,6 +273,8 @@
         "partitions": ["system"],
         "role": "TV provider",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-master-product"]
@@ -260,6 +288,8 @@
         "partitions": ["system_ext"],
         "role": "TV settings",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-system-ext"]
@@ -273,6 +303,8 @@
         "partitions": ["system_ext"],
         "role": "TV framework compatibility",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-system-ext"]
@@ -285,8 +317,6 @@
       "name": "Google TV Reference Baseline — Chromecast generation",
       "origin": "GoogleTvGms",
       "generation": "Google TV / Chromecast",
-      "manufacturer": "Google",
-      "deviceFamily": "Chromecast with Google TV",
       "sourceIds": ["uad-chromecast-100"]
     },
     "packages": [
@@ -297,6 +327,8 @@
         "generation": "Google TV / Chromecast",
         "role": "Google TV launcher",
         "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Chromecast with Google TV GA01919-US"],
@@ -317,6 +349,8 @@
         "origin": "GoogleTvGms",
         "generation": "Google TV / Chromecast",
         "role": "Google TV setup and device integration",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Chromecast with Google TV GA01919-US"],
@@ -335,6 +369,8 @@
         "origin": "GoogleTvGms",
         "generation": "Google TV / Chromecast",
         "role": "Recommendations",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
         "confidence": "High",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Chromecast with Google TV GA01919-US"],
@@ -346,6 +382,8 @@
         "origin": "GoogleTvGms",
         "generation": "Google TV / Chromecast",
         "role": "Voice and search integration",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Chromecast with Google TV GA01919-US"],
@@ -371,6 +409,8 @@
         "generation": "Android TV 11–14",
         "platformFamily": "SEI Robotics / Amlogic / Droidlogic",
         "role": "SoC and hardware overlay",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "Medium",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Homatics Box R 4K Plus", "TiVo Stream 4K"],
@@ -384,6 +424,8 @@
         "generation": "Android TV 11–14",
         "platformFamily": "SEI Robotics / Amlogic / Droidlogic",
         "role": "Media subtitle service",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
         "confidence": "Medium",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Homatics Box R 4K Plus", "TiVo Stream 4K"],
@@ -396,6 +438,8 @@
         "generation": "Android TV 11–14",
         "platformFamily": "SEI Robotics",
         "role": "Remote input",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "RealHardwareDump",
         "observedOn": ["Homatics Box R 4K Plus", "TiVo Stream 4K"],
@@ -423,6 +467,8 @@
         "manufacturer": "TCL",
         "deviceFamily": "TCL Google TV",
         "role": "TCL framework integration",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "MultiSourceCommunityEvidence",
         "observedOn": ["TCL 65C7K", "TCL Google TV families"],
@@ -437,6 +483,8 @@
         "manufacturer": "TCL",
         "deviceFamily": "TCL Google TV",
         "role": "TV and HDMI integration",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
         "confidence": "High",
         "sourceConfidence": "MultiSourceCommunityEvidence",
         "observedOn": ["TCL 65C7K", "TCL Google TV families"],
@@ -446,6 +494,224 @@
           {
             "area": "TV and HDMI",
             "description": "TV input, tuner, or HDMI behavior may stop working."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.initsetup",
+        "displayName": "TCL initial setup",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL setup/customization",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Setup",
+            "description": "Initial setup, first-run, or OEM customization flows may be unavailable."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.dashboard",
+        "displayName": "TCL dashboard",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL recommendations/dashboard",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Home screen",
+            "description": "TCL dashboard or recommendation surfaces may disappear."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.guard",
+        "displayName": "TCL Guard",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL guard/maintenance",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Maintenance",
+            "description": "Vendor guard, cleanup, or maintenance prompts may no longer run."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.partnercustomizer",
+        "displayName": "TCL partner customizer",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL partner customization",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Partner content",
+            "description": "Partner customization, promoted content, or setup defaults may change."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.smartalexa",
+        "displayName": "TCL Alexa integration",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL Alexa integration",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Voice assistant",
+            "description": "TCL Alexa integration may no longer be available."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.useragreement",
+        "displayName": "TCL user agreement",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL legal/setup prompt",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Setup",
+            "description": "OEM user-agreement prompts may no longer appear."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.miracast",
+        "displayName": "TCL Miracast",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL Miracast/casting",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "Medium",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "featureImpacts": [
+          {
+            "area": "Casting",
+            "description": "Miracast or OEM wireless display behavior can stop working."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.logkit",
+        "displayName": "TCL Logkit",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL diagnostics/logging",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Diagnostics",
+            "description": "OEM log collection or support diagnostics may be reduced."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.repairguide",
+        "displayName": "TCL repair guide",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL help/repair guide",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Help",
+            "description": "OEM repair/help guidance may no longer be available."
+          }
+        ]
+      },
+      {
+        "packageName": "com.tcl.micmanager",
+        "displayName": "TCL microphone manager",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL microphone privacy/control",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-conservative-debloater", "android-tv-debloat-toolkit"],
+        "featureImpacts": [
+          {
+            "area": "Microphone",
+            "description": "Hands-free voice, microphone indicators, or privacy controls may be affected."
           }
         ]
       }

@@ -8,17 +8,20 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
 {
     private readonly IPackageInventoryService _inventory;
     private readonly IPackageClassifier _classifier;
+    private readonly IPackageReferenceCatalog _referenceCatalog;
     private readonly IScriptExecutionService _scripts;
     private readonly IDeviceInspectionService _inspection;
 
     public DebloatExecutionService(
         IPackageInventoryService inventory,
         IPackageClassifier classifier,
+        IPackageReferenceCatalog referenceCatalog,
         IScriptExecutionService scripts,
         IDeviceInspectionService inspection)
     {
         _inventory = inventory;
         _classifier = classifier;
+        _referenceCatalog = referenceCatalog;
         _scripts = scripts;
         _inspection = inspection;
     }
@@ -54,12 +57,17 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
             BuildFingerprint = liveFingerprint
         };
         var context = PackageClassificationContexts.FromInventory(device, current.Packages);
+        var referenceAnalysis = await _referenceCatalog.AnalyzeAsync(device, current.Packages, cancellationToken);
+        var references = referenceAnalysis.Packages
+            .ToDictionary(reference => reference.PackageName, StringComparer.OrdinalIgnoreCase);
         var blocked = current.Packages
             .Where(package => expected.Any(item => item.PackageName.Equals(
                 package.PackageName,
                 StringComparison.OrdinalIgnoreCase)))
-            .Select(package => _classifier.Classify(package, context))
-            .Where(assessment => assessment.IsProtected || assessment.Risk == PackageRiskLevel.Critical)
+            .Select(package => PackageAssessmentReferenceEnricher.ApplyReferenceEvidence(
+                _classifier.Classify(package, context),
+                references.GetValueOrDefault(package.PackageName)))
+            .Where(PackageAssessmentReferenceEnricher.IsSafetyLocked)
             .Select(assessment => assessment.PackageName)
             .OrderBy(package => package, StringComparer.OrdinalIgnoreCase)
             .ToArray();

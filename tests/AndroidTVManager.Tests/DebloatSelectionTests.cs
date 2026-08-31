@@ -65,6 +65,32 @@ public sealed class DebloatSelectionTests
         viewModel.SelectionLabel.Should().Be("Locked for safety");
     }
 
+    [Fact]
+    public void Keep_recommendation_remains_locked_even_without_runtime_protection()
+    {
+        var package = Package("com.google.android.apps.tv.launcherx");
+        var assessment = new PackageAssessment(
+            package.PackageName,
+            PackageRiskLevel.HighRisk,
+            PackageConfidence.High,
+            "Google TV launcher",
+            "Google TV launcher component.",
+            "Keep",
+            [],
+            [],
+            false,
+            "test");
+        var viewModel = new DebloatPlanItemViewModel(new DebloatPlanItem(
+            package,
+            assessment,
+            DebloatAction.Disable,
+            false,
+            "Locked: critical package, Keep rule, or active device role."));
+
+        viewModel.CanSelect.Should().BeFalse();
+        viewModel.SelectionLabel.Should().Be("Locked for safety");
+    }
+
     private static PackageInventoryEntry Package(string name)
         => new(name, null, null, null, "0", false, false, true, true, false, [],
             DateTimeOffset.UtcNow, "tv-1", "14", "fingerprint");

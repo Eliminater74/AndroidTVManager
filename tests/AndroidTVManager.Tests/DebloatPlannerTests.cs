@@ -54,6 +54,45 @@ public sealed class DebloatPlannerTests
         plan.Warnings.Should().Contain(warning => warning.Contains("Device profile matched", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task Reference_recommendation_can_select_reviewed_optional_package()
+    {
+        var planner = CreatePlanner([Package("com.tcl.initsetup", isSystem: true)]);
+
+        var plan = await planner.CreatePlanAsync(
+            "tv-1",
+            DebloatPreset.Medium,
+            Device("TCL", "65C7K", androidVersion: "11"));
+
+        var item = plan.Items.Single();
+
+        item.Reference.Should().NotBeNull();
+        item.Reference!.Origin.Should().Be(PackageOrigin.Oem);
+        item.Assessment.Risk.Should().Be(PackageRiskLevel.Caution);
+        item.Assessment.RecommendedAction.Should().Be("Disable");
+        item.Assessment.IsProtected.Should().BeFalse();
+        item.Selected.Should().BeTrue();
+        item.SelectionBlockReason.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Aggressive_preset_does_not_select_high_risk_keep_rules()
+    {
+        var planner = CreatePlanner([Package("com.tivo.tvlaunchercustomization", isSystem: true)]);
+
+        var plan = await planner.CreatePlanAsync(
+            "tv-1",
+            DebloatPreset.Aggressive,
+            Device("SEI Robotics", "TiVo Stream 4K", androidVersion: "10"));
+
+        var item = plan.Items.Single();
+
+        item.Assessment.Risk.Should().Be(PackageRiskLevel.HighRisk);
+        item.Assessment.RecommendedAction.Should().Be("Keep");
+        item.Selected.Should().BeFalse();
+        item.SelectionBlockReason.Should().Contain("Locked");
+    }
+
     private static DebloatPlanner CreatePlanner(IReadOnlyList<PackageInventoryEntry> packages)
         => new(
             new FixedInventoryService(packages),
