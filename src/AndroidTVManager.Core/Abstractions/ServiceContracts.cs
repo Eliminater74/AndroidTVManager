@@ -460,6 +460,23 @@ public interface IPackageClassifier
         PackageClassificationContext context);
 }
 
+public interface IPackageReferenceCatalog
+{
+    Task<PackageReferenceAnalysis> AnalyzeAsync(
+        AndroidDevice device,
+        IReadOnlyList<PackageInventoryEntry> packages,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IReferencePackageDumpService
+{
+    Task ExportAsync(
+        AndroidDevice device,
+        PackageInventoryResult inventory,
+        string outputPath,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IDebloatPlanner
 {
     Task<DebloatPlan> CreatePlanAsync(

@@ -36,6 +36,8 @@ public static class DependencyInjection
         services.AddSingleton<IPackageIconService, PackageIconService>();
         services.AddSingleton<IPackageInventoryRepository, PackageInventoryRepository>();
         services.AddSingleton<IPackagePreferenceRepository, PackagePreferenceRepository>();
+        services.AddSingleton<IPackageReferenceCatalog, PackageReferenceCatalog>();
+        services.AddSingleton<IReferencePackageDumpService, ReferencePackageDumpService>();
         services.AddSingleton<IAdbCommandService, AdbCommandService>();
         services.AddSingleton<IPackageClassifier, PackageClassifier>();
         services.AddSingleton<IDebloatPlanner, DebloatPlanner>();
