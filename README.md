@@ -1,7 +1,7 @@
 # Android TV Manager
 
 [![Build](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml/badge.svg)](https://github.com/Eliminater74/AndroidTVManager/actions/workflows/release.yml)
-[![Latest release](https://img.shields.io/github/v/release/Eliminater74/AndroidTVManager?include_prereleases)](https://github.com/Eliminater74/AndroidTVManager/releases)
+[![Latest release](https://img.shields.io/github/v/release/Eliminater74/AndroidTVManager)](https://github.com/Eliminater74/AndroidTVManager/releases)
 [![Downloads](https://img.shields.io/github/downloads/Eliminater74/AndroidTVManager/total?label=downloads)](https://github.com/Eliminater74/AndroidTVManager/releases)
 [![License](https://img.shields.io/github/license/Eliminater74/AndroidTVManager)](LICENSE)
 
