@@ -24,10 +24,10 @@
     <Authors>Eliminater74</Authors>
     <Company>Eliminater74</Company>
     <Description>Android TV / Google TV Device Management Toolbox</Description>
-    <Version>1.0.0-B4</Version>
-    <AssemblyVersion>1.0.0.4</AssemblyVersion>
-    <FileVersion>1.0.0.4</FileVersion>
-    <InformationalVersion>1.0.0-B4</InformationalVersion>
+    <Version>1.0.0-B5</Version>
+    <AssemblyVersion>1.0.0.5</AssemblyVersion>
+    <FileVersion>1.0.0.5</FileVersion>
+    <InformationalVersion>1.0.0-B5</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 

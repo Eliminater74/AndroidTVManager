@@ -8,6 +8,12 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B5] - 2026-08-31
+
+### Fixed
+
+- Placed the About navigation action in a dedicated visible sidebar row instead of allowing a tall navigation scroll view to push it below the window.
+
 ## [1.0.0-B4] - 2026-08-30
 
 ### Fixed

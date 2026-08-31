@@ -2279,8 +2279,13 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Border Background="{StaticResource SidebarBackground}" Grid.Column="0">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="22,26,22,18">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Row="0" Margin="22,26,22,18">
                     <StackPanel Orientation="Horizontal">
                         <Border Width="42" Height="42" CornerRadius="12" Background="{StaticResource SurfaceElevatedBrush}">
                             <TextBlock Text="✦" Foreground="{StaticResource CyanAccent}" FontSize="25"
@@ -2295,7 +2300,7 @@
                     <TextBlock Text="{Binding BetaLabel}" Foreground="{StaticResource VioletAccent}"
                                FontSize="10" FontWeight="Bold" Margin="54,6,0,0"/>
                 </StackPanel>
-                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto"
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <TextBlock Text="MAIN" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondary}"
@@ -2384,7 +2389,7 @@
                         </ListBox>
                     </StackPanel>
                 </ScrollViewer>
-                <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">
+                <StackPanel Grid.Row="2" Margin="8,0,8,18">
                     <Button Content="About · Eliminater74"
                             Style="{StaticResource GhostButtonStyle}"
                             HorizontalContentAlignment="Left"
@@ -2408,7 +2413,7 @@
                     <TextBlock Text="Windows desktop toolbox" Foreground="{StaticResource TextSecondary}"
                                FontSize="11" HorizontalAlignment="Center"/>
                 </StackPanel>
-            </DockPanel>
+            </Grid>
         </Border>
         <Grid Grid.Column="1" Background="{StaticResource WindowBackground}">
             <Grid.RowDefinitions>

@@ -1,6 +1,6 @@
 # Roadmap
 
-## Beta 4 — current
+## Beta 5 — current
 
 - Managed official Android SDK Platform-Tools bootstrap
 - USB, traditional network ADB, and Android Wireless Debugging pairing
@@ -21,6 +21,7 @@
 - Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
 - Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
 - Read-only reference package dump export for device contributors
+- Dedicated visible About navigation and developer identity
 - Release automation, self-contained Windows packaging, and installer distribution
 
 ## Next
