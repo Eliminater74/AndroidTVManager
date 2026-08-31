@@ -140,19 +140,18 @@ public sealed partial class DeviceLogcatPageViewModel : PageViewModel
 
     private async Task ConsumeAsync(IAdbProcessSession session, CancellationToken cancellationToken)
     {
+        var pending = new List<string>(64);
         try
         {
             await foreach (var line in session.ReadStandardOutputAsync(cancellationToken))
             {
                 if (!Matches(line))
                     continue;
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    Entries.Add(line);
-                    while (Entries.Count > DefaultMaxLines)
-                        Entries.RemoveAt(0);
-                });
+                pending.Add(line);
+                if (pending.Count >= 64)
+                    await AppendBatchAsync(pending);
             }
+            await AppendBatchAsync(pending);
             var result = await session.Completion;
             if (!cancellationToken.IsCancellationRequested)
                 Status = result.IsSuccess ? "Logcat stream ended." : $"Logcat ended: {Error(result)}";
@@ -169,6 +168,24 @@ public sealed partial class DeviceLogcatPageViewModel : PageViewModel
             if (ReferenceEquals(_session, session))
                 IsRunning = false;
         }
+    }
+
+    private async Task AppendBatchAsync(List<string> lines)
+    {
+        if (lines.Count == 0)
+            return;
+
+        var batch = lines.ToArray();
+        lines.Clear();
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            foreach (var line in batch)
+                Entries.Add(line);
+
+            var excess = Entries.Count - DefaultMaxLines;
+            for (var index = 0; index < excess; index++)
+                Entries.RemoveAt(0);
+        });
     }
 
     private bool Matches(string line)

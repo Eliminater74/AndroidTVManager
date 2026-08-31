@@ -144,9 +144,34 @@ public sealed class AdbToolsManager : IAdbToolsManager
         process.StartInfo.ArgumentList.Add("version");
         if (!process.Start())
             return null;
-        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
-        return AdbParsers.ParseAdbVersion(output);
+        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(15));
+        try
+        {
+            await process.WaitForExitAsync(timeoutCts.Token);
+            await Task.WhenAll(outputTask, errorTask);
+            return AdbParsers.ParseAdbVersion(outputTask.Result);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            TryKill(process);
+            await process.WaitForExitAsync(CancellationToken.None);
+            return null;
+        }
+    }
+
+    private static void TryKill(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+        }
     }
 
     private string GetAdbPath() => Path.Combine(_paths.ToolsPath, "adb.exe");

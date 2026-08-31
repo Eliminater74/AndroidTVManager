@@ -158,10 +158,10 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
     private void Publish(IReadOnlyList<AndroidDevice> devices)
     {
         devices = devices.Select(ApplyCachedMetadata).ToArray();
-        if (_currentDevices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion,
-                device.ApiLevel, device.ReportedName, device.MacAddress))
-            .SequenceEqual(devices.Select(device => (device.Serial, device.State, device.Model, device.AndroidVersion,
-                device.ApiLevel, device.ReportedName, device.MacAddress))))
+        if (_currentDevices.Select(device => (device.Serial, device.Endpoint, device.ConnectionType, device.State,
+                device.Model, device.AndroidVersion, device.ApiLevel, device.ReportedName, device.MacAddress))
+            .SequenceEqual(devices.Select(device => (device.Serial, device.Endpoint, device.ConnectionType, device.State,
+                device.Model, device.AndroidVersion, device.ApiLevel, device.ReportedName, device.MacAddress))))
             return;
 
         _currentDevices = devices.ToImmutableArray();
@@ -221,6 +221,10 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
             var updated = _currentDevices.Select(current =>
                 current.Serial == device.Serial ? enriched : current).ToArray();
             Publish(updated);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.Warning("Tracker", $"Could not enrich device {device.Serial}: {exception.Message}");
         }
         finally
         {

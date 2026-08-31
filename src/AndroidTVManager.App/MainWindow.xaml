@@ -1323,7 +1323,7 @@
                                               ItemTemplate="{StaticResource DeviceSelectorTemplate}" Margin="0,8,12,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Text="BACKUP FOLDER" Style="{StaticResource SectionLabelStyle}"/>
+                                    <TextBlock Text="BACKUP PARENT FOLDER" Style="{StaticResource SectionLabelStyle}"/>
                                     <TextBox Text="{Binding DestinationDirectory, UpdateSourceTrigger=PropertyChanged}"
                                              Margin="0,8,12,0"/>
                                 </StackPanel>
@@ -1436,7 +1436,7 @@
                     <TextBlock Text="ABOUT ANDROID TV MANAGER" Style="{StaticResource SectionLabelStyle}"/>
                     <TextBlock Text="{Binding ProductName}" FontSize="36" FontWeight="SemiBold"
                                Margin="0,7,0,0"/>
-                    <TextBlock Text="Eliminater74 · Independent Windows-first Android TV tooling"
+                    <TextBlock Text="{Binding DeveloperName, StringFormat={}{0} · Independent Windows-first Android TV tooling}"
                                Foreground="{StaticResource CyanAccent}" FontSize="13" FontWeight="SemiBold"
                                Margin="0,6,0,0"/>
                     <TextBlock Text="{Binding ProductDescription}" Foreground="{StaticResource TextSecondary}"
@@ -1505,7 +1505,7 @@
                                 <TextBlock Text="{Binding CopyStatus}" Foreground="{StaticResource TextSecondary}"
                                            VerticalAlignment="Center" Margin="12,0,0,0"/>
                             </StackPanel>
-                            <TextBlock Text="Android TV Manager  ·  Developed by Eliminater74"
+                            <TextBlock Text="{Binding DeveloperName, StringFormat={}Android TV Manager  ·  Developed by {0}}"
                                        Foreground="{StaticResource TextSecondary}" Margin="0,22,0,0"/>
                         </StackPanel>
                     </Border>

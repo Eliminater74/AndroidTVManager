@@ -113,11 +113,14 @@ public sealed class DeviceFileService : IDeviceFileService
     private static void ValidatePath(string path)
     {
         var normalized = path.Replace('\\', '/').Trim();
-        if (!normalized.StartsWith("/sdcard", StringComparison.OrdinalIgnoreCase)
-            && !normalized.StartsWith("/storage/", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(normalized)
+            || (!normalized.Equals("/sdcard", StringComparison.OrdinalIgnoreCase)
+                && !normalized.StartsWith("/sdcard/", StringComparison.OrdinalIgnoreCase)
+                && !normalized.StartsWith("/storage/", StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException("File operations are limited to shared storage paths.", nameof(path));
-        if (normalized.Contains('\0') || normalized.Contains("/../", StringComparison.Ordinal)
-            || normalized.EndsWith("/..", StringComparison.Ordinal))
+        if (normalized.Contains('\0')
+            || normalized.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Any(segment => segment is "." or ".."))
             throw new ArgumentException("The remote path contains an invalid or unsafe location.", nameof(path));
     }
 }

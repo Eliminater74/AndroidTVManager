@@ -75,6 +75,31 @@ public sealed class BackupServiceTests
         }
     }
 
+    [Fact]
+    public async Task Rejects_apk_restore_when_manifest_target_does_not_match()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "AndroidTVManagerBackupTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "apks"));
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "backup-manifest.json"),
+                """{"serial":"other-device","friendlyDeviceName":"Other TV","createdUtc":"2026-01-01T00:00:00Z","requestedKinds":[2],"artifacts":[],"warnings":[]}""");
+
+            var result = await CreateService(new FakeAdbProcessRunner())
+                .RestoreApksAsync("tv-1", root);
+
+            result.RestoredPackages.Should().Be(0);
+            result.Messages.Should().ContainSingle(message =>
+                message.Contains("other-device", StringComparison.Ordinal));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static DeviceBackupService CreateService(FakeAdbProcessRunner runner)
         => new(
             runner,

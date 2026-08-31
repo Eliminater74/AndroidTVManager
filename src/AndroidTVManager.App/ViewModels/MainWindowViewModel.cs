@@ -63,12 +63,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDeviceFileService _deviceFiles;
     private readonly IDeviceComparisonService _deviceComparison;
     private readonly IScreenRecordingService _screenRecording;
+    private readonly IAppLogger _logger;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
     private AndroidDevice? _selectedDevice;
     private string _adbStatus = "ADB · Checking";
     private string _adbVersion = "Checking managed Platform-Tools…";
     private bool _sessionsRecovered;
+    private readonly SemaphoreSlim _deviceChangeLock = new(1, 1);
 
     public MainWindowViewModel(
         IAdbToolsManager toolsManager,
@@ -114,7 +116,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IBootInspectionService bootInspection,
         IDeviceFileService deviceFiles,
         IDeviceComparisonService deviceComparison,
-        IScreenRecordingService screenRecording)
+        IScreenRecordingService screenRecording,
+        IAppLogger logger)
     {
         _toolsManager = toolsManager;
         _deviceTracker = deviceTracker;
@@ -160,6 +163,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _deviceFiles = deviceFiles;
         _deviceComparison = deviceComparison;
         _screenRecording = screenRecording;
+        _logger = logger;
         Navigation = new ObservableCollection<NavigationEntry>
         {
             new("Dashboard", "⌂"),
@@ -260,7 +264,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
             _packageIconService, _settingsStore, Devices),
         "Backup / Restore" => new BackupPageViewModel(_backupService, _paths, Devices),
-        "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, Devices),
+        "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, _confirmation, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
         "Logs" => new LogPageViewModel(_logViewer, _confirmation),
         "Settings" => new SettingsPageViewModel(
@@ -418,50 +422,62 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private async void OnDevicesChanged(object? sender, IReadOnlyList<AndroidDevice> devices)
     {
-        var savedDevices = await _deviceRepository.GetSavedDevicesAsync();
-        var enrichedDevices = devices.Select(device =>
+        await _deviceChangeLock.WaitAsync();
+        try
         {
-            var saved = savedDevices.FirstOrDefault(item =>
-                string.Equals(item.LastKnownSerial, device.Serial, StringComparison.OrdinalIgnoreCase));
-            return new AndroidDevice
+            var savedDevices = await _deviceRepository.GetSavedDevicesAsync();
+            var enrichedDevices = devices.Select(device =>
             {
-                Serial = device.Serial,
-                FriendlyName = saved?.FriendlyName,
-                Endpoint = device.Endpoint,
-                State = device.State,
-                ConnectionType = device.ConnectionType,
-                ReportedName = device.ReportedName,
-                MacAddress = device.MacAddress,
-                Manufacturer = device.Manufacturer,
-                Brand = device.Brand,
-                Model = device.Model,
-                Product = device.Product,
-                DeviceName = device.DeviceName,
-                Board = device.Board,
-                AndroidVersion = device.AndroidVersion,
-                ApiLevel = device.ApiLevel,
-                SecurityPatch = device.SecurityPatch,
-                BuildId = device.BuildId,
-                BuildType = device.BuildType,
-                BuildFingerprint = device.BuildFingerprint,
-                SeenAtUtc = device.SeenAtUtc
-            };
-        }).ToArray();
-        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-        {
-            Devices.Clear();
-            foreach (var device in enrichedDevices)
-                Devices.Add(device);
-            OnPropertyChanged(nameof(ConnectedDeviceCount));
-            if (SelectedDevice is not null)
-                SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
-            else
-                SelectedDevice = Devices.FirstOrDefault(device => device.State == DeviceState.Device);
-        });
+                var saved = savedDevices.FirstOrDefault(item =>
+                    string.Equals(item.LastKnownSerial, device.Serial, StringComparison.OrdinalIgnoreCase));
+                return new AndroidDevice
+                {
+                    Serial = device.Serial,
+                    FriendlyName = saved?.FriendlyName,
+                    Endpoint = device.Endpoint,
+                    State = device.State,
+                    ConnectionType = device.ConnectionType,
+                    ReportedName = device.ReportedName,
+                    MacAddress = device.MacAddress,
+                    Manufacturer = device.Manufacturer,
+                    Brand = device.Brand,
+                    Model = device.Model,
+                    Product = device.Product,
+                    DeviceName = device.DeviceName,
+                    Board = device.Board,
+                    AndroidVersion = device.AndroidVersion,
+                    ApiLevel = device.ApiLevel,
+                    SecurityPatch = device.SecurityPatch,
+                    BuildId = device.BuildId,
+                    BuildType = device.BuildType,
+                    BuildFingerprint = device.BuildFingerprint,
+                    SeenAtUtc = device.SeenAtUtc
+                };
+            }).ToArray();
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                Devices.Clear();
+                foreach (var device in enrichedDevices)
+                    Devices.Add(device);
+                OnPropertyChanged(nameof(ConnectedDeviceCount));
+                if (SelectedDevice is not null)
+                    SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
+                else
+                    SelectedDevice = Devices.FirstOrDefault(device => device.State == DeviceState.Device);
+            });
 
-        foreach (var device in enrichedDevices)
-            await _history.RecordDeviceSeenAsync(device);
-        await _history.SyncSessionsAsync(enrichedDevices, _toolsManager.InstalledVersion);
+            foreach (var device in enrichedDevices)
+                await _history.RecordDeviceSeenAsync(device);
+            await _history.SyncSessionsAsync(enrichedDevices, _toolsManager.InstalledVersion);
+        }
+        catch (Exception exception)
+        {
+            _logger.Error("Devices", "Could not process an ADB device update.", exception);
+        }
+        finally
+        {
+            _deviceChangeLock.Release();
+        }
     }
 }
 
@@ -1957,13 +1973,17 @@ public sealed partial class ToolsPageViewModel : PageViewModel
 public sealed partial class ScriptsPageViewModel : PageViewModel
 {
     private readonly IScriptExecutionService _executionService;
+    private readonly IConfirmationService _confirmation;
     private long? _lastExecutionId;
+    private string? _validatedScriptJson;
 
     public ScriptsPageViewModel(
         IScriptExecutionService executionService,
+        IConfirmationService confirmation,
         ObservableCollection<AndroidDevice> devices) : base("Scripts")
     {
         _executionService = executionService;
+        _confirmation = confirmation;
         Devices = devices;
     }
 
@@ -2008,9 +2028,11 @@ public sealed partial class ScriptsPageViewModel : PageViewModel
                       $"{script.Actions.Count} action(s) · {reversible} reversible · {advanced} advanced\n\n" +
                       string.Join("\n", script.Actions.Select((action, index) =>
                           $"{index + 1}. {action.Type} {(action.Package ?? action.Path ?? action.Value ?? string.Empty)}"));
+            _validatedScriptJson = ScriptJson;
         }
         catch (Exception exception)
         {
+            _validatedScriptJson = null;
             Preview = $"Validation failed\n\n{exception.Message}";
         }
     }
@@ -2021,9 +2043,28 @@ public sealed partial class ScriptsPageViewModel : PageViewModel
         try
         {
             var script = ScriptDefinitionParser.Parse(ScriptJson);
+            if (!string.Equals(_validatedScriptJson, ScriptJson, StringComparison.Ordinal))
+            {
+                Preview = "Validate this exact script before running it.";
+                return;
+            }
             if (string.IsNullOrWhiteSpace(TargetSerial))
             {
                 Preview = "Select or enter a target device before running.";
+                return;
+            }
+            if (SelectedDevice is not null
+                && !string.Equals(SelectedDevice.Serial, TargetSerial.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                Preview = "The target serial does not match the selected device.";
+                return;
+            }
+            if (!_confirmation.Confirm(
+                    "Run script",
+                    $"Run {script.Actions.Count} reviewed action(s) on {TargetSerial.Trim()}?\n\n" +
+                    "Some actions may change packages, settings, files, or device state."))
+            {
+                Preview = "Script canceled.";
                 return;
             }
 

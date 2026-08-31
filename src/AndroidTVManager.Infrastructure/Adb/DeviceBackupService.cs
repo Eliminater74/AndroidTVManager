@@ -84,7 +84,11 @@ public sealed class DeviceBackupService : IDeviceBackupService
         if (request.Kinds.Count == 0)
             throw new ArgumentException("Select at least one backup option.", nameof(request));
 
-        var destination = Path.GetFullPath(request.DestinationDirectory);
+        var parentDirectory = Path.GetFullPath(request.DestinationDirectory);
+        Directory.CreateDirectory(parentDirectory);
+        var destination = Path.Combine(
+            parentDirectory,
+            $"backup-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}");
         Directory.CreateDirectory(destination);
         var artifacts = new List<BackupArtifact>();
         var warnings = new List<string>();
@@ -179,9 +183,20 @@ public sealed class DeviceBackupService : IDeviceBackupService
         {
             await using var manifestStream = File.OpenRead(manifestPath);
             var manifest = await JsonSerializer.DeserializeAsync<DeviceBackupManifest>(
-                manifestStream, cancellationToken: cancellationToken);
+                manifestStream,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true },
+                cancellationToken);
             if (manifest is null)
                 return new BackupRestoreResult(serial, 0, 0, ["The backup manifest is invalid."]);
+            if (string.IsNullOrWhiteSpace(manifest.Serial)
+                || !string.Equals(manifest.Serial.Trim(), serial.Trim(), StringComparison.OrdinalIgnoreCase))
+                return new BackupRestoreResult(
+                    serial,
+                    0,
+                    0,
+                    [string.IsNullOrWhiteSpace(manifest.Serial)
+                        ? "The backup manifest does not identify its source device."
+                        : $"The backup belongs to device {manifest.Serial}, not the selected device."]);
         }
         catch (JsonException)
         {

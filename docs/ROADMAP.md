@@ -1,6 +1,6 @@
 # Roadmap
 
-## Beta 7 — current
+## Beta 8 — current
 
 - Managed official Android SDK Platform-Tools bootstrap
 - USB, traditional network ADB, and Android Wireless Debugging pairing
@@ -22,7 +22,8 @@
 - Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
 - Read-only reference package dump export for device contributors
 - Scrollable About navigation labeled simply `About`, with developer identity on the About page
-- Release automation, self-contained Windows packaging, and installer distribution
+- Release automation, self-contained Windows packaging, installer distribution, and metadata validation
+- Privacy-redacted support bundles, isolated backups, reviewed script execution, and safer process lifecycle handling
 
 ## Next
 

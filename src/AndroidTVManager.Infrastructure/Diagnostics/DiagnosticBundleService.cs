@@ -50,7 +50,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         Directory.CreateDirectory(staging);
         try
         {
-            await WriteJsonAsync("device.json", request.Device, request.PrivacyMode, staging, included, cancellationToken);
+            await WriteJsonAsync("device.json", request.Device, request.PrivacyMode, staging, included, cancellationToken, serial);
             await WriteJsonAsync(
                 "bundle-manifest.json",
                 new
@@ -64,20 +64,21 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
                 request.PrivacyMode,
                 staging,
                 included,
-                cancellationToken);
+                cancellationToken,
+                serial);
 
             await TryWriteAsync("inspection.json", async () =>
                 await _inspection.InspectAsync(serial, cancellationToken: cancellationToken), staging, included,
-                warnings, request.PrivacyMode, cancellationToken);
+                warnings, request.PrivacyMode, serial, cancellationToken);
             await TryWriteAsync("configuration.json", async () =>
                 await _configuration.InspectAsync(serial, request.Device.FriendlyName, cancellationToken: cancellationToken),
-                staging, included, warnings, request.PrivacyMode, cancellationToken);
+                staging, included, warnings, request.PrivacyMode, serial, cancellationToken);
             await TryWriteAsync("display.json", async () =>
                 await _display.CaptureAsync(serial, request.Device.FriendlyName, cancellationToken: cancellationToken),
-                staging, included, warnings, request.PrivacyMode, cancellationToken);
+                staging, included, warnings, request.PrivacyMode, serial, cancellationToken);
             await TryWriteAsync("transport.json", async () =>
                 await _transport.RunAsync(request.Device, cancellationToken: cancellationToken),
-                staging, included, warnings, request.PrivacyMode, cancellationToken);
+                staging, included, warnings, request.PrivacyMode, serial, cancellationToken);
             await WriteCommandAsync("getprop.txt", serial, ["shell", "getprop"], staging, included, warnings, request.PrivacyMode, cancellationToken);
             await WriteCommandAsync("packages.txt", serial, ["shell", "pm", "list", "packages", "-f", "-u"], staging, included, warnings, request.PrivacyMode, cancellationToken);
             await WriteCommandAsync("network.txt", serial, ["shell", "ip", "addr", "show"], staging, included, warnings, request.PrivacyMode, cancellationToken);
@@ -127,7 +128,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
             session = await _logcat.StartAsync(serial, new LogcatOptions(MaxLines: lineLimit), captureCts.Token);
             await foreach (var line in session.ReadStandardOutputAsync(captureCts.Token))
             {
-                lines.Enqueue(Redact(line, privacyMode));
+                lines.Enqueue(Redact(line, privacyMode, serial));
                 while (lines.Count > Math.Clamp(lineLimit, 1, 5000))
                     lines.Dequeue();
             }
@@ -168,7 +169,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
                 warnings.Add($"{name}: ADB exited with {result.ExitCode}.");
             await File.WriteAllTextAsync(
                 Path.Combine(staging, name),
-                Redact(content, privacyMode),
+                Redact(content, privacyMode, serial),
                 cancellationToken);
             included.Add(name);
         }
@@ -185,12 +186,13 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         ICollection<string> included,
         ICollection<string> warnings,
         DiagnosticBundlePrivacyMode privacyMode,
+        string serial,
         CancellationToken cancellationToken)
     {
         try
         {
             var value = await operation();
-            await WriteJsonAsync(name, value, privacyMode, staging, included, cancellationToken);
+            await WriteJsonAsync(name, value, privacyMode, staging, included, cancellationToken, serial);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -204,10 +206,14 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         DiagnosticBundlePrivacyMode privacyMode,
         string staging,
         ICollection<string> included,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? sensitiveSerial = null)
     {
         var json = JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(Path.Combine(staging, name), Redact(json, privacyMode), cancellationToken);
+        await File.WriteAllTextAsync(
+            Path.Combine(staging, name),
+            Redact(json, privacyMode, sensitiveSerial),
+            cancellationToken);
         included.Add(name);
     }
 
@@ -232,14 +238,19 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         return Convert.ToHexString(await SHA256.HashDataAsync(stream, cancellationToken)).ToLowerInvariant();
     }
 
-    private static string Redact(string value, DiagnosticBundlePrivacyMode mode)
+    private static string Redact(string value, DiagnosticBundlePrivacyMode mode, string? sensitiveSerial = null)
     {
         value = Regex.Replace(value, @"(?i)(pairing[-_ ]?code|password|token|secret|credential)(\s*[:=]\s*)\S+", "$1$2<redacted>");
         return mode == DiagnosticBundlePrivacyMode.LocalFull
             ? value
             : Regex.Replace(
                 Regex.Replace(
-                    Regex.Replace(value, @"(?i)\b[0-9a-f]{2}([: -][0-9a-f]{2}){5}\b", "<mac-redacted>"),
+                    Regex.Replace(
+                        string.IsNullOrWhiteSpace(sensitiveSerial)
+                            ? value
+                            : value.Replace(sensitiveSerial, "<serial-redacted>", StringComparison.OrdinalIgnoreCase),
+                        @"(?i)\b[0-9a-f]{2}([: -][0-9a-f]{2}){5}\b",
+                        "<mac-redacted>"),
                     @"\b(?:\d{1,3}\.){3}\d{1,3}\b",
                     "<ip-redacted>"),
                 @"(?i)(ssid|wifi|network)(\s*[:=]\s*)\S+",

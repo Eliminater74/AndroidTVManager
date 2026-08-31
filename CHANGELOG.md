@@ -8,6 +8,23 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B8] - 2026-08-31
+
+### Fixed
+
+- Restored the visible About page identity, developer, and version details.
+- Redacted the selected device serial from support diagnostic bundles.
+- Prevented the updater from terminating unrelated `adb.exe` processes.
+- Isolated each backup in a unique directory and rejected cross-device APK restores.
+- Added validation and explicit confirmation before scripts can run.
+- Hardened shared-storage path boundaries, IPv6 endpoint handling, logcat buffering, recording state, startup cleanup, and device update processing.
+
+### Release
+
+- Added normal push and pull-request build/test validation.
+- Made release packaging validate project metadata, executable version, portable ZIP contents, and generated checksums.
+- Made tag-triggered release publishing use the tagged source revision and support safe asset replacement on reruns.
+
 ## [1.0.0-B7] - 2026-08-31
 
 ### Fixed

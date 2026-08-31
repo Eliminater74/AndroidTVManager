@@ -49,4 +49,11 @@ public sealed class AdbParserTests
     {
         AdbParsers.ParseAdbVersion("Android Debug Bridge version 35.0.2-12147458").Should().Be("35.0.2");
     }
+
+    [Fact]
+    public void Preserves_bracketed_ipv6_endpoint_with_port()
+    {
+        AdbParsers.ParseEndpoint("[2001:db8::20]:37099")
+            .Should().Be("[2001:db8::20]:37099");
+    }
 }

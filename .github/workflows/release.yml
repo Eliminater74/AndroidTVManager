@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing version tag to build, for example v1.0.0-B7"
+        description: "Existing version tag to build, for example v1.0.0-B8"
         required: true
         type: string
 
@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
@@ -45,7 +46,7 @@ jobs:
             "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
             "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
           ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-          if (-not (Test-Path -LiteralPath $iscc)) {
+          if ([string]::IsNullOrWhiteSpace($iscc) -or -not (Test-Path -LiteralPath $iscc)) {
             throw "Inno Setup was not installed."
           }
           "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -77,17 +78,69 @@ jobs:
           } else {
             $env:GITHUB_REF_NAME
           }
+          if ($tag -notmatch "^v") {
+            throw "Release tags must start with v."
+          }
           $version = $tag.Substring(1)
           $assets = @(Get-ChildItem -LiteralPath "$env:GITHUB_WORKSPACE\artifacts\release" -File |
             ForEach-Object { $_.FullName })
-          $arguments = @(
+          $changelog = @(Get-Content -LiteralPath "$env:GITHUB_WORKSPACE\CHANGELOG.md")
+          $heading = "## [$version]"
+          $start = [Array]::IndexOf($changelog, $heading)
+          if ($start -lt 0) {
+            throw "CHANGELOG.md does not contain a release section for $version."
+          }
+          $end = $start + 1
+          while ($end -lt $changelog.Count -and $changelog[$end] -notmatch "^## \[") {
+            $end++
+          }
+          $notes = ($changelog[$start..($end - 1)] -join "`n").Trim()
+
+          $existing = & gh release view $tag --repo "${{ github.repository }}" --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $uploadArguments = @("release", "upload", $tag, "--repo", "${{ github.repository }}", "--clobber")
+            $uploadArguments += $assets
+            & gh @uploadArguments
+            if ($LASTEXITCODE -ne 0) {
+              throw "Uploading release assets failed."
+            }
+            & gh release edit $tag --repo "${{ github.repository }}" --title "Android TV Manager $version" --notes $notes
+            if ($LASTEXITCODE -ne 0) {
+              throw "Updating release notes failed."
+            }
+            exit 0
+          }
+
+          function Get-VersionKey([string]$value) {
+            $match = [regex]::Match($value, "^v?(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-B(?<beta>\d+))?$")
+            if (-not $match.Success) {
+              return [long]::MinValue
+            }
+            $beta = if ($match.Groups["beta"].Success) { [int]$match.Groups["beta"].Value } else { 999 }
+            return ([long]$match.Groups["major"].Value * 1000000000) +
+              ([long]$match.Groups["minor"].Value * 1000000) +
+              ([long]$match.Groups["patch"].Value * 1000) + $beta
+          }
+
+          $newest = Get-VersionKey $tag
+          $releaseTags = @(& gh release list --repo "${{ github.repository }}" --limit 100 --json tagName --jq ".[].tagName")
+          foreach ($releaseTag in $releaseTags) {
+            if ((Get-VersionKey $releaseTag) -gt $newest) {
+              $newest = Get-VersionKey $releaseTag
+            }
+          }
+          $createArguments = @(
             "release", "create", $tag,
             "--repo", "${{ github.repository }}",
             "--verify-tag",
             "--title", "Android TV Manager $version",
-            "--generate-notes",
-            "--notes", "Windows installer, portable build, and SHA-256 checksums are attached."
-            "--latest"
+            "--notes", $notes
           )
-          $arguments += $assets
-          & gh @arguments
+          if ((Get-VersionKey $tag) -ge $newest) {
+            $createArguments += "--latest"
+          }
+          $createArguments += $assets
+          & gh @createArguments
+          if ($LASTEXITCODE -ne 0) {
+            throw "Creating the GitHub release failed."
+          }

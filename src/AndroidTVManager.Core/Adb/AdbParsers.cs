@@ -67,7 +67,9 @@ public static partial class AdbParsers
         if (serial.StartsWith("[", StringComparison.Ordinal))
         {
             var end = serial.IndexOf(']');
-            return end > 0 ? serial[1..end] : serial;
+            return end > 0 && end + 1 < serial.Length && serial[end + 1] == ':'
+                ? serial
+                : null;
         }
 
         return serial;

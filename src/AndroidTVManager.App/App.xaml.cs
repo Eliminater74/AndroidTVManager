@@ -15,48 +15,81 @@ public partial class App : System.Windows.Application
     private Mutex? _instanceMutex;
     private bool _ownsInstanceMutex;
 
-    protected override async void OnStartup(StartupEventArgs e)
+    public App()
+    {
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+    }
+
+    protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        _instanceMutex = new Mutex(true, "AndroidTVManager.SingleInstance", out var isFirstInstance);
-        _ownsInstanceMutex = isFirstInstance;
-        if (!isFirstInstance)
+        _ = StartAsync();
+    }
+
+    private async Task StartAsync()
+    {
+        try
         {
-            BringExistingWindowToFront();
-            Shutdown();
-            return;
+            _instanceMutex = new Mutex(true, "AndroidTVManager.SingleInstance", out var isFirstInstance);
+            _ownsInstanceMutex = isFirstInstance;
+            if (!isFirstInstance)
+            {
+                BringExistingWindowToFront();
+                Shutdown();
+                return;
+            }
+
+            var services = new ServiceCollection();
+            services.AddAndroidTVManagerInfrastructure();
+            services.AddSingleton<IConfirmationService, WpfConfirmationService>();
+            services.AddSingleton<MainWindowViewModel>();
+            services.AddSingleton<MainWindow>();
+            _services = services.BuildServiceProvider();
+            var settings = _services.GetRequiredService<ISettingsStore>();
+            var savedTheme = await settings.GetAsync("appearance.theme");
+            ThemeManager.Apply(Enum.TryParse<AppTheme>(savedTheme, true, out var theme) ? theme : AppTheme.Dark);
+            _services.GetRequiredService<IAppLogger>().Information("Application", $"Starting Android TV Manager {AppInfo.Version}.");
+
+            var window = _services.GetRequiredService<MainWindow>();
+            MainWindow = window;
+            window.Show();
+            await window.ViewModel.InitializeRuntimeAsync();
         }
-
-        var services = new ServiceCollection();
-        services.AddAndroidTVManagerInfrastructure();
-        services.AddSingleton<IConfirmationService, WpfConfirmationService>();
-        services.AddSingleton<MainWindowViewModel>();
-        services.AddSingleton<MainWindow>();
-        _services = services.BuildServiceProvider();
-        var settings = _services.GetRequiredService<ISettingsStore>();
-        var savedTheme = await settings.GetAsync("appearance.theme");
-        ThemeManager.Apply(Enum.TryParse<AppTheme>(savedTheme, true, out var theme) ? theme : AppTheme.Dark);
-        _services.GetRequiredService<IAppLogger>().Information("Application", $"Starting Android TV Manager {AppInfo.Version}.");
-
-        var window = _services.GetRequiredService<MainWindow>();
-        MainWindow = window;
-        window.Show();
-        _ = window.ViewModel.InitializeRuntimeAsync();
+        catch (Exception exception)
+        {
+            _services?.GetService<IAppLogger>()?.Error("Application", "Application startup failed.", exception);
+            System.Windows.MessageBox.Show(
+                $"Android TV Manager could not start.\n\n{exception.Message}",
+                "Startup failed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown(-1);
+        }
     }
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        if (_services?.GetService<AndroidTVManager.Core.Abstractions.IAdbDeviceTracker>() is { } tracker)
+        try
         {
-            await tracker.StopAsync();
-            if (_services.GetService<AndroidTVManager.Core.Abstractions.IConnectionHistoryRepository>() is { } history)
-                await history.RecoverOpenSessionsAsync();
+            if (_services?.GetService<AndroidTVManager.Core.Abstractions.IAdbDeviceTracker>() is { } tracker)
+            {
+                await tracker.StopAsync();
+                if (_services.GetService<AndroidTVManager.Core.Abstractions.IConnectionHistoryRepository>() is { } history)
+                    await history.RecoverOpenSessionsAsync();
+            }
         }
-        _services?.Dispose();
-        if (_ownsInstanceMutex)
-            _instanceMutex?.ReleaseMutex();
-        _instanceMutex?.Dispose();
-        base.OnExit(e);
+        catch (Exception exception)
+        {
+            _services?.GetService<IAppLogger>()?.Error("Application", "Application shutdown cleanup failed.", exception);
+        }
+        finally
+        {
+            _services?.Dispose();
+            if (_ownsInstanceMutex)
+                _instanceMutex?.ReleaseMutex();
+            _instanceMutex?.Dispose();
+            base.OnExit(e);
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

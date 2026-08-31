@@ -50,8 +50,20 @@ public sealed class AdbStreamingProcessRunner : IAdbStreamingProcessRunner
     {
         private readonly Process _process;
         private readonly IReadOnlyList<string> _arguments;
-        private readonly Channel<string> _stdout = Channel.CreateUnbounded<string>();
-        private readonly Channel<string> _stderr = Channel.CreateUnbounded<string>();
+        private readonly Channel<string> _stdout = Channel.CreateBounded<string>(
+            new BoundedChannelOptions(4096)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleWriter = true,
+                SingleReader = false
+            });
+        private readonly Channel<string> _stderr = Channel.CreateBounded<string>(
+            new BoundedChannelOptions(1024)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleWriter = true,
+                SingleReader = false
+            });
         private int _stopped;
 
         public AdbProcessSession(Process process, IReadOnlyList<string> arguments)

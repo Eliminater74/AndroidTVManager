@@ -79,7 +79,6 @@ public sealed class UpdateService : IUpdateService
             if (!string.Equals(NormalizeHash(expectedHash), actualHash, StringComparison.OrdinalIgnoreCase))
                 return new(false, "The downloaded installer checksum did not match the release checksum.", installerPath);
 
-            KillAdbProcesses();
             var process = Process.Start(new ProcessStartInfo
             {
                 FileName = installerPath,
@@ -139,26 +138,6 @@ public sealed class UpdateService : IUpdateService
             64 * 1024,
             useAsync: true);
         await source.CopyToAsync(target, cancellationToken);
-    }
-
-    private static void KillAdbProcesses()
-    {
-        foreach (var process in Process.GetProcessesByName("adb"))
-        {
-            try
-            {
-                if (!process.HasExited)
-                    process.Kill(entireProcessTree: true);
-                process.WaitForExit(5000);
-            }
-            catch (Exception) when (process.HasExited)
-            {
-            }
-            finally
-            {
-                process.Dispose();
-            }
-        }
     }
 
     private static async Task<string> HashAsync(string path, CancellationToken cancellationToken)

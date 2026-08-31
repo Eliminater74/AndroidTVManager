@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: ${{ matrix.configuration }} build and test
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration:
+          - Debug
+          - Release
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore AndroidTVManager.sln
+
+      - name: Build
+        run: dotnet build AndroidTVManager.sln --configuration ${{ matrix.configuration }} --no-restore
+
+      - name: Test
+        run: dotnet test AndroidTVManager.sln --configuration ${{ matrix.configuration }} --no-build --no-restore

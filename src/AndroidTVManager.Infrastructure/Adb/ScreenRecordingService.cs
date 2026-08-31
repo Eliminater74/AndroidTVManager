@@ -9,6 +9,7 @@ public sealed class ScreenRecordingService : IScreenRecordingService
     private readonly IAdbProcessRunner _runner;
     private readonly ILocalAppDataPaths _paths;
     private IAdbProcessSession? _session;
+    private bool _sessionCompleted;
 
     public ScreenRecordingService(
         IAdbStreamingProcessRunner streaming,
@@ -20,7 +21,7 @@ public sealed class ScreenRecordingService : IScreenRecordingService
         _paths = paths;
     }
 
-    public bool IsRecording => _session is not null;
+    public bool IsRecording => _session is not null && !_sessionCompleted;
     public ScreenRecordingInfo? Current { get; private set; }
 
     public async Task<ScreenRecordingInfo> StartAsync(
@@ -36,7 +37,9 @@ public sealed class ScreenRecordingService : IScreenRecordingService
             serial.Trim(),
             ["shell", "screenrecord", "--time-limit", Math.Clamp((int)duration.TotalSeconds, 1, 1800).ToString(), remotePath],
             cancellationToken);
+        _sessionCompleted = false;
         Current = new(serial.Trim(), remotePath, DateTimeOffset.UtcNow);
+        _ = ObserveCompletionAsync(_session);
         return Current;
     }
 
@@ -47,6 +50,7 @@ public sealed class ScreenRecordingService : IScreenRecordingService
         var session = _session;
         var recording = Current;
         _session = null;
+        _sessionCompleted = false;
         Current = null;
         await session.DisposeAsync();
         var localPath = Path.Combine(_paths.RecordingsPath, $"recording-{DateTime.Now:yyyyMMdd-HHmmss}.mp4");
@@ -60,5 +64,20 @@ public sealed class ScreenRecordingService : IScreenRecordingService
             ["shell", "rm", recording.RemotePath],
             cancellationToken: CancellationToken.None);
         return pull.IsSuccess ? localPath : null;
+    }
+
+    private async Task ObserveCompletionAsync(IAdbProcessSession session)
+    {
+        try
+        {
+            await session.Completion.ConfigureAwait(false);
+        }
+        catch
+        {
+            // StopAsync remains responsible for pulling and cleaning up the recording.
+        }
+
+        if (ReferenceEquals(_session, session))
+            _sessionCompleted = true;
     }
 }
