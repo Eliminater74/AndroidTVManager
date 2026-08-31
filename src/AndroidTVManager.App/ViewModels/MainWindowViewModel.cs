@@ -44,6 +44,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IPackageInventoryService _packageInventoryService;
     private readonly IPackageIconService _packageIconService;
     private readonly IPackagePreferenceRepository _packagePreferences;
+    private readonly IPackageClassifier _packageClassifier;
+    private readonly IPackageReferenceCatalog _packageReferenceCatalog;
+    private readonly IReferencePackageDumpService _referencePackageDumpService;
     private readonly IDeveloperVerificationPolicyProvider _verificationPolicy;
     private readonly ILogViewerService _logViewer;
     private readonly IUpdateService _updates;
@@ -94,6 +97,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IPackageIconService packageIconService,
         IDeveloperVerificationPolicyProvider verificationPolicy,
         IPackagePreferenceRepository packagePreferences,
+        IPackageClassifier packageClassifier,
+        IPackageReferenceCatalog packageReferenceCatalog,
+        IReferencePackageDumpService referencePackageDumpService,
         ILogViewerService logViewer,
         IUpdateService updates,
         IDeploymentProfileRepository deploymentProfiles,
@@ -135,6 +141,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _packageInventoryService = packageInventoryService;
         _packageIconService = packageIconService;
         _packagePreferences = packagePreferences;
+        _packageClassifier = packageClassifier;
+        _packageReferenceCatalog = packageReferenceCatalog;
+        _referencePackageDumpService = referencePackageDumpService;
         _verificationPolicy = verificationPolicy;
         _logViewer = logViewer;
         _updates = updates;
@@ -246,7 +255,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Devices,
             device => SelectedDevice = device),
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packageIconService,
-            _packagePreferences, _confirmation, _settingsStore, Devices),
+            _packagePreferences, _packageClassifier, _packageReferenceCatalog, _referencePackageDumpService,
+            _confirmation, _settingsStore, Devices),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
             _packageIconService, _settingsStore, Devices),
         "Backup / Restore" => new BackupPageViewModel(_backupService, _paths, Devices),
@@ -1315,18 +1325,29 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     private readonly IPackageInventoryService _inventoryService;
     private readonly IPackageIconService _iconService;
     private readonly IPackagePreferenceRepository _preferences;
+    private readonly IPackageClassifier _classifier;
+    private readonly IPackageReferenceCatalog _referenceCatalog;
+    private readonly IReferencePackageDumpService _referenceDumpService;
     private readonly IConfirmationService _confirmation;
     private readonly ISettingsStore _settings;
     private readonly Task _settingsLoaded;
     private readonly SemaphoreSlim _iconThrottle = new(4, 4);
     private CancellationTokenSource? _iconSource;
     private bool _updatingIconSetting;
+    private IReadOnlyDictionary<string, PackageAssessment> _assessments =
+        new Dictionary<string, PackageAssessment>(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyDictionary<string, PackageReferenceAnalysisItem> _references =
+        new Dictionary<string, PackageReferenceAnalysisItem>(StringComparer.OrdinalIgnoreCase);
+    private PackageInventoryResult? _lastInventory;
 
     public ApplicationsPageViewModel(
         IPackageManager packageManager,
         IPackageInventoryService inventoryService,
         IPackageIconService iconService,
         IPackagePreferenceRepository preferences,
+        IPackageClassifier classifier,
+        IPackageReferenceCatalog referenceCatalog,
+        IReferencePackageDumpService referenceDumpService,
         IConfirmationService confirmation,
         ISettingsStore settings,
         ObservableCollection<AndroidDevice> devices) : base("Applications")
@@ -1335,6 +1356,9 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         _inventoryService = inventoryService;
         _iconService = iconService;
         _preferences = preferences;
+        _classifier = classifier;
+        _referenceCatalog = referenceCatalog;
+        _referenceDumpService = referenceDumpService;
         _confirmation = confirmation;
         _settings = settings;
         _settingsLoaded = LoadIconSettingAsync();
@@ -1367,6 +1391,12 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     private PackageInventoryEntry? _selectedPackage;
 
     [ObservableProperty]
+    private PackageAssessment? _selectedAssessment;
+
+    [ObservableProperty]
+    private PackageReferenceAnalysisItem? _selectedReference;
+
+    [ObservableProperty]
     private string _message = "Waiting for a connected device…";
 
     [ObservableProperty]
@@ -1377,6 +1407,31 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 
     [ObservableProperty]
     private string _selectedFilter = "All";
+
+    [ObservableProperty]
+    private string _referenceSummary = "Reference baseline analysis is available after scanning.";
+
+    public IReadOnlyList<PackageReferenceMatch> SelectedReferences
+        => SelectedReference?.Matches ?? [];
+
+    public string SelectedObservedOn
+        => SelectedReference is { ObservedOn.Count: > 0 }
+            ? string.Join(", ", SelectedReference.ObservedOn)
+            : "No reference device match.";
+
+    public string SelectedDependencies
+        => SelectedReference is { Matches.Count: > 0 }
+            ? string.Join(", ", SelectedReference.Matches
+                .SelectMany(match => match.Dependencies)
+                .Distinct(StringComparer.OrdinalIgnoreCase))
+            : "None detected.";
+
+    public string SelectedNeededBy
+        => SelectedReference is { Matches.Count: > 0 }
+            ? string.Join(", ", SelectedReference.Matches
+                .SelectMany(match => match.NeededBy)
+                .Distinct(StringComparer.OrdinalIgnoreCase))
+            : "None recorded.";
 
     [ObservableProperty]
     private string _permission = string.Empty;
@@ -1406,6 +1461,30 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 
     partial void OnSearchChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
     partial void OnSelectedFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
+
+    partial void OnSelectedPackageChanged(PackageInventoryEntry? value)
+    {
+        SelectedAssessment = value is not null
+            && _assessments.TryGetValue(value.PackageName, out var assessment)
+                ? assessment
+                : null;
+        SelectedReference = value is not null
+            && _references.TryGetValue(value.PackageName, out var reference)
+                ? reference
+                : null;
+        OnPropertyChanged(nameof(SelectedReferences));
+        OnPropertyChanged(nameof(SelectedObservedOn));
+        OnPropertyChanged(nameof(SelectedDependencies));
+        OnPropertyChanged(nameof(SelectedNeededBy));
+    }
+
+    partial void OnSelectedReferenceChanged(PackageReferenceAnalysisItem? value)
+    {
+        OnPropertyChanged(nameof(SelectedReferences));
+        OnPropertyChanged(nameof(SelectedObservedOn));
+        OnPropertyChanged(nameof(SelectedDependencies));
+        OnPropertyChanged(nameof(SelectedNeededBy));
+    }
 
     partial void OnShowPackageIconsChanged(bool value)
     {
@@ -1449,15 +1528,67 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         }
         Message = "Loading package list…";
         var inventory = await _inventoryService.GetInventoryAsync(TargetSerial.Trim());
+        _lastInventory = inventory;
         Packages.Clear();
         foreach (var package in inventory.Packages)
             Packages.Add(package);
+        var device = Devices.FirstOrDefault(candidate =>
+            string.Equals(candidate.Serial, TargetSerial.Trim(), StringComparison.OrdinalIgnoreCase))
+            ?? new AndroidDevice { Serial = TargetSerial.Trim() };
+        var context = new PackageClassificationContext(
+            device,
+            inventory.Packages.FirstOrDefault(package => package.IsActiveLauncher)?.PackageName,
+            inventory.Packages.Where(package => package.IsDefaultInputMethod)
+                .Select(package => package.PackageName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase),
+            inventory.Packages.Where(package => package.IsEnabledAccessibilityService)
+                .Select(package => package.PackageName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase),
+            inventory.Packages.Where(package => package.IsDeviceOwner)
+                .Select(package => package.PackageName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase));
+        _assessments = inventory.Packages
+            .Select(package => _classifier.Classify(package, context))
+            .ToDictionary(assessment => assessment.PackageName, StringComparer.OrdinalIgnoreCase);
+        var referenceAnalysis = await _referenceCatalog.AnalyzeAsync(device, inventory.Packages);
+        _references = referenceAnalysis.Packages
+            .ToDictionary(reference => reference.PackageName, StringComparer.OrdinalIgnoreCase);
+        ReferenceSummary = BuildReferenceSummary(referenceAnalysis.Summary);
+        SelectedPackage = Packages.FirstOrDefault();
         OnPropertyChanged(nameof(FilteredPackages));
         Message = inventory.ErrorMessage is null
             ? $"{Packages.Count} packages loaded."
             : $"{Packages.Count} packages loaded with warnings: {inventory.ErrorMessage}";
         if (ShowPackageIcons)
             StartIconLoading(TargetSerial.Trim());
+    }
+
+    [RelayCommand]
+    private async Task ExportReferenceDumpAsync()
+    {
+        if (_lastInventory is null || string.IsNullOrWhiteSpace(TargetSerial))
+        {
+            Message = "Refresh packages before exporting a reference dump.";
+            return;
+        }
+        var device = Devices.FirstOrDefault(candidate =>
+            string.Equals(candidate.Serial, TargetSerial.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (device is null)
+        {
+            Message = "The target device is no longer connected.";
+            return;
+        }
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "Reference package dump (*.json)|*.json",
+            DefaultExt = ".json",
+            FileName = $"{SanitizeFileName(device.Manufacturer ?? "AndroidTV")}-" +
+                $"{SanitizeFileName(device.Model ?? "device")}-reference.json"
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+        await _referenceDumpService.ExportAsync(device, _lastInventory, dialog.FileName);
+        Message = $"Reference dump exported: {dialog.FileName}";
     }
 
     private async Task LoadIconSettingAsync()
@@ -1668,6 +1799,28 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         var result = await operation(serial, package, permission);
         Message = result.IsSuccess ? $"{action} completed." : result.StandardError.Trim();
     }
+
+    private static string BuildReferenceSummary(PackageReferenceSummary summary)
+        => $"{summary.TotalPackages} packages · {summary.BaselineMatches} reference matches · " +
+           $"{summary.UnknownPackages} unknown\n" +
+           string.Join(" · ", summary.OriginCounts.Select(count =>
+               $"{FormatOrigin(count.Origin)} {count.Count}"));
+
+    private static string FormatOrigin(PackageOrigin origin)
+        => origin switch
+        {
+            PackageOrigin.AospTvCore => "AOSP TV",
+            PackageOrigin.GoogleTvGms => "Google TV",
+            PackageOrigin.SocPlatform => "SoC",
+            PackageOrigin.RegionalOperator => "Regional",
+            PackageOrigin.ThirdParty => "Third-party",
+            PackageOrigin.Oem => "OEM",
+            _ => "Unknown"
+        };
+
+    private static string SanitizeFileName(string value)
+        => string.Concat(value.Select(character =>
+            Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
 }
 
 public sealed partial class ToolsPageViewModel : PageViewModel

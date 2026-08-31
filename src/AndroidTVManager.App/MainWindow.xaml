@@ -1764,6 +1764,8 @@
                     </StackPanel>
                     <TextBlock Text="{Binding IconStatus}" Foreground="{StaticResource TextMuted}"
                                FontSize="11" Margin="2,6,0,0"/>
+                    <TextBlock Text="{Binding ReferenceSummary}" Foreground="{StaticResource TextSecondary}"
+                               TextWrapping="Wrap" FontSize="11" Margin="2,8,0,0"/>
                     <Grid Margin="0,22,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -1779,6 +1781,9 @@
                         <Button Grid.Column="3" Content="Refresh packages" Style="{StaticResource AccentButtonStyle}"
                                 Command="{Binding RefreshCommand}"/>
                     </Grid>
+                    <Button Content="Export reference dump" Style="{StaticResource GhostButtonStyle}"
+                            HorizontalAlignment="Left" Margin="0,10,0,0"
+                            Command="{Binding ExportReferenceDumpCommand}"/>
                 </StackPanel>
                 <Grid Grid.Row="1" Margin="0,18,0,0">
                     <Grid.ColumnDefinitions>
@@ -1818,7 +1823,58 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                    <ScrollViewer Grid.Column="1" Margin="16,0,0,0"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                        <Border Background="{StaticResource SurfaceSecondaryBrush}"
+                                BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
+                                CornerRadius="8" Padding="10">
+                            <StackPanel>
+                                <TextBlock Text="PACKAGE INTELLIGENCE" FontSize="10" FontWeight="Bold"
+                                           Foreground="{StaticResource CyanAccent}"/>
+                                <TextBlock Text="{Binding SelectedReference.Origin, StringFormat=Origin: {0}}"
+                                           Margin="0,7,0,0"/>
+                                <TextBlock Text="{Binding SelectedAssessment.Category, StringFormat=Role/category: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedAssessment.Risk, StringFormat=Risk: {0}}"
+                                           Foreground="{StaticResource AmberAccent}"/>
+                                <TextBlock Text="{Binding SelectedAssessment.Confidence, StringFormat=Confidence: {0}}"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding SelectedAssessment.RecommendedAction, StringFormat=Suggested action: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedAssessment.IsProtected, StringFormat=Protected by runtime role: {0}}"
+                                           Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedReference.Role, StringFormat=Known role: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedObservedOn, StringFormat=Observed on: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedDependencies, StringFormat=Dependencies: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedNeededBy, StringFormat=Needed by: {0}}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SelectedAssessment.Description}"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"
+                                           Margin="0,3,0,0"/>
+                                <TextBlock Text="REFERENCE MATCHES" FontSize="9" FontWeight="Bold"
+                                           Foreground="{StaticResource VioletAccent}" Margin="0,8,0,3"/>
+                                <ItemsControl ItemsSource="{Binding SelectedReferences}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,2,0,4">
+                                                <TextBlock Text="{Binding BaselineName}" FontWeight="SemiBold"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding SourceConfidence, StringFormat=Source: {0}}"
+                                                           Foreground="{StaticResource TextMuted}" FontSize="10"/>
+                                                <TextBlock Text="{Binding EvidenceSourceIds, StringFormat=Evidence IDs: {0}}"
+                                                           Foreground="{StaticResource TextMuted}" FontSize="10"
+                                                           TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
                         <TextBlock Text="PACKAGE ACTIONS" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource VioletAccent}"/>
                         <Button Content="Launch" Style="{StaticResource GhostButtonStyle}" Margin="0,12,0,4"
@@ -1865,7 +1921,8 @@
                                 Command="{Binding SaveNoteCommand}" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding Message}" Foreground="{StaticResource TextSecondary}"
                                    TextWrapping="Wrap" Margin="0,14,0,0"/>
-                    </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
                 </Grid>
             </Grid>
         </DataTemplate>
