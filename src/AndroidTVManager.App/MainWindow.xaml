@@ -2385,6 +2385,12 @@
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel DockPanel.Dock="Bottom" Margin="8,0,8,18">
+                    <Button Content="About · Eliminater74"
+                            Style="{StaticResource GhostButtonStyle}"
+                            HorizontalContentAlignment="Left"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="About"
+                            Margin="0,0,0,10"/>
                     <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
                             <DockPanel>

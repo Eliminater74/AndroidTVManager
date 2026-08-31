@@ -6,6 +6,9 @@
             <TextBlock Text="ABOUT ANDROID TV MANAGER" Style="{StaticResource SectionLabelStyle}"/>
             <TextBlock Text="{Binding ProductName}" FontSize="36" FontWeight="SemiBold"
                        Margin="0,7,0,0"/>
+            <TextBlock Text="Eliminater74 · Independent Windows-first Android TV tooling"
+                       Foreground="{StaticResource CyanAccent}" FontSize="13" FontWeight="SemiBold"
+                       Margin="0,6,0,0"/>
             <TextBlock Text="{Binding ProductDescription}" Foreground="{StaticResource TextSecondary}"
                        FontSize="15" TextWrapping="Wrap" Margin="0,8,0,0"/>
             <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
