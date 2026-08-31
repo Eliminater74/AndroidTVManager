@@ -9,7 +9,7 @@ Android TV Manager releases are built on Windows by GitHub Actions. A release ta
 3. Make sure the version is not already tagged.
 4. Use a tag with the `v` prefix, for example `v1.0.0-B4`.
 
-The tag version without `v` must match the project `<Version>` value. Beta tags such as `v1.0.0-B4` automatically create GitHub pre-releases.
+The tag version without `v` must match the project `<Version>` value. Beta tags are published as normal GitHub releases so the newest validated build is the repository's `Latest` release.
 
 ## Local validation
 
@@ -55,4 +55,4 @@ The same workflow can be rerun from GitHub Actions with `workflow_dispatch` by s
 - [ ] SHA-256 checksums are attached.
 - [ ] No database, logs, Platform-Tools, APKs, or generated output are committed.
 - [ ] GitHub Actions completes successfully.
-- [ ] The release page contains the expected assets and pre-release status.
+- [ ] The release page contains the expected assets and is marked `Latest`.

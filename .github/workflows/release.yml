@@ -87,9 +87,7 @@ jobs:
             "--title", "Android TV Manager $version",
             "--generate-notes",
             "--notes", "Windows installer, portable build, and SHA-256 checksums are attached."
+            "--latest"
           )
-          if ($version -match "-B\d+") {
-            $arguments += "--prerelease"
-          }
           $arguments += $assets
           & gh @arguments
