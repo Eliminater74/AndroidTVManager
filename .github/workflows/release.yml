@@ -85,8 +85,14 @@ jobs:
           $assets = @(Get-ChildItem -LiteralPath "$env:GITHUB_WORKSPACE\artifacts\release" -File |
             ForEach-Object { $_.FullName })
           $changelog = @(Get-Content -LiteralPath "$env:GITHUB_WORKSPACE\CHANGELOG.md")
-          $heading = "## [$version]"
-          $start = [Array]::IndexOf($changelog, $heading)
+          $versionPattern = [regex]::Escape($version)
+          $start = -1
+          for ($index = 0; $index -lt $changelog.Count; $index++) {
+            if ($changelog[$index] -match "^## \[$versionPattern\](?:\s|$)") {
+              $start = $index
+              break
+            }
+          }
           if ($start -lt 0) {
             throw "CHANGELOG.md does not contain a release section for $version."
           }
