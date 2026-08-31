@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
@@ -332,9 +331,18 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             CountIfSucceeded(results, "packages-user", user.Count),
             CountIfSucceeded(results, "packages-system", system.Count),
             CountIfSucceeded(results, "packages-uninstalled", uninstalled),
-            CountIfSucceeded(results, "packages-launcher", CountPackageTokens(Output(results, "packages-launcher"))),
-            CountIfSucceeded(results, "packages-accessibility", CountPackageTokens(Output(results, "packages-accessibility"))),
-            CountIfSucceeded(results, "packages-owner", CountPackageTokens(Output(results, "packages-owner"))));
+            CountIfSucceeded(
+                results,
+                "packages-launcher",
+                PackageInventoryParser.ParseResolvedActivityPackage(Output(results, "packages-launcher")) is null ? 0 : 1),
+            CountIfSucceeded(
+                results,
+                "packages-accessibility",
+                PackageInventoryParser.ParseSettingComponentPackages(Output(results, "packages-accessibility")).Count),
+            CountIfSucceeded(
+                results,
+                "packages-owner",
+                PackageInventoryParser.ParseDeviceOwnerPackages(Output(results, "packages-owner")).Count));
     }
 
     private static int? CountIfSucceeded(
@@ -344,12 +352,6 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         => results.GetValueOrDefault(key)?.All(item => item.State == InspectionSectionState.Completed) == true
             ? count
             : null;
-
-    private static int CountPackageTokens(string output)
-        => Regex.Matches(output, @"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+")
-            .Select(match => match.Value)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Count();
 
     private static string Output(
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,

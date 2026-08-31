@@ -453,6 +453,29 @@ public sealed record PackageClassificationContext(
     IReadOnlySet<string> EnabledAccessibilityPackages,
     IReadOnlySet<string> DeviceOwnerPackages);
 
+public static class PackageClassificationContexts
+{
+    public static PackageClassificationContext FromInventory(
+        AndroidDevice device,
+        IEnumerable<PackageInventoryEntry> packages)
+    {
+        var packageList = packages as IReadOnlyList<PackageInventoryEntry>
+            ?? packages.ToArray();
+        return new PackageClassificationContext(
+            device,
+            packageList.FirstOrDefault(package => package.IsActiveLauncher)?.PackageName,
+            packageList.Where(package => package.IsDefaultInputMethod)
+                .Select(package => package.PackageName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase),
+            packageList.Where(package => package.IsEnabledAccessibilityService)
+                .Select(package => package.PackageName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase),
+            packageList.Where(package => package.IsDeviceOwner)
+                .Select(package => package.PackageName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase));
+    }
+}
+
 public interface IPackageClassifier
 {
     PackageAssessment Classify(

@@ -30,17 +30,10 @@ public sealed class PackageClassifier : IPackageClassifier
         PackageClassificationContext context)
     {
         var reasons = new List<string>();
-        var isRoleProtected = package.IsActiveLauncher
-            || string.Equals(package.PackageName, context.ActiveLauncherPackage, StringComparison.OrdinalIgnoreCase)
-            || package.IsDefaultInputMethod
-            || context.DefaultInputMethodPackages.Contains(package.PackageName)
-            || package.IsEnabledAccessibilityService
-            || context.EnabledAccessibilityPackages.Contains(package.PackageName)
-            || package.IsDeviceOwner
-            || context.DeviceOwnerPackages.Contains(package.PackageName);
-        if (isRoleProtected)
+        var activeRoles = GetActiveRoles(package, context);
+        if (activeRoles.Length > 0)
         {
-            reasons.Add("This package currently holds an active device role.");
+            reasons.Add($"This package currently holds active device role(s): {string.Join(", ", activeRoles)}.");
             return Assessment(package, PackageRiskLevel.Critical, PackageConfidence.Verified,
                 "Active system role", "Keep", reasons, true);
         }
@@ -114,12 +107,29 @@ public sealed class PackageClassifier : IPackageClassifier
             && (!rule.MinApi.HasValue || (device.ApiLevel ?? 0) >= rule.MinApi)
             && (!rule.MaxApi.HasValue || (device.ApiLevel ?? int.MaxValue) <= rule.MaxApi);
 
+    private static string[] GetActiveRoles(
+        PackageInventoryEntry package,
+        PackageClassificationContext context)
+    {
+        var roles = new List<string>();
+        if (package.IsActiveLauncher
+            || string.Equals(package.PackageName, context.ActiveLauncherPackage, StringComparison.OrdinalIgnoreCase))
+            roles.Add("active launcher");
+        if (package.IsDefaultInputMethod || context.DefaultInputMethodPackages.Contains(package.PackageName))
+            roles.Add("default input method");
+        if (package.IsEnabledAccessibilityService || context.EnabledAccessibilityPackages.Contains(package.PackageName))
+            roles.Add("enabled accessibility service");
+        if (package.IsDeviceOwner || context.DeviceOwnerPackages.Contains(package.PackageName))
+            roles.Add("device owner");
+        return roles.ToArray();
+    }
+
     private static int Specificity(PackageKnowledgeRule rule)
-        => (rule.Manufacturer is null ? 0 : 8)
+        => (string.IsNullOrWhiteSpace(rule.PackagePrefix) ? 16 : 0)
+           + (rule.Manufacturer is null ? 0 : 8)
            + (rule.Product is null ? 0 : 4)
            + (rule.ModelContains is null ? 0 : 2)
-           + (rule.MinApi.HasValue || rule.MaxApi.HasValue ? 1 : 0)
-           + (rule.PackagePrefix is null ? 0 : 1);
+           + (rule.MinApi.HasValue || rule.MaxApi.HasValue ? 1 : 0);
 }
 
 public static class PackageKnowledgeLoader

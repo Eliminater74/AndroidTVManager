@@ -71,20 +71,17 @@ public sealed class PackageInventoryService : IPackageInventoryService
         var enabled = PackageInventoryParser.ParsePackageNames(results["enabled"].StandardOutput);
         var uninstalled = PackageInventoryParser.ParsePackageNames(results["uninstalled"].StandardOutput);
         var packageNames = all.Union(uninstalled, StringComparer.OrdinalIgnoreCase);
-        var launcher = ExtractPackage(results["launcher"].StandardOutput);
-        var input = ExtractPackages(results["input"].StandardOutput);
-        var accessibility = ExtractPackages(results["accessibility"].StandardOutput);
-        var owners = ExtractPackages(results["device-owner"].StandardOutput);
+        var launcher = PackageInventoryParser.ParseResolvedActivityPackage(results["launcher"].StandardOutput);
+        var input = PackageInventoryParser.ParseSettingComponentPackages(results["input"].StandardOutput);
+        var accessibility = PackageInventoryParser.ParseSettingComponentPackages(results["accessibility"].StandardOutput);
+        var owners = PackageInventoryParser.ParseDeviceOwnerPackages(results["device-owner"].StandardOutput);
 
         var packages = packageNames
             .OrderBy(package => package, StringComparer.OrdinalIgnoreCase)
             .Select(package =>
             {
                 var packagePaths = paths.GetValueOrDefault(package) ?? [];
-                var isSystem = system.Contains(package)
-                    || packagePaths.Any(path => path.Contains("/system/", StringComparison.OrdinalIgnoreCase)
-                        || path.Contains("/product/", StringComparison.OrdinalIgnoreCase)
-                        || path.Contains("/vendor/", StringComparison.OrdinalIgnoreCase));
+                var isSystem = system.Contains(package) || packagePaths.Any(IsSystemPartitionPath);
                 return new PackageInventoryEntry(
                     package,
                     null,
@@ -125,22 +122,13 @@ public sealed class PackageInventoryService : IPackageInventoryService
         return inventory;
     }
 
-    private static string? ExtractPackage(string output)
-    {
-        var value = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(line => line.Trim())
-            .LastOrDefault(line => line.Contains('/'));
-        if (value is null)
-            return null;
-        var separator = value.IndexOf('/');
-        return separator > 0 ? value[..separator] : null;
-    }
-
-    private static IReadOnlySet<string> ExtractPackages(string output)
-        => output.Split(['\r', '\n', ':', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(value => value.Split('/')[0])
-            .Where(value => value.Contains('.') && !value.Contains('='))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    private static bool IsSystemPartitionPath(string path)
+        => path.Contains("/system/", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/system_ext/", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/product/", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/vendor/", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/odm/", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/oem/", StringComparison.OrdinalIgnoreCase);
 
     public async Task<PackageInventoryEntry?> GetDetailsAsync(
         string serial,
@@ -163,7 +151,7 @@ public sealed class PackageInventoryService : IPackageInventoryService
             details.VersionName,
             details.VersionCode,
             details.UserId,
-            details.ApkPaths.Any(path => path.Contains("/system/", StringComparison.OrdinalIgnoreCase)),
+            details.ApkPaths.Any(IsSystemPartitionPath),
             details.ApkPaths.Any(path => path.Contains("/data/app", StringComparison.OrdinalIgnoreCase)
                 && path.Contains("updated", StringComparison.OrdinalIgnoreCase)),
             details.IsEnabled,
