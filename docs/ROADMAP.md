@@ -19,12 +19,15 @@
 - Advanced diagnostics for boot/Fastboot state, shared storage, network, codecs, device comparison, and screen recording
 - Source-attributed debloat knowledge for Chromecast, Shield, Sony, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, Fire TV, and ONN research
 - Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
+- Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
+- Read-only reference package dump export for device contributors
 - Release automation, self-contained Windows packaging, and installer distribution
 
 ## Next
 
 - Profile export/import (`.atmprofile`) with optional APK assets
 - More hardware fixtures and physical-device validation
+- Reversible recommendation scoring with restore points and explicit package-data limitations
 
 ## Later
 

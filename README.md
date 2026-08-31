@@ -51,6 +51,8 @@ Public package dumps and community guides are treated as evidence, not as proof 
 
 Actionable rules currently cover the strongest evidence for TCL, Philips, Hisense, Sony, NVIDIA Shield, Chromecast/Google TV, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, and Yandex families. Fire TV/ONN device research and Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba identifiers are retained as research provenance or namespace recognition until package behavior is independently verified.
 
+Reference baseline analysis is a separate layer beneath debloat decisions. It compares an inventory with versioned AOSP TV Core and Chromecast-generation Google TV references, plus initial SoC and TCL platform references, and reports origin, role, observed devices, dependencies, and evidence without changing the classifier's risk or action. From Applications, `Export reference dump` creates a read-only, account-free JSON contribution containing device identity, package states, UIDs, APK paths, and runtime-role flags.
+
 ## Requirements
 
 - Windows 10 or later, x64
