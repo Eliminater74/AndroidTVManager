@@ -71,7 +71,8 @@ public sealed class PackageClassifier : IPackageClassifier
         foreach (var sourceId in rule.SourceIds ?? [])
         {
             if (_sources.TryGetValue(sourceId, out var source))
-                reasons.Add($"Source evidence [{source.Id}]: {source.Title} ({source.SourceType}) — {source.Url}");
+                reasons.Add($"Source evidence [{source.Id}]: {source.Title} "
+                    + $"({source.SourceConfidence}, {source.SourceType}) — {source.Url}");
             else
                 reasons.Add($"Source evidence reference '{sourceId}' is unavailable.");
         }
@@ -150,7 +151,8 @@ public static class PackageKnowledgeLoader
             throw new InvalidDataException("Package knowledge source catalog could not be opened.");
         var sources = JsonSerializer.Deserialize<List<PackageKnowledgeSource>>(stream, new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
             }) ?? throw new JsonException("Package knowledge source catalog is empty.");
         if (sources.Count == 0 || sources.Any(source =>
                 string.IsNullOrWhiteSpace(source.Id)
@@ -159,6 +161,26 @@ public static class PackageKnowledgeLoader
                 || string.IsNullOrWhiteSpace(source.SourceType)
                 || string.IsNullOrWhiteSpace(source.Attribution)))
             throw new JsonException("Package knowledge source catalog contains an incomplete source entry.");
-        return sources;
+        return sources
+            .Select(source => source.SourceConfidence == PackageSourceConfidence.Unknown
+                ? source with { SourceConfidence = InferSourceConfidence(source.SourceType) }
+                : source)
+            .ToArray();
     }
+
+    private static PackageSourceConfidence InferSourceConfidence(string sourceType)
+        => sourceType switch
+        {
+            "community-package-dump" or "community-hardware-research"
+                => PackageSourceConfidence.RealHardwareDump,
+            "community-tested-guide" or "community-regression-report"
+                => PackageSourceConfidence.TestedDeviceReport,
+            "community-tool" or "community-knowledge-base" or "community-package-research"
+                => PackageSourceConfidence.MultiSourceCommunityEvidence,
+            "manufacturer-product-reference" or "device-compatibility-reference"
+                => PackageSourceConfidence.GenericManufacturerEvidence,
+            _ when sourceType.Contains("anecdotal", StringComparison.OrdinalIgnoreCase)
+                => PackageSourceConfidence.SingleAnecdotalReport,
+            _ => PackageSourceConfidence.Unknown
+        };
 }

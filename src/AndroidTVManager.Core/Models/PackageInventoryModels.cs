@@ -17,6 +17,16 @@ public enum PackageConfidence
     Verified
 }
 
+public enum PackageSourceConfidence
+{
+    Unknown,
+    RealHardwareDump,
+    TestedDeviceReport,
+    MultiSourceCommunityEvidence,
+    SingleAnecdotalReport,
+    GenericManufacturerEvidence
+}
+
 public enum PackageOverride
 {
     None,
@@ -90,7 +100,8 @@ public sealed record PackageKnowledgeSource(
     string Url,
     string SourceType,
     string RetrievedUtc,
-    string Attribution);
+    string Attribution,
+    PackageSourceConfidence SourceConfidence = PackageSourceConfidence.Unknown);
 
 public enum DebloatPreset
 {
