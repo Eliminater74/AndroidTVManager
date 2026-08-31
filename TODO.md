@@ -13,14 +13,18 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Verify installer upgrade and uninstall behavior.
 - [ ] Add code signing when a release certificate is available.
 
-## Beta 2 follow-up
+## Beta 3 follow-up
 
-- [ ] Add backup integrity verification and a richer backup history browser.
-- [ ] Add restore warnings and validation for more backup artifact types.
-- [ ] Add device comparison between saved inspection/configuration snapshots.
+- [x] Add source-attributed package knowledge with conservative vendor and device-family rules.
+- [x] Add layered Reference Baseline Catalog with AOSP TV generations, Google TV, SoC, and OEM references.
+- [x] Add read-only reference package dump export for device contributors.
+- [ ] Add reversible recommendation scoring with explicit Fully Reversible, Partially Reversible, and Not Reversible states.
+- [ ] Add device restore points that capture package state, runtime roles, relevant settings, and the ruleset version before mutations.
+- [ ] Add package-data backup warnings so package-state restoration is not presented as application-data restoration.
+- [ ] Add Xiaomi, Yandex, Fire TV, and additional per-model reference baselines.
+- [ ] Add a richer backup history browser and validation for more backup artifact types.
 - [ ] Improve package icon extraction for more APK/resource formats.
 - [ ] Add richer file browsing with explicit user-selected paths.
-- [ ] Add logcat viewing separately from the application log viewer.
 - [ ] Add QR-based Wireless Debugging pairing where platform support is reliable.
 
 ## Quality

@@ -7,9 +7,9 @@ Android TV Manager releases are built on Windows by GitHub Actions. A release ta
 1. Update the `<Version>`, `<AssemblyVersion>`, `<FileVersion>`, and `<InformationalVersion>` values in `src/AndroidTVManager.App/AndroidTVManager.App.csproj`.
 2. Add a matching section to `CHANGELOG.md`.
 3. Make sure the version is not already tagged.
-4. Use a tag with the `v` prefix, for example `v1.0.0-B2`.
+4. Use a tag with the `v` prefix, for example `v1.0.0-B3`.
 
-The tag version without `v` must match the project `<Version>` value. Beta tags such as `v1.0.0-B2` automatically create GitHub pre-releases.
+The tag version without `v` must match the project `<Version>` value. Beta tags such as `v1.0.0-B3` automatically create GitHub pre-releases.
 
 ## Local validation
 
@@ -21,7 +21,7 @@ dotnet build AndroidTVManager.sln -c Debug
 dotnet test AndroidTVManager.sln -c Debug
 dotnet build AndroidTVManager.sln -c Release
 dotnet test AndroidTVManager.sln -c Release
-.\scripts\package-release.ps1 -Version 1.0.0-B2 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B3 -RequireInstaller
 ```
 
 The script writes only generated output under `artifacts\`, which is ignored by Git:
@@ -37,8 +37,8 @@ After committing and validating the release:
 
 ```powershell
 git push origin main
-git tag -a v1.0.0-B2 -m "Release Android TV Manager 1.0.0-B2"
-git push origin v1.0.0-B2
+git tag -a v1.0.0-B3 -m "Release Android TV Manager 1.0.0-B3"
+git push origin v1.0.0-B3
 ```
 
 Pushing the tag starts `.github/workflows/release.yml`. The workflow restores, builds, tests, publishes the self-contained application, installs Inno Setup, creates the installer and portable ZIP, generates SHA-256 checksums, and creates the GitHub release with all generated assets.

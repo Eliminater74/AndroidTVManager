@@ -11,15 +11,15 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B2 — Beta 2
+### 1.0.0-B3 — Beta 3
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 2 is currently published as the latest release; future beta tags may be marked as pre-releases while hardware validation continues.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 3 is currently published as the latest release; future beta tags may be marked as pre-releases while hardware validation continues.
 
 Available assets:
 
 - [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/latest/download/AndroidTVManager-Setup.exe) — stable installer link; GitHub records the asset download count
-- `AndroidTVManager-1.0.0-B2-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B2-win-x64.zip` — portable self-contained build
+- `AndroidTVManager-1.0.0-B3-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B3-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
 The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository.
@@ -103,7 +103,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B2
+.\scripts\package-release.ps1 -Version 1.0.0-B3
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.
