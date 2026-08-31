@@ -285,5 +285,32 @@
     "sourceConfidence": "GenericManufacturerEvidence",
     "retrievedUtc": "2026-08-30",
     "attribution": "TweakDroid"
+  },
+  {
+    "id": "aosp-atv-master-product",
+    "title": "AOSP generic Android TV product definition",
+    "url": "https://android.googlesource.com/device/google/atv/+/master/products/atv_product.mk",
+    "sourceType": "official-source-definition",
+    "sourceConfidence": "OfficialAosp",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Android Open Source Project"
+  },
+  {
+    "id": "aosp-atv-system-ext",
+    "title": "AOSP Android TV system_ext product definition",
+    "url": "https://android.googlesource.com/device/google/atv/+/c442d26ac6452f18f74e71b4e93db41dcfe02429/products/atv_system_ext.mk",
+    "sourceType": "official-source-definition",
+    "sourceConfidence": "OfficialAosp",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Android Open Source Project"
+  },
+  {
+    "id": "aosp-atv-android10-base",
+    "title": "AOSP Android 10 Android TV base product definition",
+    "url": "https://android.googlesource.com/device/google/atv/+/refs/heads/android10-dev/products/atv_base.mk",
+    "sourceType": "official-source-definition",
+    "sourceConfidence": "OfficialAosp",
+    "retrievedUtc": "2026-08-30",
+    "attribution": "Android Open Source Project"
   }
 ]

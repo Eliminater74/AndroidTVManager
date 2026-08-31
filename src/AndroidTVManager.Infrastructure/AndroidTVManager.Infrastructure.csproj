@@ -12,6 +12,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Data\package-knowledge.json" />
     <EmbeddedResource Include="Data\package-knowledge-sources.json" />
+    <EmbeddedResource Include="Data\reference-baselines.json" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -1,0 +1,454 @@
+[
+  {
+    "baseline": {
+      "id": "aosp-tv-android10",
+      "name": "AOSP Android TV Core — Android 10",
+      "origin": "AospTvCore",
+      "generation": "Android TV 10",
+      "androidVersion": "10",
+      "sourceIds": ["aosp-atv-android10-base"]
+    },
+    "packages": [
+      {
+        "packageName": "com.android.providers.tv",
+        "displayName": "TV Provider",
+        "origin": "AospTvCore",
+        "generation": "Android TV 10",
+        "moduleName": "TvProvider",
+        "partitions": ["system"],
+        "role": "TV provider",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-android10-base"],
+        "notes": "Resolved package identity from the AOSP TV provider module."
+      },
+      {
+        "packageName": "com.android.tv.settings",
+        "displayName": "TV Settings",
+        "origin": "AospTvCore",
+        "generation": "Android TV 10",
+        "moduleName": "TvSettings",
+        "partitions": ["system"],
+        "role": "TV settings",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-android10-base"]
+      },
+      {
+        "packageName": "com.android.settings.intelligence",
+        "displayName": "Settings Intelligence",
+        "origin": "AospTvCore",
+        "generation": "Android TV 10",
+        "moduleName": "SettingsIntelligence",
+        "partitions": ["system"],
+        "role": "Settings search and intelligence",
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-android10-base"]
+      },
+      {
+        "packageName": "com.android.systemui",
+        "displayName": "TV System UI",
+        "origin": "AospTvCore",
+        "generation": "Android TV 10",
+        "moduleName": "TvSystemUI",
+        "partitions": ["system"],
+        "role": "System UI",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-android10-base"]
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "aosp-tv-android11",
+      "name": "AOSP Android TV Core — Android 11",
+      "origin": "AospTvCore",
+      "generation": "Android TV 11",
+      "androidVersion": "11",
+      "sourceIds": ["aosp-atv-master-product", "aosp-atv-system-ext"]
+    },
+    "packages": [
+      {
+        "packageName": "com.android.providers.tv",
+        "displayName": "TV Provider",
+        "origin": "AospTvCore",
+        "generation": "Android TV 11",
+        "moduleName": "TvProvider",
+        "partitions": ["system"],
+        "role": "TV provider",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      },
+      {
+        "packageName": "com.android.tv.settings",
+        "displayName": "TV Settings",
+        "origin": "AospTvCore",
+        "generation": "Android TV 11",
+        "moduleName": "TvSettings",
+        "partitions": ["system_ext"],
+        "role": "TV settings",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-system-ext"]
+      },
+      {
+        "packageName": "com.android.tv.frameworkpackagestubs",
+        "displayName": "TV Framework Package Stubs",
+        "origin": "AospTvCore",
+        "generation": "Android TV 11",
+        "moduleName": "TvFrameworkPackageStubs",
+        "partitions": ["system_ext"],
+        "role": "TV framework compatibility",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-system-ext"]
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "aosp-tv-android12",
+      "name": "AOSP Android TV Core — Android 12",
+      "origin": "AospTvCore",
+      "generation": "Android TV 12",
+      "androidVersion": "12",
+      "sourceIds": ["aosp-atv-master-product"]
+    },
+    "packages": [
+      {
+        "packageName": "com.android.providers.tv",
+        "displayName": "TV Provider",
+        "origin": "AospTvCore",
+        "generation": "Android TV 12",
+        "moduleName": "TvProvider",
+        "partitions": ["system"],
+        "role": "TV provider",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      },
+      {
+        "packageName": "com.android.tv.settings",
+        "displayName": "TV Settings",
+        "origin": "AospTvCore",
+        "generation": "Android TV 12",
+        "moduleName": "TvSettings",
+        "partitions": ["system_ext"],
+        "role": "TV settings",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "aosp-tv-android13",
+      "name": "AOSP Android TV Core — Android 13",
+      "origin": "AospTvCore",
+      "generation": "Android TV 13",
+      "androidVersion": "13",
+      "sourceIds": ["aosp-atv-master-product"]
+    },
+    "packages": [
+      {
+        "packageName": "com.android.providers.tv",
+        "displayName": "TV Provider",
+        "origin": "AospTvCore",
+        "generation": "Android TV 13",
+        "moduleName": "TvProvider",
+        "partitions": ["system"],
+        "role": "TV provider",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      },
+      {
+        "packageName": "com.android.tv.settings",
+        "displayName": "TV Settings",
+        "origin": "AospTvCore",
+        "generation": "Android TV 13",
+        "moduleName": "TvSettings",
+        "partitions": ["system_ext"],
+        "role": "TV settings",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "aosp-tv-android14",
+      "name": "AOSP Android TV Core — Android 14",
+      "origin": "AospTvCore",
+      "generation": "Android TV 14",
+      "androidVersion": "14",
+      "sourceIds": ["aosp-atv-master-product"]
+    },
+    "packages": [
+      {
+        "packageName": "com.android.providers.tv",
+        "displayName": "TV Provider",
+        "origin": "AospTvCore",
+        "generation": "Android TV 14",
+        "moduleName": "TvProvider",
+        "partitions": ["system"],
+        "role": "TV provider",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      },
+      {
+        "packageName": "com.android.tv.settings",
+        "displayName": "TV Settings",
+        "origin": "AospTvCore",
+        "generation": "Android TV 14",
+        "moduleName": "TvSettings",
+        "partitions": ["system_ext"],
+        "role": "TV settings",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "aosp-tv-android15-current",
+      "name": "AOSP Android TV Core — Android 15/current",
+      "origin": "AospTvCore",
+      "generation": "Android TV 15/current",
+      "androidVersion": "15",
+      "sourceIds": ["aosp-atv-master-product", "aosp-atv-system-ext"]
+    },
+    "packages": [
+      {
+        "packageName": "com.android.providers.tv",
+        "displayName": "TV Provider",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "TvProvider",
+        "partitions": ["system"],
+        "role": "TV provider",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"]
+      },
+      {
+        "packageName": "com.android.tv.settings",
+        "displayName": "TV Settings",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "TvSettings",
+        "partitions": ["system_ext"],
+        "role": "TV settings",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-system-ext"]
+      },
+      {
+        "packageName": "com.android.tv.frameworkpackagestubs",
+        "displayName": "TV Framework Package Stubs",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "TvFrameworkPackageStubs",
+        "partitions": ["system_ext"],
+        "role": "TV framework compatibility",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-system-ext"]
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "google-tv-chromecast-ga01919",
+      "name": "Google TV Reference Baseline — Chromecast generation",
+      "origin": "GoogleTvGms",
+      "generation": "Google TV / Chromecast",
+      "manufacturer": "Google",
+      "deviceFamily": "Chromecast with Google TV",
+      "sourceIds": ["uad-chromecast-100"]
+    },
+    "packages": [
+      {
+        "packageName": "com.google.android.apps.tv.launcherx",
+        "displayName": "Google TV Home",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV / Chromecast",
+        "role": "Google TV launcher",
+        "activeRoleProtection": true,
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Chromecast with Google TV GA01919-US"],
+        "evidenceSourceIds": ["uad-chromecast-100"],
+        "dependencies": ["com.google.android.tungsten.setupwraith"],
+        "neededBy": ["Google Home / casting"],
+        "featureImpacts": [
+          {
+            "area": "Launcher and casting",
+            "description": "The launcher and related setup components can affect Google Home/casting behavior."
+          }
+        ],
+        "notes": "A real package inventory, not an official universal Google TV list."
+      },
+      {
+        "packageName": "com.google.android.tungsten.setupwraith",
+        "displayName": "Google TV SetupWraith",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV / Chromecast",
+        "role": "Google TV setup and device integration",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Chromecast with Google TV GA01919-US"],
+        "evidenceSourceIds": ["uad-chromecast-100"],
+        "neededBy": ["com.google.android.apps.tv.launcherx"],
+        "featureImpacts": [
+          {
+            "area": "Setup and casting",
+            "description": "Setup and casting integrations may be affected by launcher changes."
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.tvrecommendations",
+        "displayName": "Android TV Recommendations",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV / Chromecast",
+        "role": "Recommendations",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Chromecast with Google TV GA01919-US"],
+        "evidenceSourceIds": ["uad-chromecast-100"]
+      },
+      {
+        "packageName": "com.google.android.katniss",
+        "displayName": "Google TV voice/search integration",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV / Chromecast",
+        "role": "Voice and search integration",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Chromecast with Google TV GA01919-US"],
+        "evidenceSourceIds": ["uad-chromecast-100"],
+        "notes": "Presence does not make disablement safe; risk is supplied by the independent classifier."
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "soc-sei-droidlogic",
+      "name": "SEI / Droidlogic platform reference",
+      "origin": "SocPlatform",
+      "generation": "Android TV 11–14",
+      "platformFamily": "SEI Robotics / Amlogic / Droidlogic",
+      "sourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"]
+    },
+    "packages": [
+      {
+        "packageName": "com.droidlogic.overlay",
+        "displayName": "Droidlogic system overlay",
+        "origin": "SocPlatform",
+        "generation": "Android TV 11–14",
+        "platformFamily": "SEI Robotics / Amlogic / Droidlogic",
+        "role": "SoC and hardware overlay",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Homatics Box R 4K Plus", "TiVo Stream 4K"],
+        "evidenceSourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+        "activeRoleProtection": true
+      },
+      {
+        "packageName": "com.droidlogic.SubTitleService",
+        "displayName": "Droidlogic subtitle service",
+        "origin": "SocPlatform",
+        "generation": "Android TV 11–14",
+        "platformFamily": "SEI Robotics / Amlogic / Droidlogic",
+        "role": "Media subtitle service",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Homatics Box R 4K Plus", "TiVo Stream 4K"],
+        "evidenceSourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"]
+      },
+      {
+        "packageName": "com.nes.tvglobalkeyhandler",
+        "displayName": "SEI global key handler",
+        "origin": "SocPlatform",
+        "generation": "Android TV 11–14",
+        "platformFamily": "SEI Robotics",
+        "role": "Remote input",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Homatics Box R 4K Plus", "TiVo Stream 4K"],
+        "evidenceSourceIds": ["homatics-4pda-atv14", "tivo-stream4k-gist"],
+        "activeRoleProtection": true
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "oem-tcl-google-tv",
+      "name": "TCL Google TV OEM reference",
+      "origin": "Oem",
+      "generation": "Google TV",
+      "manufacturer": "TCL",
+      "deviceFamily": "TCL Google TV",
+      "sourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"]
+    },
+    "packages": [
+      {
+        "packageName": "com.tcl.framework.custom",
+        "displayName": "TCL framework customization",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TCL framework integration",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "activeRoleProtection": true
+      },
+      {
+        "packageName": "com.tcl.tv",
+        "displayName": "TCL TV service",
+        "origin": "Oem",
+        "generation": "Google TV",
+        "manufacturer": "TCL",
+        "deviceFamily": "TCL Google TV",
+        "role": "TV and HDMI integration",
+        "confidence": "High",
+        "sourceConfidence": "MultiSourceCommunityEvidence",
+        "observedOn": ["TCL 65C7K", "TCL Google TV families"],
+        "evidenceSourceIds": ["tcl-65c7k-guide", "tcl-conservative-debloater"],
+        "activeRoleProtection": true,
+        "featureImpacts": [
+          {
+            "area": "TV and HDMI",
+            "description": "TV input, tuner, or HDMI behavior may stop working."
+          }
+        ]
+      }
+    ]
+  }
+]
