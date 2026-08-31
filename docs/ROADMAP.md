@@ -1,6 +1,6 @@
 # Roadmap
 
-## Beta 5 — current
+## Beta 6 — current
 
 - Managed official Android SDK Platform-Tools bootstrap
 - USB, traditional network ADB, and Android Wireless Debugging pairing

@@ -8,7 +8,7 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [1.0.0-B5] - 2026-08-31
+## [1.0.0-B6] - 2026-08-31
 
 ### Fixed
 

@@ -2,6 +2,7 @@ using AndroidTVManager.Core.Models;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Infrastructure.Database;
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 
 namespace AndroidTVManager.Tests;
 
@@ -63,6 +64,7 @@ public sealed class DeploymentProfileRepositoryTests
         }
         finally
         {
+            SqliteConnection.ClearAllPools();
             if (Directory.Exists(root))
             {
                 for (var attempt = 0; attempt < 20; attempt++)
