@@ -14,18 +14,18 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B10 — Beta 10
+### 1.0.0-B11 — Beta 11
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 10 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 11 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B10/AndroidTVManager-Setup.exe) — current Beta 10 installer link
-- `AndroidTVManager-1.0.0-B10-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B10-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B11/AndroidTVManager-Setup.exe) — current Beta 11 installer link
+- `AndroidTVManager-1.0.0-B11-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B11-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 10 is a debloat intelligence and safety release that promotes reviewed reference evidence into cautious recommendations while keeping Android TV core packages locked.
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 11 is a smart debloat profile release that recognizes the Android TV 16 emulator package set, lists loaded and matched reference profiles, promotes reviewed optional packages into cautious disable-first recommendations, and keeps Android TV core packages locked.
 
 ## Highlights
 
@@ -37,7 +37,7 @@ The installer is currently unsigned. Windows SmartScreen may display a warning u
 - Configuration Explorer for read-only property provenance, conflicts, snapshots, and reports
 - Complete package inventory including system, user, enabled, disabled, and uninstalled-for-user views
 - Optional cached package icons
-- Device-aware debloat previews with Safe, Caution, High Risk, Critical, and Unknown classifications
+- Device-aware debloat previews with loaded profile visibility, origin/role evidence, breakage notes, Safe, Caution, High Risk, Critical, and Unknown classifications
 - Deployment Profiles for repeatable APK/split installation and package setup after a reset
 - ADB Remote, live device Logcat, redacted Diagnostic Bundles, codec/network inspection, and shared-storage tools
 - Disable-first debloat actions, captured serials, drift checks, transaction history, and restore
@@ -54,7 +54,7 @@ Public package dumps and community guides are treated as evidence, not as proof 
 
 Actionable rules currently cover the strongest evidence for TCL, Philips, Hisense, Sony, NVIDIA Shield, Chromecast/Google TV, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, and Yandex families. Fire TV/ONN device research and Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba identifiers are retained as research provenance or namespace recognition until package behavior is independently verified.
 
-Reference baseline analysis sits beneath debloat decisions. It compares an inventory with versioned AOSP TV Core and Chromecast-generation Google TV references, plus initial SoC and TCL platform references, and reports origin, role, observed devices, dependencies, and evidence. Debloat previews now use reviewed reference risk/action metadata for conservative Caution/High Risk recommendations, while AOSP TV Settings, TV Provider, TV framework stubs, launchers, IMEs, device-owner packages, accessibility services, and Keep rules remain locked. Community evidence can raise a package to disable-first Caution, but it is never promoted to automatic Safe or Verified status by import alone. From Applications, `Export reference dump` creates a read-only, account-free JSON contribution containing device identity, package states, UIDs, APK paths, and runtime-role flags.
+Reference baseline analysis sits beneath debloat decisions. It compares an inventory with versioned AOSP TV Core and Chromecast-generation Google TV references, plus initial SoC, TCL platform, and Android TV 16 emulator references, and reports origin, role, observed devices, dependencies, and evidence. Debloat previews now list the loaded profile catalog and active profile matches, use reviewed reference risk/action metadata for conservative Caution/High Risk recommendations, while AOSP TV Settings, TV Provider, TV framework stubs, launchers, IMEs, device-owner packages, accessibility services, and Keep rules remain locked. Community evidence can raise a package to disable-first Caution, but it is never promoted to automatic Safe or Verified status by import alone. From Applications, `Export reference dump` creates a read-only, account-free JSON contribution containing device identity, package states, UIDs, APK paths, and runtime-role flags.
 
 ## Requirements
 
@@ -106,7 +106,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B10 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B11 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.

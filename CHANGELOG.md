@@ -8,6 +8,27 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B11] - 2026-09-01
+
+Beta 11 focuses on making debloat previews behave like a profile-driven recommendation engine instead of a static package list.
+
+### Added
+
+- Added an Android TV 16 / API 36 emulator reference profile sourced from a live Google `sdk_google_atv64_x86_64` package inventory.
+- Added Debloat page visibility for loaded reference profiles, active profile matches, origin, generation, and matched package counts.
+- Added Android TV 16 emulator package recommendations for reversible optional packages including Basic Dreams, Backdrop, TV Recommendations, Play Games, YouTube TV, Google Calendar Sync, and CTS shim packages.
+
+### Fixed
+
+- Current AOSP Android TV reference coverage now applies to Android TV 15+ API levels, including Android TV 16 emulator builds.
+- Reference-derived reviewed recommendations now map to the correct debloat operation, including `Uninstall for user 0` when a rule explicitly calls for it.
+- Already-disabled packages are no longer auto-selected in debloat previews.
+- Enabled input-method packages are now captured alongside the default input method so voice/keyboard services are protected as active device roles.
+
+### Tests
+
+- Added regression coverage for Android TV 16 emulator profile matching, optional package selection, core launcher locking, already-disabled candidates, reviewed uninstall actions, reference profile listing, and enabled input-method role detection.
+
 ## [1.0.0-B10] - 2026-08-31
 
 Beta 10 focuses on debloat intelligence, source attribution, and safety locks for Android TV core packages.

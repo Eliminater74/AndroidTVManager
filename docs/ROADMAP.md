@@ -1,6 +1,6 @@
 # Roadmap
 
-## Beta 10 — current
+## Beta 11 — current
 
 - Managed official Android SDK Platform-Tools bootstrap
 - USB, traditional network ADB, and Android Wireless Debugging pairing
@@ -20,7 +20,8 @@
 - Source-attributed debloat knowledge for Chromecast, Shield, Sony, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, Fire TV, and ONN research
 - Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
 - Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
-- Debloat previews use selected-device identity, reference-profile recommendations, source evidence, and current runtime-role checks before execution
+- Debloat previews use selected-device identity, loaded/matched reference-profile visibility, source evidence, breakage notes, and current runtime-role checks before execution
+- Android TV 16 emulator profile coverage for AOSP/Google TV core packages and reversible optional-package recommendations
 - Android TV core settings/provider/framework packages and all Keep-side recommendations are locked across previews, execution, and direct package actions
 - Read-only reference package dump export for device contributors
 - Scrollable About navigation labeled simply `About`, with developer identity on the About page
