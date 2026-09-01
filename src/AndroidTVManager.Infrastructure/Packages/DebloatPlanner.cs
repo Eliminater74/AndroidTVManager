@@ -97,6 +97,7 @@ public sealed class DebloatPlanner : IDebloatPlanner
         PackageReferenceAnalysisItem? reference)
     {
         var autoAction = PackageAssessmentReferenceEnricher.IsAutoDebloatAction(assessment);
+        var action = ResolveAction(assessment);
         var allowed = assessment.Override == PackageOverride.UserApproved
             || (autoAction && assessment.Risk switch
             {
@@ -106,9 +107,9 @@ public sealed class DebloatPlanner : IDebloatPlanner
                 _ => false
         });
         var protectedPackage = PackageAssessmentReferenceEnricher.IsSafetyLocked(assessment);
-        var selected = allowed && !protectedPackage && package.IsInstalled;
+        var selected = allowed && !protectedPackage && package.IsInstalled && package.IsEnabled;
         var reason = GetSelectionBlockReason(package, assessment, preset, selected, protectedPackage, autoAction);
-        return new(package, assessment, DebloatAction.Disable, selected, reason, reference);
+        return new(package, assessment, action, selected, reason, reference);
     }
 
     private static string? GetSelectionBlockReason(
@@ -123,17 +124,31 @@ public sealed class DebloatPlanner : IDebloatPlanner
             return null;
         if (protectedPackage)
             return "Locked: critical package, Keep rule, or active device role.";
-        if (assessment.Risk == PackageRiskLevel.Unknown)
-            return "Not auto-selected: unknown package. You may select it manually after review.";
         if (!package.IsInstalled)
             return "Package is not currently installed for the user.";
+        if (!package.IsEnabled)
+            return "Package is already disabled.";
+        if (assessment.Risk == PackageRiskLevel.Unknown)
+            return "Not auto-selected: unknown package. You may select it manually after review.";
         if (!autoAction)
             return $"Not auto-selected: reviewed action is {assessment.RecommendedAction}.";
         return $"Not included in {preset} preset.";
     }
 
+    private static DebloatAction ResolveAction(PackageAssessment assessment)
+        => assessment.RecommendedAction switch
+        {
+            { } value when value.Equals("Uninstall for user 0", StringComparison.OrdinalIgnoreCase)
+                || value.Equals("UninstallForUser", StringComparison.OrdinalIgnoreCase)
+                => DebloatAction.UninstallForUser,
+            { } value when value.Equals("Disable", StringComparison.OrdinalIgnoreCase)
+                => DebloatAction.Disable,
+            _ => DebloatAction.Disable
+        };
+
     private static string BuildReferenceWarning(PackageReferenceSummary summary)
-        => $"Device profile matched {summary.BaselineMatches} reference package record(s); "
+        => $"Device profile matched {summary.BaselineMatches} reference package record(s) "
+           + $"across {summary.ProfileMatches?.Count ?? 0} active profile(s); "
            + $"{summary.UnknownPackages} of {summary.TotalPackages} package(s) remain Unknown.";
 
     private static AndroidDevice MergeDevice(

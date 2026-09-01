@@ -16,17 +16,34 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
     public PackageAssessment Assessment => Item.Assessment;
     public PackageReferenceAnalysisItem? Reference => Item.Reference;
     public bool CanSelect => !PackageAssessmentReferenceEnricher.IsSafetyLocked(Assessment)
-        && Package.IsInstalled;
+        && Package.IsInstalled
+        && Package.IsEnabled;
     public bool RequiresManualReview => Assessment.Risk == PackageRiskLevel.Unknown;
-    public string SelectionLabel => CanSelect
-        ? RequiresManualReview
-            ? "Unknown — review before selecting"
-            : IsSelected
-                ? "Selected"
-                : "Not selected"
-        : PackageAssessmentReferenceEnricher.IsSafetyLocked(Assessment)
-            ? "Locked for safety"
-            : "Not installed for User 0";
+    public string ActionSummary => Item.Action switch
+    {
+        DebloatAction.UninstallForUser => "Action: uninstall for user 0",
+        DebloatAction.Disable => "Action: disable package",
+        _ => "Action: none"
+    };
+    public string SelectionLabel
+    {
+        get
+        {
+            if (CanSelect)
+                return RequiresManualReview
+                    ? "Unknown — review before selecting"
+                    : IsSelected
+                        ? "Selected"
+                        : "Not selected";
+            if (PackageAssessmentReferenceEnricher.IsSafetyLocked(Assessment))
+                return "Locked for safety";
+            if (!Package.IsInstalled)
+                return "Not installed for User 0";
+            if (!Package.IsEnabled)
+                return "Already disabled";
+            return "Not selectable";
+        }
+    }
     public string ImpactSummary => Assessment.Impacts.Count == 0
         ? "No documented impact is available."
         : string.Join(" · ", Assessment.Impacts.Select(impact => $"{impact.Area}: {impact.Description}"));
@@ -75,6 +92,7 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
         OnPropertyChanged(nameof(Package));
         OnPropertyChanged(nameof(Reference));
         OnPropertyChanged(nameof(CanSelect));
+        OnPropertyChanged(nameof(ActionSummary));
         OnPropertyChanged(nameof(SelectionLabel));
         OnPropertyChanged(nameof(ProfileSummary));
         OnPropertyChanged(nameof(EvidenceSummary));

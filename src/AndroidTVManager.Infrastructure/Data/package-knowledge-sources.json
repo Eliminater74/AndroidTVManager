@@ -305,6 +305,33 @@
     "attribution": "Android Open Source Project"
   },
   {
+    "id": "aosp-atv-current-gsi",
+    "title": "AOSP current Android TV GSI product definition",
+    "url": "https://android.googlesource.com/device/google/atv/+/master/products/aosp_tv_arm64.mk",
+    "sourceType": "official-source-definition",
+    "sourceConfidence": "OfficialAosp",
+    "retrievedUtc": "2026-08-31",
+    "attribution": "Android Open Source Project"
+  },
+  {
+    "id": "aosp-basic-dreams",
+    "title": "AOSP Basic screensaver package manifest",
+    "url": "https://android.googlesource.com/platform/packages/screensavers/Basic/+/refs/heads/main/AndroidManifest.xml",
+    "sourceType": "official-source-definition",
+    "sourceConfidence": "OfficialAosp",
+    "retrievedUtc": "2026-08-31",
+    "attribution": "Android Open Source Project"
+  },
+  {
+    "id": "android-tv-manager-atv16-emulator",
+    "title": "Android TV Manager local Android TV 16 emulator package inventory",
+    "url": "https://developer.android.com/studio/run/emulator",
+    "sourceType": "local-adb-package-inventory",
+    "sourceConfidence": "RealHardwareDump",
+    "retrievedUtc": "2026-08-31",
+    "attribution": "Android TV Manager read-only ADB capture from Google sdk_google_atv64_x86_64 API 36 emulator"
+  },
+  {
     "id": "aosp-atv-android10-base",
     "title": "AOSP Android 10 Android TV base product definition",
     "url": "https://android.googlesource.com/device/google/atv/+/refs/heads/android10-dev/products/atv_base.mk",

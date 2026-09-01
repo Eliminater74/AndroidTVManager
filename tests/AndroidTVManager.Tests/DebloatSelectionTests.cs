@@ -91,6 +91,33 @@ public sealed class DebloatSelectionTests
         viewModel.SelectionLabel.Should().Be("Locked for safety");
     }
 
+    [Fact]
+    public void Disabled_candidate_is_not_selectable()
+    {
+        var package = Package("com.android.dreams.basic") with { IsEnabled = false };
+        var assessment = new PackageAssessment(
+            package.PackageName,
+            PackageRiskLevel.Caution,
+            PackageConfidence.Medium,
+            "Screensaver",
+            "Basic screensaver.",
+            "Disable",
+            [],
+            [],
+            false,
+            "test");
+        var viewModel = new DebloatPlanItemViewModel(new DebloatPlanItem(
+            package,
+            assessment,
+            DebloatAction.Disable,
+            false,
+            "Package is already disabled."));
+
+        viewModel.CanSelect.Should().BeFalse();
+        viewModel.SelectionLabel.Should().Be("Already disabled");
+        viewModel.ActionSummary.Should().Be("Action: disable package");
+    }
+
     private static PackageInventoryEntry Package(string name)
         => new(name, null, null, null, "0", false, false, true, true, false, [],
             DateTimeOffset.UtcNow, "tv-1", "14", "fingerprint");

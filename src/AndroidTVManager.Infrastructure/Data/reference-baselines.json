@@ -261,7 +261,8 @@
       "origin": "AospTvCore",
       "generation": "Android TV 15/current",
       "androidVersion": "15",
-      "sourceIds": ["aosp-atv-master-product", "aosp-atv-system-ext"]
+      "sourceIds": ["aosp-atv-master-product", "aosp-atv-system-ext", "aosp-atv-current-gsi", "aosp-basic-dreams"],
+      "minApiLevel": 35
     },
     "packages": [
       {
@@ -308,6 +309,159 @@
         "confidence": "High",
         "sourceConfidence": "OfficialAosp",
         "evidenceSourceIds": ["aosp-atv-system-ext"]
+      },
+      {
+        "packageName": "com.android.settings.intelligence",
+        "displayName": "Settings Intelligence",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "SettingsIntelligence",
+        "partitions": ["product"],
+        "role": "Settings search and intelligence",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-master-product"],
+        "featureImpacts": [
+          {
+            "area": "Settings",
+            "description": "Settings search, suggestions, and related configuration surfaces can be degraded.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.systemui",
+        "displayName": "TV System UI",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "TvSystemUI",
+        "partitions": ["system_ext"],
+        "role": "System UI",
+        "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-system-ext"],
+        "featureImpacts": [
+          {
+            "area": "System UI",
+            "description": "Status, navigation, overlays, and system surface rendering can stop working.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.tv.feedbackconsent",
+        "displayName": "TV Feedback Consent",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "TvFeedbackConsent",
+        "partitions": ["system_ext"],
+        "role": "TV feedback and bugreport consent",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-system-ext"],
+        "featureImpacts": [
+          {
+            "area": "Diagnostics",
+            "description": "System feedback, consent, or bugreport capture flows may be affected.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.tv.provision",
+        "displayName": "TV Provision",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "TvProvision",
+        "partitions": ["product"],
+        "role": "TV provisioning",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-current-gsi"],
+        "featureImpacts": [
+          {
+            "area": "Setup",
+            "description": "First-run provisioning, setup completion, or reset flows may be affected.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.dreams.basic",
+        "displayName": "Basic Dreams",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "BasicDreams",
+        "partitions": ["system"],
+        "role": "Basic screensaver/dream provider",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-basic-dreams"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Screensaver",
+            "description": "The built-in basic dream/screensaver option will disappear; normal launcher, settings, ADB, and TV playback should not depend on it."
+          }
+        ],
+        "notes": "Official AOSP manifest declares this as a DreamService provider, so it is an optional screensaver candidate rather than core TV infrastructure."
+      },
+      {
+        "packageName": "android",
+        "displayName": "Android framework resources",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "moduleName": "framework-res",
+        "partitions": ["system"],
+        "role": "Android framework resources",
+        "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "Verified",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-current-gsi"],
+        "featureImpacts": [
+          {
+            "area": "Framework",
+            "description": "Core Android resources and framework behavior can break.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.*",
+        "displayName": "Android package namespace",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "packagePrefix": "com.android.",
+        "role": "Android platform package namespace",
+        "confidence": "Low",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-current-gsi"],
+        "notes": "Namespace evidence only. Exact package rules and runtime active roles decide risk and action."
+      },
+      {
+        "packageName": "android.*",
+        "displayName": "Android resource overlay namespace",
+        "origin": "AospTvCore",
+        "generation": "Android TV 15/current",
+        "packagePrefix": "android.",
+        "role": "Android resource overlay namespace",
+        "confidence": "Low",
+        "sourceConfidence": "OfficialAosp",
+        "evidenceSourceIds": ["aosp-atv-current-gsi"],
+        "notes": "Namespace evidence only for Android framework/resource overlays. It is not a debloat recommendation."
       }
     ]
   },
@@ -389,6 +543,295 @@
         "observedOn": ["Chromecast with Google TV GA01919-US"],
         "evidenceSourceIds": ["uad-chromecast-100"],
         "notes": "Presence does not make disablement safe; risk is supplied by the independent classifier."
+      }
+    ]
+  },
+  {
+    "baseline": {
+      "id": "google-atv-emulator-api36",
+      "name": "Google Android TV Emulator — API 36",
+      "origin": "GoogleTvGms",
+      "generation": "Android TV 16 emulator",
+      "androidVersion": "16",
+      "manufacturer": "Google",
+      "deviceFamily": "sdk_google_atv",
+      "sourceIds": ["android-tv-manager-atv16-emulator"]
+    },
+    "packages": [
+      {
+        "packageName": "com.google.android.tvlauncher",
+        "displayName": "Android TV Launcher",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Android TV home launcher",
+        "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "Verified",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Launcher",
+            "description": "Home navigation and leanback launcher entry points can stop working.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.inputmethod.latin",
+        "displayName": "Google TV Latin IME",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Default on-screen keyboard",
+        "activeRoleProtection": true,
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "Verified",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Text input",
+            "description": "On-screen text entry can stop working when this is the selected input method.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.gms",
+        "displayName": "Google Play services",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Google services framework runtime",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Google services",
+            "description": "Play Store, account, licensing, casting, push, and Google-backed APIs can fail.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.gsf",
+        "displayName": "Google Services Framework",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Google account and service registration",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Google services",
+            "description": "Google account/service registration and dependent Google apps can fail.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.vending",
+        "displayName": "Google Play Store",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "App store and package delivery",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Package management",
+            "description": "Store installs, app updates, licensing, and purchase flows may fail.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.apps.mediashell",
+        "displayName": "Android Media Shell",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Cast/media shell",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Casting and media",
+            "description": "Cast receiver or Google media shell behavior may be affected.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.backdrop",
+        "displayName": "Google Backdrop",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Ambient mode/screensaver artwork",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Screensaver",
+            "description": "Google ambient/backdrop images may be unavailable."
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.tvrecommendations",
+        "displayName": "Android TV Recommendations",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Home-screen recommendation rows",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Home screen",
+            "description": "Recommended content rows and personalized suggestions may change."
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.play.games",
+        "displayName": "Google Play Games",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Optional Google gaming application",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Games",
+            "description": "Play Games profile, achievements, or TV game hub features may be unavailable."
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.youtube.tv",
+        "displayName": "YouTube for Android TV",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Optional media application",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Media",
+            "description": "YouTube TV app entry points and playback are removed until restored."
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.syncadapters.calendar",
+        "displayName": "Google Calendar Sync Adapter",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "role": "Optional Google calendar sync",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Account sync",
+            "description": "Google Calendar sync on the TV profile may stop."
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.cts.ctsshim",
+        "displayName": "CTS Shim",
+        "origin": "AospTvCore",
+        "generation": "Android TV 16 emulator",
+        "role": "Compatibility test shim",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Compatibility tests",
+            "description": "CTS-style compatibility checks may no longer see this shim package."
+          }
+        ]
+      },
+      {
+        "packageName": "com.android.cts.priv.ctsshim",
+        "displayName": "Privileged CTS Shim",
+        "origin": "AospTvCore",
+        "generation": "Android TV 16 emulator",
+        "role": "Privileged compatibility test shim",
+        "risk": "Caution",
+        "recommendedAction": "Disable",
+        "confidence": "Medium",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "reversibleMethod": "cmd package install-existing",
+        "featureImpacts": [
+          {
+            "area": "Compatibility tests",
+            "description": "Privileged CTS-style compatibility checks may no longer see this shim package."
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.*",
+        "displayName": "Google Android package namespace",
+        "origin": "GoogleTvGms",
+        "generation": "Android TV 16 emulator",
+        "packagePrefix": "com.google.android.",
+        "role": "Google Android TV package namespace",
+        "confidence": "Low",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google sdk_google_atv64_x86_64 API 36 emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "notes": "Namespace evidence only. Exact package rules, runtime active roles, and reviewed dependency records decide risk and action."
       }
     ]
   },

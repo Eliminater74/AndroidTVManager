@@ -32,7 +32,7 @@ public sealed class PackageInventoryService : IPackageInventoryService
         var commandNames = new[]
         {
             "all", "system", "user", "disabled", "enabled", "uninstalled",
-            "launcher", "input", "accessibility", "device-owner"
+            "launcher", "input", "enabled-inputs", "accessibility", "device-owner"
         };
         var tasks = commandNames.Select(async name =>
         {
@@ -47,6 +47,7 @@ public sealed class PackageInventoryService : IPackageInventoryService
                 "launcher" => ["shell", "cmd", "package", "resolve-activity", "--brief", "-a",
                     "android.intent.action.MAIN", "-c", "android.intent.category.HOME"],
                 "input" => ["shell", "settings", "get", "secure", "default_input_method"],
+                "enabled-inputs" => ["shell", "settings", "get", "secure", "enabled_input_methods"],
                 "accessibility" => ["shell", "settings", "get", "secure", "enabled_accessibility_services"],
                 "device-owner" => ["shell", "dumpsys", "device_policy"],
                 _ => []
@@ -72,7 +73,11 @@ public sealed class PackageInventoryService : IPackageInventoryService
         var uninstalled = PackageInventoryParser.ParsePackageNames(results["uninstalled"].StandardOutput);
         var packageNames = all.Union(uninstalled, StringComparer.OrdinalIgnoreCase);
         var launcher = PackageInventoryParser.ParseResolvedActivityPackage(results["launcher"].StandardOutput);
-        var input = PackageInventoryParser.ParseSettingComponentPackages(results["input"].StandardOutput);
+        var input = PackageInventoryParser.ParseSettingComponentPackages(results["input"].StandardOutput)
+            .Union(
+                PackageInventoryParser.ParseSettingComponentPackages(results["enabled-inputs"].StandardOutput),
+                StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var accessibility = PackageInventoryParser.ParseSettingComponentPackages(results["accessibility"].StandardOutput);
         var owners = PackageInventoryParser.ParseDeviceOwnerPackages(results["device-owner"].StandardOutput);
 

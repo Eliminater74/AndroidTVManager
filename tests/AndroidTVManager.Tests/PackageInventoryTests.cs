@@ -97,6 +97,8 @@ public sealed class PackageInventoryTests
             Result("com.android.tvlauncher/.TvLauncherActivity");
         runner.Responses["shell settings get secure default_input_method"] =
             Result("com.google.android.inputmethod.latin/.LatinIME");
+        runner.Responses["shell settings get secure enabled_input_methods"] =
+            Result("com.google.android.inputmethod.latin/.LatinIME:com.google.android.tts/com.google.android.apps.speech.tts.googletts.service.GoogleTTSVoiceIME");
         runner.Responses["shell settings get secure enabled_accessibility_services"] =
             Result("com.google.android.marvin.talkback/.TalkBackService");
         runner.Responses["shell dumpsys device_policy"] = Result("""
@@ -123,6 +125,44 @@ public sealed class PackageInventoryTests
         iptv.IsDeviceOwner.Should().BeFalse();
         assessment.Risk.Should().Be(PackageRiskLevel.Unknown);
         assessment.IsProtected.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Inventory_marks_default_and_enabled_input_method_packages()
+    {
+        var runner = new FakeAdbProcessRunner();
+        runner.Responses["shell pm list packages -f"] = Result("""
+            package:/product/app/LatinImeGoogle/LatinImeGoogle.apk=com.google.android.inputmethod.latin
+            package:/product/app/GoogleTTS/GoogleTTS.apk=com.google.android.tts
+            package:/data/app/~~iptv/base.apk=com.purefusion.iptv
+            """);
+        runner.Responses["shell pm list packages -s"] = Result("""
+            package:com.google.android.inputmethod.latin
+            package:com.google.android.tts
+            """);
+        runner.Responses["shell pm list packages -3"] = Result("package:com.purefusion.iptv");
+        runner.Responses["shell pm list packages -e"] = Result("""
+            package:com.google.android.inputmethod.latin
+            package:com.google.android.tts
+            package:com.purefusion.iptv
+            """);
+        runner.Responses["shell settings get secure default_input_method"] =
+            Result("com.google.android.inputmethod.latin/.LatinIME");
+        runner.Responses["shell settings get secure enabled_input_methods"] =
+            Result("com.google.android.inputmethod.latin/.LatinIME:com.google.android.tts/com.google.android.apps.speech.tts.googletts.service.GoogleTTSVoiceIME");
+        var service = new PackageInventoryService(
+            runner,
+            new CapturingPackageInventoryRepository(),
+            new FakeAppLogger());
+
+        var inventory = await service.GetInventoryAsync("tv-1");
+
+        inventory.Packages.Single(package => package.PackageName == "com.google.android.inputmethod.latin")
+            .IsDefaultInputMethod.Should().BeTrue();
+        inventory.Packages.Single(package => package.PackageName == "com.google.android.tts")
+            .IsDefaultInputMethod.Should().BeTrue();
+        inventory.Packages.Single(package => package.PackageName == "com.purefusion.iptv")
+            .IsDefaultInputMethod.Should().BeFalse();
     }
 
     private static AdbCommandResult Result(string output)

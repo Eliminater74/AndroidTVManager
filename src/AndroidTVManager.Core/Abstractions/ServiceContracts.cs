@@ -485,6 +485,8 @@ public interface IPackageClassifier
 
 public interface IPackageReferenceCatalog
 {
+    IReadOnlyList<PackageReferenceProfileMatch> GetProfiles();
+
     Task<PackageReferenceAnalysis> AnalyzeAsync(
         AndroidDevice device,
         IReadOnlyList<PackageInventoryEntry> packages,

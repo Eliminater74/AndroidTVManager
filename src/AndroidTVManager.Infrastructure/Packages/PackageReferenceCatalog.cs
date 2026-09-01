@@ -7,17 +7,17 @@ namespace AndroidTVManager.Infrastructure.Packages;
 
 public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
 {
-    private readonly IReadOnlyList<PackageReferenceCatalogEntry> _entries;
+    private readonly IReadOnlyList<PackageReferenceBaselineDocument> _documents;
 
     public PackageReferenceCatalog()
     {
         var sources = PackageKnowledgeLoader.LoadSources()
             .Select(source => source.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var documents = LoadDocuments();
-        var missingSourceIds = documents
+        _documents = LoadDocuments();
+        var missingSourceIds = _documents
             .SelectMany(document => document.Baseline.SourceIds ?? [])
-            .Concat(documents.SelectMany(document =>
+            .Concat(_documents.SelectMany(document =>
                 document.Packages.SelectMany(package => package.EvidenceSourceIds ?? [])))
             .Where(sourceId => !sources.Contains(sourceId))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -25,14 +25,14 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
         if (missingSourceIds.Length > 0)
             throw new InvalidDataException(
                 $"Reference baseline catalog references missing source(s): {string.Join(", ", missingSourceIds)}.");
-
-        _entries = documents
-            .SelectMany(document => document.Packages.Select(package =>
-                new PackageReferenceCatalogEntry(document.Baseline, package)))
-            .Where(entry => !string.IsNullOrWhiteSpace(entry.Package.PackageName)
-                || !string.IsNullOrWhiteSpace(entry.Package.PackagePrefix))
-            .ToArray();
     }
+
+    public IReadOnlyList<PackageReferenceProfileMatch> GetProfiles()
+        => _documents
+            .Select(document => ToProfile(document, matchedPackages: 0))
+            .OrderBy(profile => profile.Origin)
+            .ThenBy(profile => profile.BaselineName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
     public Task<PackageReferenceAnalysis> AnalyzeAsync(
         AndroidDevice device,
@@ -42,8 +42,14 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(packages);
 
-        var applicableEntries = _entries
-            .Where(entry => IsApplicable(entry.Baseline, device))
+        var applicableDocuments = _documents
+            .Where(document => IsApplicable(document.Baseline, device))
+            .ToArray();
+        var applicableEntries = applicableDocuments
+            .SelectMany(document => document.Packages.Select(package =>
+                new PackageReferenceCatalogEntry(document.Baseline, package)))
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.Package.PackageName)
+                || !string.IsNullOrWhiteSpace(entry.Package.PackagePrefix))
             .ToArray();
         var results = new List<PackageReferenceAnalysisItem>(packages.Count);
         foreach (var package in packages)
@@ -74,7 +80,8 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
                 .OrderBy(count => count.Origin)
                 .ToArray(),
             results.Sum(result => result.Matches.Count),
-            results.Count(result => result.Origin == PackageOrigin.Unknown));
+            results.Count(result => result.Origin == PackageOrigin.Unknown),
+            BuildProfileMatches(applicableDocuments, results));
         return Task.FromResult(new PackageReferenceAnalysis(
             device.Serial,
             DateTimeOffset.UtcNow,
@@ -122,7 +129,15 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
             && !string.Equals(baseline.Manufacturer, device.Manufacturer,
                 StringComparison.OrdinalIgnoreCase))
             return false;
-        if (!string.IsNullOrWhiteSpace(baseline.AndroidVersion)
+        if (baseline.MinApiLevel.HasValue
+            && (!device.ApiLevel.HasValue || device.ApiLevel < baseline.MinApiLevel))
+            return false;
+        if (baseline.MaxApiLevel.HasValue
+            && (!device.ApiLevel.HasValue || device.ApiLevel > baseline.MaxApiLevel))
+            return false;
+        if (!baseline.MinApiLevel.HasValue
+            && !baseline.MaxApiLevel.HasValue
+            && !string.IsNullOrWhiteSpace(baseline.AndroidVersion)
             && TryGetMajorVersion(device.AndroidVersion) is { } deviceVersion
             && TryGetMajorVersion(baseline.AndroidVersion) is { } baselineVersion
             && deviceVersion != baselineVersion)
@@ -170,4 +185,44 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
             package.ReversibleMethod,
             package.Notes);
     }
+
+    private static IReadOnlyList<PackageReferenceProfileMatch> BuildProfileMatches(
+        IReadOnlyList<PackageReferenceBaselineDocument> applicableDocuments,
+        IReadOnlyList<PackageReferenceAnalysisItem> results)
+    {
+        var matchedCounts = results
+            .SelectMany(result => result.Matches.Select(match => new
+            {
+                match.BaselineId,
+                result.PackageName
+            }))
+            .GroupBy(match => match.BaselineId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(match => match.PackageName)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Count(),
+                StringComparer.OrdinalIgnoreCase);
+
+        return applicableDocuments
+            .Select(document => ToProfile(
+                document,
+                matchedCounts.GetValueOrDefault(document.Baseline.Id)))
+            .Where(profile => profile.MatchedPackages > 0)
+            .OrderByDescending(profile => profile.MatchedPackages)
+            .ThenBy(profile => profile.BaselineName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static PackageReferenceProfileMatch ToProfile(
+        PackageReferenceBaselineDocument document,
+        int matchedPackages)
+        => new(
+            document.Baseline.Id,
+            document.Baseline.Name,
+            document.Baseline.Origin,
+            document.Baseline.Generation,
+            document.Packages.Count,
+            matchedPackages,
+            document.Baseline.SourceIds ?? []);
 }

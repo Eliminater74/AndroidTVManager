@@ -99,6 +99,64 @@ public sealed class PackageReferenceCatalogTests
     }
 
     [Fact]
+    public async Task Android_16_emulator_uses_current_aosp_and_google_emulator_profiles()
+    {
+        var device = Device("Google", "sdk_google_atv64_x86_64", "16", apiLevel: 36);
+
+        var analysis = await _catalog.AnalyzeAsync(
+            device,
+            [
+                Package("com.android.dreams.basic"),
+                Package("com.android.tv.feedbackconsent"),
+                Package("com.google.android.tvlauncher"),
+                Package("com.google.android.play.games"),
+                Package("dev.eliminater.purefusioniptv")
+            ]);
+
+        var dreams = analysis.Packages.Single(package => package.PackageName == "com.android.dreams.basic");
+        dreams.Origin.Should().Be(PackageOrigin.AospTvCore);
+        dreams.Matches.Should().Contain(match =>
+            match.Risk == PackageRiskLevel.Caution
+            && match.RecommendedAction == "Disable"
+            && match.Role!.Contains("screensaver", StringComparison.OrdinalIgnoreCase));
+
+        var launcher = analysis.Packages.Single(package => package.PackageName == "com.google.android.tvlauncher");
+        launcher.Origin.Should().Be(PackageOrigin.GoogleTvGms);
+        launcher.Matches.Should().Contain(match =>
+            match.Risk == PackageRiskLevel.Critical
+            && match.RecommendedAction == "Keep");
+
+        var games = analysis.Packages.Single(package => package.PackageName == "com.google.android.play.games");
+        games.Matches.Should().Contain(match =>
+            match.Risk == PackageRiskLevel.Caution
+            && match.RecommendedAction == "Disable"
+            && match.FeatureImpacts.Any(impact => impact.Area == "Games"));
+
+        analysis.Packages.Single(package => package.PackageName == "dev.eliminater.purefusioniptv")
+            .Origin.Should().Be(PackageOrigin.Unknown);
+        analysis.Summary.ProfileMatches.Should().NotBeNull();
+        analysis.Summary.ProfileMatches!.Should().Contain(profile =>
+            profile.BaselineId == "aosp-tv-android15-current"
+            && profile.MatchedPackages >= 2);
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "google-atv-emulator-api36"
+            && profile.MatchedPackages >= 2);
+    }
+
+    [Fact]
+    public void Reference_profiles_are_listable_for_the_debloat_ui()
+    {
+        var profiles = _catalog.GetProfiles();
+
+        profiles.Should().Contain(profile =>
+            profile.BaselineId == "aosp-tv-android15-current"
+            && profile.PackageRecords > 0);
+        profiles.Should().Contain(profile =>
+            profile.BaselineId == "google-atv-emulator-api36"
+            && profile.Generation == "Android TV 16 emulator");
+    }
+
+    [Fact]
     public async Task Exported_reference_dump_contains_device_and_package_state_without_serial()
     {
         var output = Path.Combine(Path.GetTempPath(), $"atm-reference-{Guid.NewGuid():N}.json");
@@ -139,7 +197,11 @@ public sealed class PackageReferenceCatalogTests
         }
     }
 
-    private static AndroidDevice Device(string manufacturer, string model, string androidVersion)
+    private static AndroidDevice Device(
+        string manufacturer,
+        string model,
+        string androidVersion,
+        int? apiLevel = null)
         => new()
         {
             Serial = "reference-device",
@@ -147,7 +209,7 @@ public sealed class PackageReferenceCatalogTests
             Brand = manufacturer,
             Model = model,
             AndroidVersion = androidVersion,
-            ApiLevel = int.Parse(androidVersion) + 19
+            ApiLevel = apiLevel ?? int.Parse(androidVersion) + 19
         };
 
     private static PackageInventoryEntry Package(string packageName)

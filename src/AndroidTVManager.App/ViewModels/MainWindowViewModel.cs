@@ -262,7 +262,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _packagePreferences, _packageClassifier, _packageReferenceCatalog, _referencePackageDumpService,
             _confirmation, _settingsStore, Devices),
         "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
-            _packageIconService, _settingsStore, Devices),
+            _packageIconService, _settingsStore, _packageReferenceCatalog, Devices),
         "Backup / Restore" => new BackupPageViewModel(_backupService, _paths, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, _confirmation, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
@@ -636,6 +636,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     private readonly IConfirmationService _confirmation;
     private readonly IPackageIconService _iconService;
     private readonly ISettingsStore _settings;
+    private readonly IPackageReferenceCatalog _referenceCatalog;
     private readonly Task _settingsLoaded;
     private readonly SemaphoreSlim _iconThrottle = new(4, 4);
     private CancellationTokenSource? _iconSource;
@@ -647,6 +648,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         IConfirmationService confirmation,
         IPackageIconService iconService,
         ISettingsStore settings,
+        IPackageReferenceCatalog referenceCatalog,
         ObservableCollection<AndroidDevice> devices) : base("Debloat")
     {
         _planner = planner;
@@ -654,13 +656,18 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         _confirmation = confirmation;
         _iconService = iconService;
         _settings = settings;
+        _referenceCatalog = referenceCatalog;
         _settingsLoaded = LoadIconSettingAsync();
         Devices = devices;
+        AvailableReferenceProfiles = _referenceCatalog.GetProfiles();
     }
 
     public ObservableCollection<AndroidDevice> Devices { get; }
     public IReadOnlyList<DebloatPreset> Presets { get; } = Enum.GetValues<DebloatPreset>();
     public ObservableCollection<DebloatPlanItemViewModel> PlanItems { get; } = [];
+    public ObservableCollection<PackageReferenceProfileMatch> ReferenceProfiles { get; } = [];
+    public IReadOnlyList<PackageReferenceProfileMatch> AvailableReferenceProfiles { get; }
+    public string AvailableProfileSummary => $"{AvailableReferenceProfiles.Count} reference profile(s) loaded";
 
     [ObservableProperty]
     private AndroidDevice? _selectedDevice;
@@ -694,6 +701,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         _iconSource?.Cancel();
         Plan = null;
         PlanItems.Clear();
+        ReferenceProfiles.Clear();
         Status = value is null ? "Select a connected device." : $"Ready to analyze {value.Serial}.";
         IconStatus = string.Empty;
     }
@@ -705,11 +713,17 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         OnPropertyChanged(nameof(IsAggressivePreset));
         Plan = null;
         PlanItems.Clear();
+        ReferenceProfiles.Clear();
         Status = $"Preset set to {value}. Create a new preview to apply its defaults.";
     }
 
     partial void OnPlanChanged(DebloatPlan? value)
-        => OnPropertyChanged(nameof(PlanProfileSummary));
+    {
+        ReferenceProfiles.Clear();
+        foreach (var profile in value?.ReferenceSummary?.ProfileMatches ?? [])
+            ReferenceProfiles.Add(profile);
+        OnPropertyChanged(nameof(PlanProfileSummary));
+    }
 
     [RelayCommand]
     private void SelectPreset(DebloatPreset preset)

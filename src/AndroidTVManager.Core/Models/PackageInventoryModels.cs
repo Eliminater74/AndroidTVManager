@@ -124,7 +124,9 @@ public sealed record PackageReferenceBaseline(
     string? Manufacturer = null,
     string? DeviceFamily = null,
     string? PlatformFamily = null,
-    IReadOnlyList<string>? SourceIds = null);
+    IReadOnlyList<string>? SourceIds = null,
+    int? MinApiLevel = null,
+    int? MaxApiLevel = null);
 
 public sealed record PackageReferenceEntry(
     string? PackageName,
@@ -191,11 +193,21 @@ public sealed record PackageOriginCount(
     PackageOrigin Origin,
     int Count);
 
+public sealed record PackageReferenceProfileMatch(
+    string BaselineId,
+    string BaselineName,
+    PackageOrigin Origin,
+    string Generation,
+    int PackageRecords,
+    int MatchedPackages,
+    IReadOnlyList<string> SourceIds);
+
 public sealed record PackageReferenceSummary(
     int TotalPackages,
     IReadOnlyList<PackageOriginCount> OriginCounts,
     int BaselineMatches,
-    int UnknownPackages);
+    int UnknownPackages,
+    IReadOnlyList<PackageReferenceProfileMatch>? ProfileMatches = null);
 
 public sealed record PackageReferenceAnalysis(
     string Serial,
