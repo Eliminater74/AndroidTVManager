@@ -93,7 +93,8 @@ public sealed record PackageKnowledgeRule(
     string? ObservedModels = null,
     string? EvidenceNotes = null,
     bool HardwareVerified = false,
-    string? PackagePrefix = null);
+    string? PackagePrefix = null,
+    string? DeviceFamily = null);
 
 public sealed record PackageKnowledgeSource(
     string Id,

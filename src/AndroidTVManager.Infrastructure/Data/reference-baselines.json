@@ -1160,4 +1160,417 @@
       }
     ]
   }
+,
+{
+  "baseline": {
+    "id": "nvidia-shield-tv-reviewed",
+    "name": "NVIDIA Shield TV - reviewed package profile",
+    "origin": "Oem",
+    "generation": "Shield TV firmware-dependent",
+    "deviceFamily": "NVIDIA Shield TV",
+    "sourceIds": [
+      "shield-packages-gist",
+      "shield-optimizer"
+    ]
+  },
+  "packages": [
+    {
+      "packageName": "com.nvidia.shieldservice",
+      "displayName": "NVIDIA Shield platform",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA Shield platform",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist",
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Shield platform",
+          "description": "NVIDIA-specific platform features and integrations may fail."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.NvCPLSvc",
+      "displayName": "NVIDIA control plane",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA control plane",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist",
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "area": "NVIDIA system control",
+          "description": "Display, performance, or Shield-specific control features may fail."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.nvaudiosvc",
+      "displayName": "NVIDIA audio",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA audio",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist",
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Audio",
+          "description": "Audio output, synchronization, or vendor audio features may fail."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.packagemanagerservice",
+      "displayName": "NVIDIA package management",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA package management",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Application management",
+          "description": "NVIDIA application update or package operations may fail."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.shield.appselector",
+      "displayName": "NVIDIA launcher",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA launcher",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist",
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Launcher",
+          "description": "Application selection or home-screen behavior may fail."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.shield.remote.server",
+      "displayName": "NVIDIA remote",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA remote",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist",
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Remote control",
+          "description": "Remote-control integration may stop working."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.ota",
+      "displayName": "NVIDIA updates",
+      "origin": "Oem",
+      "confidence": "High",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA updates",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist",
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Updates",
+          "description": "Shield firmware updates and update notifications may fail."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.blakepairing",
+      "displayName": "NVIDIA pairing",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA pairing",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-packages-gist"
+      ],
+      "featureImpacts": [
+        {
+          "area": "Accessory pairing",
+          "description": "Controller or accessory pairing may be affected."
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.stats",
+      "displayName": "NVIDIA usage reporting",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA usage reporting",
+      "risk": "Caution",
+      "recommendedAction": "Disable",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Usage reports may no longer reach NVIDIA support.",
+          "area": "NVIDIA usage reporting"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.diagtools",
+      "displayName": "NVIDIA diagnostics",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA diagnostics",
+      "risk": "Caution",
+      "recommendedAction": "Disable",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Support troubleshooting and diagnostic collection may be unavailable.",
+          "area": "NVIDIA diagnostics"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.feedback",
+      "displayName": "NVIDIA feedback",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA feedback",
+      "risk": "Caution",
+      "recommendedAction": "Disable",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Submitting device feedback may stop working.",
+          "area": "NVIDIA feedback"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.tegrazone3",
+      "displayName": "NVIDIA games",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA games",
+      "risk": "HighRisk",
+      "recommendedAction": "Disable",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "NVIDIA game access and associated streaming features may be unavailable.",
+          "area": "NVIDIA games"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.plexapp.mediaserver.smb",
+      "displayName": "Plex hosting",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "Plex hosting",
+      "risk": "HighRisk",
+      "recommendedAction": "Disable",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Other clients may lose access to libraries hosted by this Shield.",
+          "area": "Plex hosting"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.osc",
+      "displayName": "NVIDIA platform integration",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA platform integration",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Platform behavior may change in firmware-specific ways.",
+          "area": "NVIDIA platform integration"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.shieldtech.hooks",
+      "displayName": "NVIDIA system integration",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA system integration",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Dependent NVIDIA features may stop functioning.",
+          "area": "NVIDIA system integration"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.nvgamecast",
+      "displayName": "NVIDIA capture",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA capture",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Game recording or streaming integration may fail.",
+          "area": "NVIDIA capture"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    },
+    {
+      "packageName": "com.nvidia.shieldtech.accessoryhost",
+      "displayName": "NVIDIA accessories",
+      "origin": "Oem",
+      "confidence": "Medium",
+      "sourceConfidence": "MultiSourceCommunityEvidence",
+      "role": "NVIDIA accessories",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "evidenceSourceIds": [
+        "shield-optimizer"
+      ],
+      "featureImpacts": [
+        {
+          "description": "Accessory input and home navigation may fail.",
+          "area": "NVIDIA accessories"
+        }
+      ],
+      "observedOn": [
+        "NVIDIA Shield TV"
+      ],
+      "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    }
+  ]
+}
 ]

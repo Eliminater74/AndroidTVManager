@@ -120,11 +120,14 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
 
     private static bool IsApplicable(PackageReferenceBaseline baseline, AndroidDevice device)
     {
+        if (baseline.DeviceFamily == DeviceFamilies.NvidiaShieldTv && !DeviceFamilies.IsShieldTv(device))
+            return false;
         if (!string.IsNullOrWhiteSpace(baseline.Manufacturer)
             && !string.Equals(baseline.Manufacturer, device.Manufacturer,
                 StringComparison.OrdinalIgnoreCase))
             return false;
         if (!string.IsNullOrWhiteSpace(baseline.DeviceFamily)
+            && baseline.DeviceFamily != DeviceFamilies.NvidiaShieldTv
             && !ContainsDeviceValue(device, baseline.DeviceFamily)
             && !string.Equals(baseline.Manufacturer, device.Manufacturer,
                 StringComparison.OrdinalIgnoreCase))

@@ -1834,4 +1834,194 @@
     "observedModels": "Konka TP701 and related Android TV families",
     "evidenceNotes": "ADB guidance exists, but no trustworthy package behavior map was found."
   }
+,
+{
+  "package": "com.nvidia.stats",
+  "risk": "Caution",
+  "confidence": "Medium",
+  "category": "NVIDIA usage reporting",
+  "description": "Usage reporting component.",
+  "recommendedAction": "Disable",
+  "impacts": [
+    {
+      "description": "Usage reports may no longer reach NVIDIA support.",
+      "area": "NVIDIA usage reporting"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.diagtools",
+  "risk": "Caution",
+  "confidence": "Medium",
+  "category": "NVIDIA diagnostics",
+  "description": "Vendor diagnostic tools.",
+  "recommendedAction": "Disable",
+  "impacts": [
+    {
+      "description": "Support troubleshooting and diagnostic collection may be unavailable.",
+      "area": "NVIDIA diagnostics"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.feedback",
+  "risk": "Caution",
+  "confidence": "Medium",
+  "category": "NVIDIA feedback",
+  "description": "Vendor feedback component.",
+  "recommendedAction": "Disable",
+  "impacts": [
+    {
+      "description": "Submitting device feedback may stop working.",
+      "area": "NVIDIA feedback"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.tegrazone3",
+  "risk": "HighRisk",
+  "confidence": "Medium",
+  "category": "NVIDIA games",
+  "description": "NVIDIA gaming application.",
+  "recommendedAction": "Disable",
+  "impacts": [
+    {
+      "description": "NVIDIA game access and associated streaming features may be unavailable.",
+      "area": "NVIDIA games"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.plexapp.mediaserver.smb",
+  "risk": "HighRisk",
+  "confidence": "Medium",
+  "category": "Plex hosting",
+  "description": "Plex server component on supported Shield models.",
+  "recommendedAction": "Disable",
+  "impacts": [
+    {
+      "description": "Other clients may lose access to libraries hosted by this Shield.",
+      "area": "Plex hosting"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.osc",
+  "risk": "HighRisk",
+  "confidence": "Medium",
+  "category": "NVIDIA platform integration",
+  "description": "Vendor background integration with insufficient evidence for removal.",
+  "recommendedAction": "Keep",
+  "impacts": [
+    {
+      "description": "Platform behavior may change in firmware-specific ways.",
+      "area": "NVIDIA platform integration"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.shieldtech.hooks",
+  "risk": "HighRisk",
+  "confidence": "Medium",
+  "category": "NVIDIA system integration",
+  "description": "Vendor system hooks with insufficient evidence for removal.",
+  "recommendedAction": "Keep",
+  "impacts": [
+    {
+      "description": "Dependent NVIDIA features may stop functioning.",
+      "area": "NVIDIA system integration"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.nvgamecast",
+  "risk": "HighRisk",
+  "confidence": "Medium",
+  "category": "NVIDIA capture",
+  "description": "Vendor game capture and streaming integration.",
+  "recommendedAction": "Keep",
+  "impacts": [
+    {
+      "description": "Game recording or streaming integration may fail.",
+      "area": "NVIDIA capture"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+},
+{
+  "package": "com.nvidia.shieldtech.accessoryhost",
+  "risk": "Critical",
+  "confidence": "Medium",
+  "category": "NVIDIA accessories",
+  "description": "Accessory integration and HOME-capable component.",
+  "recommendedAction": "Keep",
+  "impacts": [
+    {
+      "description": "Accessory input and home navigation may fail.",
+      "area": "NVIDIA accessories"
+    }
+  ],
+  "deviceFamily": "NVIDIA Shield TV",
+  "sourceIds": [
+    "shield-optimizer"
+  ],
+  "observedModels": "Shield TV; availability varies by firmware",
+  "evidenceNotes": "Community evidence; review feature use before disabling. Not hardware verified.",
+  "hardwareVerified": false
+}
 ]

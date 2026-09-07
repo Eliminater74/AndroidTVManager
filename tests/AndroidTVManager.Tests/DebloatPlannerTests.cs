@@ -8,6 +8,35 @@ namespace AndroidTVManager.Tests;
 
 public sealed class DebloatPlannerTests
 {
+    [Theory]
+    [InlineData(DebloatPreset.Simple, false)]
+    [InlineData(DebloatPreset.Medium, true)]
+    [InlineData(DebloatPreset.Aggressive, true)]
+    public async Task Shield_profile_selects_reviewed_telemetry_but_keeps_platform_services(DebloatPreset preset, bool selected)
+    {
+        var planner = CreatePlanner([
+            Package("com.nvidia.stats", isSystem: true),
+            Package("com.nvidia.ota", isSystem: true),
+            Package("com.nvidia.osc", isSystem: true),
+            Package("com.nvidia.feedback", isSystem: true, isEnabled: false)]);
+        var plan = await planner.CreatePlanAsync("tv-1", preset, Device("NVIDIA", "SHIELD Android TV", "11"));
+        plan.Items.Single(i => i.Package.PackageName == "com.nvidia.stats").Selected.Should().Be(selected);
+        plan.Items.Where(i => i.Package.PackageName != "com.nvidia.stats").Should().OnlyContain(i => !i.Selected);
+        plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
+    }
+
+    [Theory]
+    [InlineData("NVIDIA", "SHIELD Tablet")]
+    [InlineData("Samsung", "SHIELD Android TV")]
+    [InlineData("NVIDIA", "Unknown")]
+    public async Task Shield_tv_candidates_do_not_leak_to_other_devices(string manufacturer, string model)
+    {
+        var plan = await CreatePlanner([Package("com.nvidia.stats")]).CreatePlanAsync(
+            "tv-1", DebloatPreset.Aggressive, Device(manufacturer, model, "11"));
+        plan.Items.Single().Selected.Should().BeFalse();
+        plan.ReferenceSummary!.ProfileMatches.Should().NotContain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
+    }
+
     [Fact]
     public async Task Planner_uses_selected_device_identity_for_manufacturer_rules()
     {

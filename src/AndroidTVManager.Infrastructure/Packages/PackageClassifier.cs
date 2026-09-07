@@ -114,6 +114,8 @@ public sealed class PackageClassifier : IPackageClassifier
                 && package.PackageName.StartsWith(rule.PackagePrefix, StringComparison.OrdinalIgnoreCase)))
             && (string.IsNullOrWhiteSpace(rule.Manufacturer)
                 || string.Equals(rule.Manufacturer, device.Manufacturer, StringComparison.OrdinalIgnoreCase))
+            && (rule.DeviceFamily is null
+                || (rule.DeviceFamily == DeviceFamilies.NvidiaShieldTv && DeviceFamilies.IsShieldTv(device)))
             && (string.IsNullOrWhiteSpace(rule.Product)
                 || string.Equals(rule.Product, device.Product, StringComparison.OrdinalIgnoreCase))
             && (string.IsNullOrWhiteSpace(rule.ModelContains)
