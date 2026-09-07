@@ -10,6 +10,37 @@ namespace AndroidTVManager.Tests;
 
 public sealed class PackageInventoryTests
 {
+    [Theory]
+    [InlineData("0", "feature:android.hardware.touchscreen", false)]
+    [InlineData("10", "feature:android.hardware.touchscreen", true)]
+    [InlineData("unknown", "", true)]
+    [InlineData("0", "feature:android.hardware.type.automotive", true)]
+    public async Task Inventory_scopes_user_zero_and_blocks_unsupported_debloat_contexts(string user, string features, bool blocked)
+    {
+        var runner = new FakeAdbProcessRunner();
+        runner.Responses["shell am get-current-user"] = Result(user);
+        runner.Responses["shell pm list features"] = Result(features);
+        var service = new PackageInventoryService(runner, new CapturingPackageInventoryRepository(), new FakeAppLogger());
+        var inventory = await service.GetInventoryAsync("tablet-or-car");
+        (inventory.ErrorMessage is not null).Should().Be(blocked);
+        runner.Calls.Should().OnlyContain(call => call.Serial == "tablet-or-car");
+        runner.Calls.Where(call => call.Arguments.Contains("packages") || call.Arguments.Contains("settings")
+            || call.Arguments.Contains("resolve-activity")).Should().OnlyContain(call =>
+                string.Join(" ", call.Arguments).Contains("--user 0"));
+    }
+
+    [Fact]
+    public async Task Failed_role_detection_blocks_debloat_even_when_package_listing_succeeds()
+    {
+        var runner = new FakeAdbProcessRunner();
+        runner.Responses["shell am get-current-user"] = Result("0");
+        runner.Responses["shell settings --user 0 get secure enabled_accessibility_services"] =
+            new("adb.exe", [], 1, "", "denied", TimeSpan.Zero);
+        var inventory = await new PackageInventoryService(runner, new CapturingPackageInventoryRepository(), new FakeAppLogger())
+            .GetInventoryAsync("tablet");
+        inventory.ErrorMessage.Should().Contain("accessibility");
+    }
+
     [Fact]
     public void Parses_base_and_split_apk_paths()
     {
@@ -83,23 +114,23 @@ public sealed class PackageInventoryTests
     public async Task Inventory_keeps_iptv_player_unknown_when_it_is_not_an_active_role()
     {
         var runner = new FakeAdbProcessRunner();
-        runner.Responses["shell pm list packages -f"] = Result("""
+        runner.Responses["shell pm list packages -f --user 0"] = Result("""
             package:/system/priv-app/TvLauncher/TvLauncher.apk=com.android.tvlauncher
             package:/data/app/~~iptv/base.apk=com.purefusion.iptv
             """);
-        runner.Responses["shell pm list packages -s"] = Result("package:com.android.tvlauncher");
-        runner.Responses["shell pm list packages -3"] = Result("package:com.purefusion.iptv");
-        runner.Responses["shell pm list packages -e"] = Result("""
+        runner.Responses["shell pm list packages -s --user 0"] = Result("package:com.android.tvlauncher");
+        runner.Responses["shell pm list packages -3 --user 0"] = Result("package:com.purefusion.iptv");
+        runner.Responses["shell pm list packages -e --user 0"] = Result("""
             package:com.android.tvlauncher
             package:com.purefusion.iptv
             """);
-        runner.Responses["shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME"] =
+        runner.Responses["shell cmd package resolve-activity --user 0 --brief -a android.intent.action.MAIN -c android.intent.category.HOME"] =
             Result("com.android.tvlauncher/.TvLauncherActivity");
-        runner.Responses["shell settings get secure default_input_method"] =
+        runner.Responses["shell settings --user 0 get secure default_input_method"] =
             Result("com.google.android.inputmethod.latin/.LatinIME");
-        runner.Responses["shell settings get secure enabled_input_methods"] =
+        runner.Responses["shell settings --user 0 get secure enabled_input_methods"] =
             Result("com.google.android.inputmethod.latin/.LatinIME:com.google.android.tts/com.google.android.apps.speech.tts.googletts.service.GoogleTTSVoiceIME");
-        runner.Responses["shell settings get secure enabled_accessibility_services"] =
+        runner.Responses["shell settings --user 0 get secure enabled_accessibility_services"] =
             Result("com.google.android.marvin.talkback/.TalkBackService");
         runner.Responses["shell dumpsys device_policy"] = Result("""
             Device policy manager state:
@@ -131,24 +162,24 @@ public sealed class PackageInventoryTests
     public async Task Inventory_marks_default_and_enabled_input_method_packages()
     {
         var runner = new FakeAdbProcessRunner();
-        runner.Responses["shell pm list packages -f"] = Result("""
+        runner.Responses["shell pm list packages -f --user 0"] = Result("""
             package:/product/app/LatinImeGoogle/LatinImeGoogle.apk=com.google.android.inputmethod.latin
             package:/product/app/GoogleTTS/GoogleTTS.apk=com.google.android.tts
             package:/data/app/~~iptv/base.apk=com.purefusion.iptv
             """);
-        runner.Responses["shell pm list packages -s"] = Result("""
+        runner.Responses["shell pm list packages -s --user 0"] = Result("""
             package:com.google.android.inputmethod.latin
             package:com.google.android.tts
             """);
-        runner.Responses["shell pm list packages -3"] = Result("package:com.purefusion.iptv");
-        runner.Responses["shell pm list packages -e"] = Result("""
+        runner.Responses["shell pm list packages -3 --user 0"] = Result("package:com.purefusion.iptv");
+        runner.Responses["shell pm list packages -e --user 0"] = Result("""
             package:com.google.android.inputmethod.latin
             package:com.google.android.tts
             package:com.purefusion.iptv
             """);
-        runner.Responses["shell settings get secure default_input_method"] =
+        runner.Responses["shell settings --user 0 get secure default_input_method"] =
             Result("com.google.android.inputmethod.latin/.LatinIME");
-        runner.Responses["shell settings get secure enabled_input_methods"] =
+        runner.Responses["shell settings --user 0 get secure enabled_input_methods"] =
             Result("com.google.android.inputmethod.latin/.LatinIME:com.google.android.tts/com.google.android.apps.speech.tts.googletts.service.GoogleTTSVoiceIME");
         var service = new PackageInventoryService(
             runner,

@@ -12,17 +12,37 @@ public sealed class AdbConnectionService : IAdbConnectionService
         _runner = runner;
     }
 
-    public Task<AdbCommandResult> ConnectAsync(string endpoint, CancellationToken cancellationToken = default)
-        => _runner.RunAsync(["connect", endpoint], TimeSpan.FromSeconds(15), cancellationToken);
+    public async Task<AdbCommandResult> ConnectAsync(string endpoint, CancellationToken cancellationToken = default)
+    {
+        var result = await _runner.RunAsync(["connect", endpoint], TimeSpan.FromSeconds(15), cancellationToken);
+        return RequireAcknowledgement(result, "connected to ", "already connected to ");
+    }
 
     public Task<AdbCommandResult> DisconnectAsync(string endpoint, CancellationToken cancellationToken = default)
         => _runner.RunAsync(["disconnect", endpoint], TimeSpan.FromSeconds(15), cancellationToken);
 
-    public Task<AdbCommandResult> PairAsync(
+    public async Task<AdbCommandResult> PairAsync(
         string endpoint,
         string pairingCode,
         CancellationToken cancellationToken = default)
-        => _runner.RunAsync(["pair", endpoint, pairingCode], TimeSpan.FromSeconds(30), cancellationToken);
+    {
+        var result = await _runner.RunAsync(["pair", endpoint, pairingCode], TimeSpan.FromSeconds(30), cancellationToken);
+        return RequireAcknowledgement(result, "Successfully paired to ");
+    }
+
+    private static AdbCommandResult RequireAcknowledgement(AdbCommandResult result, params string[] prefixes)
+    {
+        if (!result.IsSuccess || prefixes.Any(prefix => result.StandardOutput.TrimStart()
+                .StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            return result;
+        return result with
+        {
+            ExitCode = 1,
+            StandardError = string.IsNullOrWhiteSpace(result.StandardError)
+                ? string.IsNullOrWhiteSpace(result.StandardOutput) ? "ADB did not acknowledge the connection." : result.StandardOutput.Trim()
+                : result.StandardError
+        };
+    }
 }
 
 public sealed class ApkInstaller : IApkInstaller

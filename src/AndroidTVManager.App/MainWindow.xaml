@@ -1759,8 +1759,12 @@
                     <TextBlock Text="CONNECTIONS" FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource CyanAccent}"/>
                     <TextBlock Text="Connect a device" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                    <TextBlock Text="Traditional network ADB and modern Android Wireless Debugging pairing."
-                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                      <TextBlock Text="Traditional network ADB and modern Android Wireless Debugging pairing."
+                                 Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                      <TextBlock Text="Shield TV: enable Network debugging and approve this PC on the TV. Tablets: enable USB debugging, attach a data cable and select the device in the header; install the manufacturer's Windows ADB driver if needed. Wireless Debugging uses separate pairing and connection ports shown on the device."
+                                 TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" Margin="0,10,0,0"/>
+                      <TextBlock Text="Car/truck screens: standalone Android head units can connect when the vendor exposes ADB. Android Auto and CarPlay projection alone are not ADB targets. Use a parked vehicle; vehicle services and nonzero-user debloat are not supported."
+                                 TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" Margin="0,10,0,0"/>
                     <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
                             BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,28,0,0">
                         <StackPanel>

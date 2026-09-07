@@ -32,23 +32,25 @@ public sealed class PackageInventoryService : IPackageInventoryService
         var commandNames = new[]
         {
             "all", "system", "user", "disabled", "enabled", "uninstalled",
-            "launcher", "input", "enabled-inputs", "accessibility", "device-owner"
+            "launcher", "input", "enabled-inputs", "accessibility", "device-owner", "current-user", "features"
         };
         var tasks = commandNames.Select(async name =>
         {
             var arguments = name switch
             {
-                "all" => (IReadOnlyList<string>)["shell", "pm", "list", "packages", "-f"],
-                "system" => ["shell", "pm", "list", "packages", "-s"],
-                "user" => ["shell", "pm", "list", "packages", "-3"],
-                "disabled" => ["shell", "pm", "list", "packages", "-d"],
-                "enabled" => ["shell", "pm", "list", "packages", "-e"],
-                "uninstalled" => ["shell", "pm", "list", "packages", "-u"],
-                "launcher" => ["shell", "cmd", "package", "resolve-activity", "--brief", "-a",
+                "all" => (IReadOnlyList<string>)["shell", "pm", "list", "packages", "-f", "--user", "0"],
+                "system" => ["shell", "pm", "list", "packages", "-s", "--user", "0"],
+                "user" => ["shell", "pm", "list", "packages", "-3", "--user", "0"],
+                "disabled" => ["shell", "pm", "list", "packages", "-d", "--user", "0"],
+                "enabled" => ["shell", "pm", "list", "packages", "-e", "--user", "0"],
+                "uninstalled" => ["shell", "pm", "list", "packages", "-u", "--user", "0"],
+                "launcher" => ["shell", "cmd", "package", "resolve-activity", "--user", "0", "--brief", "-a",
                     "android.intent.action.MAIN", "-c", "android.intent.category.HOME"],
-                "input" => ["shell", "settings", "get", "secure", "default_input_method"],
-                "enabled-inputs" => ["shell", "settings", "get", "secure", "enabled_input_methods"],
-                "accessibility" => ["shell", "settings", "get", "secure", "enabled_accessibility_services"],
+                "input" => ["shell", "settings", "--user", "0", "get", "secure", "default_input_method"],
+                "enabled-inputs" => ["shell", "settings", "--user", "0", "get", "secure", "enabled_input_methods"],
+                "accessibility" => ["shell", "settings", "--user", "0", "get", "secure", "enabled_accessibility_services"],
+                "current-user" => ["shell", "am", "get-current-user"],
+                "features" => ["shell", "pm", "list", "features"],
                 "device-owner" => ["shell", "dumpsys", "device_policy"],
                 _ => []
             };
@@ -110,11 +112,14 @@ public sealed class PackageInventoryService : IPackageInventoryService
             })
             .ToArray();
 
-        var error = results["all"].IsSuccess
-            ? null
-            : string.IsNullOrWhiteSpace(results["all"].StandardError)
-                ? "Package inventory was unavailable."
-                : results["all"].StandardError.Trim();
+        var failures = results.Where(pair => !pair.Value.IsSuccess).Select(pair => pair.Key).ToArray();
+        var error = failures.Length > 0
+            ? $"Required inventory evidence unavailable: {string.Join(", ", failures)}. Debloat is blocked."
+            : !int.TryParse(results["current-user"].StandardOutput.Trim(), out var currentUser) || currentUser != 0
+                ? "Debloat supports foreground User 0 only. This device has a different or unknown active user; inventory shown is User 0."
+                : results["features"].StandardOutput.Contains("android.hardware.type.automotive", StringComparison.Ordinal)
+                    ? "Android Automotive inventory is read-only for debloat. Vehicle package dependencies need a dedicated reviewed profile."
+                    : null;
         var inventory = new PackageInventoryResult(serial, DateTimeOffset.UtcNow, packages, evidence, error);
         try
         {

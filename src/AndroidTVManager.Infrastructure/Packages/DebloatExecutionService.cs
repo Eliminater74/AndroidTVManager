@@ -31,6 +31,8 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
         CancellationToken cancellationToken = default)
     {
         var current = await _inventory.GetInventoryAsync(plan.Serial, cancellationToken);
+        if (current.ErrorMessage is not null)
+            throw new InvalidOperationException(current.ErrorMessage);
         var live = await _inspection.InspectAsync(plan.Serial, cancellationToken: cancellationToken);
         var liveFingerprint = live.Overview.Value?.BuildFingerprint;
         if (plan.BuildFingerprint is not null

@@ -35,6 +35,8 @@ public sealed class DebloatPlanner : IDebloatPlanner
         CancellationToken cancellationToken = default)
     {
         var inventory = await _inventory.GetInventoryAsync(serial, cancellationToken);
+        if (inventory.ErrorMessage is not null)
+            throw new InvalidOperationException(inventory.ErrorMessage);
         var overrides = await _preferences.GetOverridesAsync(serial, cancellationToken);
         var inspection = await _snapshots.GetLatestAsync(serial, cancellationToken);
         var device = MergeDevice(targetDevice, inspection?.Overview.Value, serial);

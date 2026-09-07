@@ -8,6 +8,20 @@ namespace AndroidTVManager.Tests;
 
 public sealed class DebloatPlannerTests
 {
+    [Fact]
+    public async Task Incomplete_inventory_blocks_both_preview_and_execution()
+    {
+        var inventory = new FixedInventoryService([], "Required role evidence unavailable");
+        var planner = new DebloatPlanner(inventory, new PackageClassifier(), new PackageReferenceCatalog(),
+            new FakeDeviceSnapshotRepository(), new EmptyPackagePreferenceRepository());
+        await FluentActions.Awaiting(() => planner.CreatePlanAsync("tv-1", DebloatPreset.Aggressive))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Required role evidence unavailable");
+        var execution = new DebloatExecutionService(inventory, null!, null!, null!, null!);
+        await FluentActions.Awaiting(() => execution.ExecuteAsync(new DebloatPlan(
+            "tv-1", null, DateTimeOffset.UtcNow, DebloatPreset.Simple, null, [], [])))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Required role evidence unavailable");
+    }
+
     [Theory]
     [InlineData(DebloatPreset.Simple, false)]
     [InlineData(DebloatPreset.Medium, true)]
@@ -248,16 +262,18 @@ public sealed class DebloatPlannerTests
     private sealed class FixedInventoryService : IPackageInventoryService
     {
         private readonly IReadOnlyList<PackageInventoryEntry> _packages;
+        private readonly string? _error;
 
-        public FixedInventoryService(IReadOnlyList<PackageInventoryEntry> packages)
+        public FixedInventoryService(IReadOnlyList<PackageInventoryEntry> packages, string? error = null)
         {
             _packages = packages;
+            _error = error;
         }
 
         public Task<PackageInventoryResult> GetInventoryAsync(
             string serial,
             CancellationToken cancellationToken = default)
-            => Task.FromResult(new PackageInventoryResult(serial, DateTimeOffset.UtcNow, _packages, []));
+            => Task.FromResult(new PackageInventoryResult(serial, DateTimeOffset.UtcNow, _packages, [], _error));
 
         public Task<PackageInventoryEntry?> GetDetailsAsync(
             string serial,

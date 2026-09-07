@@ -742,8 +742,11 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         try
         {
             Status = $"Analyzing packages on {SelectedDevice.Serial}…";
+            var target = SelectedDevice;
+            Plan = null;
+            PlanItems.Clear();
             await _settingsLoaded;
-            Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset, SelectedDevice);
+            Plan = await _planner.CreatePlanAsync(target.Serial, SelectedPreset, target);
             PlanItems.Clear();
             foreach (var item in Plan.Items)
             {
