@@ -112,7 +112,9 @@ public sealed class PackageInventoryService : IPackageInventoryService
             })
             .ToArray();
 
-        var failures = results.Where(pair => !pair.Value.IsSuccess).Select(pair => pair.Key).ToArray();
+        var failures = results.Where(pair => !pair.Value.IsSuccess
+                || (pair.Key == "features" && !pair.Value.StandardOutput.Contains("feature:", StringComparison.Ordinal)))
+            .Select(pair => pair.Key).ToArray();
         var error = failures.Length > 0
             ? $"Required inventory evidence unavailable: {string.Join(", ", failures)}. Debloat is blocked."
             : !int.TryParse(results["current-user"].StandardOutput.Trim(), out var currentUser) || currentUser != 0

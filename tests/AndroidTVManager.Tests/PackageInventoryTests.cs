@@ -14,6 +14,7 @@ public sealed class PackageInventoryTests
     [InlineData("0", "feature:android.hardware.touchscreen", false)]
     [InlineData("10", "feature:android.hardware.touchscreen", true)]
     [InlineData("unknown", "", true)]
+    [InlineData("0", "", true)]
     [InlineData("0", "feature:android.hardware.type.automotive", true)]
     public async Task Inventory_scopes_user_zero_and_blocks_unsupported_debloat_contexts(string user, string features, bool blocked)
     {

@@ -1,5 +1,15 @@
 # Roadmap
 
+## Local improvements awaiting release authorization
+
+- Dedicated Shield TV reference profile and reviewed optional-package rules
+- Verified animation timing controls, exact-value undo and Shield settings guidance
+- Honest ADB connection acknowledgements, User 0 inventory and conservative Automotive gates
+- Exact package-state journaling and consistent User 0 enable/restore commands
+- Next priorities: capability/user badges, shared live package policy, feature-based cleanup protection and touch remote controls
+
+See [Device support audit](DEVICE-SUPPORT-AUDIT.md) for evidence, limitations and the full prioritized backlog. Product version remains 1.0.0-B11; these changes have not been published.
+
 ## Beta 11 — current
 
 - Managed official Android SDK Platform-Tools bootstrap

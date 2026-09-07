@@ -56,6 +56,14 @@ Actionable rules currently cover the strongest evidence for TCL, Philips, Hisens
 
 Reference baseline analysis sits beneath debloat decisions. It compares an inventory with versioned AOSP TV Core and Chromecast-generation Google TV references, plus initial SoC, TCL platform, and Android TV 16 emulator references, and reports origin, role, observed devices, dependencies, and evidence. Debloat previews now list the loaded profile catalog and active profile matches, use reviewed reference risk/action metadata for conservative Caution/High Risk recommendations, while AOSP TV Settings, TV Provider, TV framework stubs, launchers, IMEs, device-owner packages, accessibility services, and Keep rules remain locked. Community evidence can raise a package to disable-first Caution, but it is never promoted to automatic Safe or Verified status by import alone. From Applications, `Export reference dump` creates a read-only, account-free JSON contribution containing device identity, package states, UIDs, APK paths, and runtime-role flags.
 
+## Shield, tablets and vehicle displays
+
+Debloat includes a dedicated NVIDIA Shield TV profile with cautious telemetry recommendations and protected platform/accessory services. The **Tweaks** page provides verified animation timing controls with journal-based undo, plus guidance for Shield picture, audio and performance settings.
+
+Android tablets and standalone Android head units can use the existing USB/network/Wireless Debugging connections when their firmware exposes ADB. Android Auto/CarPlay projection screens are not standalone ADB targets. Guided debloat supports foreground User 0 and blocks Android Automotive; vehicle-specific package management has not been validated.
+
+See the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md) for the support matrix, remaining limitations, improvement priorities and physical-device acceptance checks.
+
 ## Requirements
 
 - Windows 10 or later, x64
