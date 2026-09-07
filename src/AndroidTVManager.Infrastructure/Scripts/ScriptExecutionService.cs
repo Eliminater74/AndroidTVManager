@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using AndroidTVManager.Core.Abstractions;
+using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
 using AndroidTVManager.Core.Scripts;
 
@@ -149,11 +150,11 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         if (action.Type.Equals("disablePackage", StringComparison.OrdinalIgnoreCase)
             || action.Type.Equals("enablePackage", StringComparison.OrdinalIgnoreCase))
         {
-            var disabled = await _runner.RunForDeviceAsync(serial, ["shell", "pm", "list", "packages", "-d"],
+            var disabled = await _runner.RunForDeviceAsync(serial, ["shell", "pm", "list", "packages", "-d", "--user", "0"],
                 TimeSpan.FromSeconds(30), cancellationToken);
             if (!disabled.IsSuccess)
                 return null;
-            return disabled.StandardOutput.Contains($"package:{action.Package}", StringComparison.OrdinalIgnoreCase)
+            return PackageInventoryParser.ParsePackageNames(disabled.StandardOutput).Contains(action.Package!)
                 ? "disabled"
                 : "enabled";
         }
@@ -161,14 +162,12 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         if (action.Type.Equals("uninstallUser", StringComparison.OrdinalIgnoreCase)
             || action.Type.Equals("restorePackage", StringComparison.OrdinalIgnoreCase))
         {
-            var packages = await _runner.RunForDeviceAsync(serial, ["shell", "dumpsys", "package", action.Package!],
+            var packages = await _runner.RunForDeviceAsync(serial, ["shell", "pm", "list", "packages", "--user", "0"],
                 TimeSpan.FromSeconds(30), cancellationToken);
             return packages.IsSuccess
-                ? packages.StandardOutput.Contains("installed=true", StringComparison.OrdinalIgnoreCase)
+                ? PackageInventoryParser.ParsePackageNames(packages.StandardOutput).Contains(action.Package!)
                     ? "installed"
-                    : packages.StandardOutput.Contains("installed=false", StringComparison.OrdinalIgnoreCase)
-                        ? "missing"
-                        : null
+                    : "missing"
                 : null;
         }
 
@@ -196,9 +195,9 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         return type switch
         {
             "disablepackage" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "disable-user", "--user", "0", action.Package!], cancellationToken: cancellationToken),
-            "enablepackage" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", action.Package!], cancellationToken: cancellationToken),
+            "enablepackage" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", action.Package!], cancellationToken: cancellationToken),
             "uninstalluser" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", "--user", "0", action.Package!], cancellationToken: cancellationToken),
-            "restorepackage" => _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", action.Package!], cancellationToken: cancellationToken),
+            "restorepackage" => _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", "--user", "0", action.Package!], cancellationToken: cancellationToken),
             "clear data" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", action.Package!], cancellationToken: cancellationToken),
             "cleardata" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", action.Package!], cancellationToken: cancellationToken),
             "launchpackage" => _runner.RunForDeviceAsync(serial, ["shell", "monkey", "-p", action.Package!, "1"], cancellationToken: cancellationToken),
@@ -224,11 +223,11 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         return action.ActionType.ToLowerInvariant() switch
         {
             "disablepackage" when action.PreviousState == "enabled"
-                => await _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", action.Target!], cancellationToken: cancellationToken),
+                => await _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", action.Target!], cancellationToken: cancellationToken),
             "enablepackage" when action.PreviousState == "disabled"
                 => await _runner.RunForDeviceAsync(serial, ["shell", "pm", "disable-user", "--user", "0", action.Target!], cancellationToken: cancellationToken),
             "uninstalluser" when action.PreviousState == "installed"
-                => await _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", action.Target!], cancellationToken: cancellationToken),
+                => await _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", "--user", "0", action.Target!], cancellationToken: cancellationToken),
             "restorepackage" when action.PreviousState == "missing"
                 => await _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", "--user", "0", action.Target!], cancellationToken: cancellationToken),
             "setsetting" => await UndoSettingAsync(serial, action, cancellationToken),

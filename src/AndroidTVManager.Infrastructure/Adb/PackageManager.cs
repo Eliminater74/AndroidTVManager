@@ -39,7 +39,7 @@ public sealed class PackageManager : IPackageManager
             TimeSpan.FromSeconds(30), cancellationToken);
 
     public Task<AdbCommandResult> EnableAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", packageName],
+        => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", packageName],
             TimeSpan.FromSeconds(30), cancellationToken);
 
     public Task<AdbCommandResult> DisableAsync(string serial, string packageName, CancellationToken cancellationToken = default)
