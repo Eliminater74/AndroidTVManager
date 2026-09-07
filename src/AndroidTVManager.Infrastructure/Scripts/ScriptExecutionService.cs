@@ -41,6 +41,8 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var previous = await CapturePreviousStateAsync(target.Serial, action, cancellationToken);
+                if (script.RequireCapturedState && previous is null)
+                    throw new InvalidOperationException("Previous state could not be captured; action was not executed.");
                 var actionId = await _store.AddActionAsync(executionId, new ScriptActionRecord(
                     0,
                     index,
@@ -61,6 +63,14 @@ public sealed class ScriptExecutionService : IScriptExecutionService
                     : null;
                 await _store.UpdateActionAsync(actionId, result.IsSuccess, reversible, resulting,
                     RedactOutput(result.StandardOutput, result.StandardError), cancellationToken);
+
+                if (result.IsSuccess && script.VerifySettingWrites && action.Type.Equals("setSetting", StringComparison.OrdinalIgnoreCase)
+                    && ParseSetting(action.Value) is { } setting
+                    && !SettingValuesEqual(resulting, $"{setting.Namespace}|{setting.Value}"))
+                {
+                    await _store.CompleteAsync(executionId, "VerificationFailed", cancellationToken);
+                    return new(executionId, "VerificationFailed", succeeded, failed + 1, canUndo || reversible);
+                }
 
                 if (result.IsSuccess)
                 {
@@ -100,13 +110,16 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             ?? throw new InvalidOperationException("The script execution no longer exists.");
         if (!string.Equals(execution.Serial, serial, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Undo target serial does not match the original execution target.");
-        if (execution.Actions.Any(action => string.Equals(action.UndoStatus, "Succeeded", StringComparison.OrdinalIgnoreCase)))
+        if (execution.Actions.Any(action => action.Success && action.Reversible)
+            && execution.Actions.Where(action => action.Success && action.Reversible)
+            .All(action => string.Equals(action.UndoStatus, "Succeeded", StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("This execution has already been undone.");
 
         var restored = 0;
         var failed = 0;
         foreach (var action in execution.Actions
-                     .Where(action => action.Success && action.Reversible && action.PreviousState is not null)
+                     .Where(action => action.Success && action.Reversible && action.PreviousState is not null
+                         && !string.Equals(action.UndoStatus, "Succeeded", StringComparison.OrdinalIgnoreCase))
                      .Reverse())
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -167,7 +180,8 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             var result = await _runner.RunForDeviceAsync(serial,
                 ["shell", "settings", "get", setting.Value.Namespace, setting.Value.Key],
                 TimeSpan.FromSeconds(30), cancellationToken);
-            return result.IsSuccess ? $"{setting.Value.Namespace}|{result.StandardOutput.Trim()}" : null;
+            return result.IsSuccess && !string.IsNullOrWhiteSpace(result.StandardOutput)
+                ? $"{setting.Value.Namespace}|{result.StandardOutput.Trim()}" : null;
         }
 
         return null;
@@ -246,9 +260,26 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             return new AdbCommandResult("adb.exe", [], 2, string.Empty, "Previous setting state is invalid.", TimeSpan.Zero);
         var ns = action.PreviousState[..separator];
         var previous = action.PreviousState[(separator + 1)..];
-        return previous.Equals("null", StringComparison.OrdinalIgnoreCase)
+        var result = previous.Equals("null", StringComparison.OrdinalIgnoreCase)
             ? await _runner.RunForDeviceAsync(serial, ["shell", "settings", "delete", ns, action.Target!], cancellationToken: cancellationToken)
             : await _runner.RunForDeviceAsync(serial, ["shell", "settings", "put", ns, action.Target!, previous], cancellationToken: cancellationToken);
+        if (!result.IsSuccess)
+            return result;
+        var readback = await _runner.RunForDeviceAsync(serial, ["shell", "settings", "get", ns, action.Target!], cancellationToken: cancellationToken);
+        return readback.IsSuccess && SettingValuesEqual($"{ns}|{readback.StandardOutput.Trim()}", action.PreviousState)
+            ? result
+            : result with { ExitCode = 1, StandardError = "Setting restore could not be verified." };
+    }
+
+    private static bool SettingValuesEqual(string? actual, string expected)
+    {
+        if (actual == expected) return true;
+        var oldParts = actual?.Split('|', 2);
+        var newParts = expected.Split('|', 2);
+        return oldParts?.Length == 2 && newParts.Length == 2 && oldParts[0] == newParts[0]
+            && decimal.TryParse(oldParts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var a)
+            && decimal.TryParse(newParts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var b)
+            && a == b;
     }
 
     private static (string Namespace, string Key, string Value)? ParseSetting(string? value)

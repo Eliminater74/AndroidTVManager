@@ -11,6 +11,8 @@ public sealed class ScriptDefinition
     public string Description { get; init; } = string.Empty;
     public List<SupportedDevice> SupportedDevices { get; init; } = [];
     public List<ScriptAction> Actions { get; init; } = [];
+    public bool RequireCapturedState { get; init; }
+    public bool VerifySettingWrites { get; init; }
 }
 
 public sealed class SupportedDevice

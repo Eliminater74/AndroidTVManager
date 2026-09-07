@@ -1,0 +1,43 @@
+<UserControl x:Class="AndroidTVManager.App.Views.Pages.TweaksPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="34,26,34,28">
+        <TextBlock Text="TWEAKS" Style="{StaticResource SectionLabelStyle}"/>
+        <TextBlock Text="Tune your experience" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,12"/>
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}"/>
+        <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,20,0,0">
+            <StackPanel>
+                <TextBlock Text="Android animation timing" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="Adjust window, transition and animator timing together. 0 turns animations off; 0.5 shortens them; 1 uses normal duration. This affects all users. It does not increase streaming quality or video frame rate."
+                           TextWrapping="Wrap" Margin="0,8,0,12" Foreground="{StaticResource TextSecondary}"/>
+                <TextBlock Text="{Binding CurrentValues}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <WrapPanel>
+                    <Button Content="Read settings" Command="{Binding ReadCommand}" Margin="0,0,10,8"/>
+                    <ComboBox ItemsSource="{Binding Scales}" SelectedItem="{Binding SelectedScale}" Width="90"
+                              AutomationProperties.Name="Animation scale" Margin="0,0,10,8"/>
+                    <Button Content="Apply timing" Command="{Binding ApplyCommand}" Margin="0,0,10,8"/>
+                    <Button Content="Undo last change" Command="{Binding UndoCommand}" Margin="0,0,10,8"/>
+                </WrapPanel>
+                <TextBlock Text="Previous values are saved in Scripts history. Failed verification is reported; use Undo to restore applied changes. Vehicle and unsupported user contexts cannot use these controls."
+                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}"/>
+            </StackPanel>
+        </Border>
+        <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,16,0,0">
+            <StackPanel>
+                <TextBlock Text="NVIDIA Shield TV settings guide" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding ShieldGuidance}" TextWrapping="Wrap" Margin="0,8,0,14" Foreground="{StaticResource TextSecondary}"/>
+                <TextBlock Text="Picture and motion" FontWeight="SemiBold" Foreground="{StaticResource CyanAccent}"/>
+                <TextBlock Text="On supported 2019 models, compare AI upscaling with Basic using NVIDIA's demo mode. Match Frame Rate (Beta) is a per-playback action with app limitations; test it with your actual streaming apps. Use Display Diagnostics to capture the HDMI/HDR evidence before and after changes."
+                           TextWrapping="Wrap" Margin="0,5,0,14"/>
+                <TextBlock Text="Audio, power and accessories" FontWeight="SemiBold" Foreground="{StaticResource CyanAccent}"/>
+                <TextBlock Text="Use the Shield Display &amp; Sound menus to review CEC, supported audio formats and lip sync against your TV/receiver. Where available, compare the processor and fan modes in the System menu. Keep accessory, audio and update services enabled. Menu locations vary by Shield Experience version."
+                           TextWrapping="Wrap" Margin="0,5,0,14"/>
+                <TextBlock Text="Package cleanup" FontWeight="SemiBold" Foreground="{StaticResource CyanAccent}"/>
+                <TextBlock Text="Debloat now includes a Shield TV profile. Medium includes reviewed telemetry candidates; Aggressive also offers gaming and Plex server components with feature-loss warnings. Keep anything you use. Disable first, test playback, casting, remote and Plex clients, then keep the journal for recovery."
+                           TextWrapping="Wrap" Margin="0,5,0,14"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

@@ -5,6 +5,7 @@ using AndroidTVManager.Infrastructure.Diagnostics;
 using AndroidTVManager.Infrastructure.Logging;
 using AndroidTVManager.Infrastructure.Scripts;
 using AndroidTVManager.Core.Scripts;
+using AndroidTVManager.Core.Models;
 using AndroidTVManager.Infrastructure.Packages;
 using AndroidTVManager.Infrastructure.Storage;
 using AndroidTVManager.Infrastructure.Updates;
@@ -16,6 +17,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAndroidTVManagerInfrastructure(this IServiceCollection services)
     {
+        services.AddSingleton<IDeviceTweakService, DeviceTweakService>();
         services.AddSingleton<ILocalAppDataPaths, LocalAppDataPaths>();
         services.AddSingleton<FileLogger>();
         services.AddSingleton<IAppLogger>(services => services.GetRequiredService<FileLogger>());

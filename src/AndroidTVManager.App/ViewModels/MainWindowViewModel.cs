@@ -63,6 +63,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDeviceFileService _deviceFiles;
     private readonly IDeviceComparisonService _deviceComparison;
     private readonly IScreenRecordingService _screenRecording;
+    private readonly IDeviceTweakService _tweaks;
     private readonly IAppLogger _logger;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
@@ -117,6 +118,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDeviceFileService deviceFiles,
         IDeviceComparisonService deviceComparison,
         IScreenRecordingService screenRecording,
+        IDeviceTweakService tweaks,
         IAppLogger logger)
     {
         _toolsManager = toolsManager;
@@ -163,6 +165,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _deviceFiles = deviceFiles;
         _deviceComparison = deviceComparison;
         _screenRecording = screenRecording;
+        _tweaks = tweaks;
         _logger = logger;
         Navigation = new ObservableCollection<NavigationEntry>
         {
@@ -182,6 +185,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Device Comparison", "⇄"),
             new("Applications", "▦"),
             new("Debloat", "◌"),
+            new("Tweaks", "◐"),
             new("Backup / Restore", "⇩"),
             new("Scripts", "◇"),
             new("Tools", "⚙"),
@@ -222,6 +226,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Devices,
             device => SelectedDevice = device),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
+        "Tweaks" => new TweaksPageViewModel(_tweaks, _confirmation),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
         "Deployment Profiles" => new DeploymentProfilesPageViewModel(
             _deploymentProfiles,
@@ -303,6 +308,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             if (!SetProperty(ref _selectedDevice, value))
                 return;
+            if (_pages.TryGetValue("Tweaks", out var tweaksPage) && tweaksPage is TweaksPageViewModel tweaks)
+                tweaks.SelectedDevice = value;
             if (_pages.TryGetValue("Configuration Explorer", out var page)
                 && page is ConfigurationPageViewModel configuration)
                 configuration.SelectedDevice = value;
@@ -361,6 +368,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Device Comparison" => "Compare two connected devices across build, package, display, security, and capability evidence.",
         "Applications" => "Inspect and manage installed packages.",
         "Debloat" => "Preview conservative, device-specific package changes.",
+        "Tweaks" => "Verified animation timing controls and NVIDIA Shield settings guidance.",
         "Backup / Restore" => "Create safe device backups and restore APKs.",
         "Scripts" => "Preview safe, structured ADB automation.",
         "Tools" => "Targeted device utilities and diagnostics.",
