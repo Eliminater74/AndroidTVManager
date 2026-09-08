@@ -4,6 +4,8 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 
 ## Before hardware validation
 
+- [x] Add guided Lineage Recovery file selection/sideload and guarded Pixel C recovery flashing (unreleased).
+- [ ] Validate the [recovery hardware checklist](docs/RECOVERY-SIDELOAD.md#hardware-acceptance) with the exact Pixel C ROM/recovery build.
 - [ ] Test USB discovery with a physical Android TV device.
 - [ ] Test traditional TCP/IP ADB and saved-device reconnect.
 - [ ] Test Android Wireless Debugging pairing on supported Android versions.

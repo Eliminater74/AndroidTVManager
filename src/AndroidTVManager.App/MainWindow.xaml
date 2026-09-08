@@ -17,6 +17,9 @@
         Loaded="Window_Loaded"
         >
     <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:RecoveryPageViewModel}">
+            <views:RecoveryPageView/>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:TweaksPageViewModel}">
             <views:TweaksPageView/>
         </DataTemplate>

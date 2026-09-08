@@ -119,6 +119,9 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
             value.Equals("pull", StringComparison.OrdinalIgnoreCase));
         if (pullIndex >= 0 && pullIndex + 2 < redacted.Length)
             redacted[pullIndex + 2] = "<local-path-redacted>";
+        var sideloadIndex = Array.FindIndex(redacted, value => value.Equals("sideload", StringComparison.OrdinalIgnoreCase));
+        if (sideloadIndex >= 0 && sideloadIndex + 1 < redacted.Length)
+            redacted[sideloadIndex + 1] = "<sideload-file-redacted>";
         return redacted;
     }
 

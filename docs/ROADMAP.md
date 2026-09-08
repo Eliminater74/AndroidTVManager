@@ -1,5 +1,14 @@
 # Roadmap
 
+## Unreleased recovery workflow
+
+- Implemented file-picker sideload with recovery reboot, exact-serial waiting and package hash review.
+- Implemented guarded Pixel C recovery flashing; Lineage Recovery wipe/menu steps remain explicit on-device checkpoints.
+- Pending physical Pixel C validation against the exact installed Lineage build; no Lineage 22 compatibility claim is made.
+- Future improvements: optional expected-checksum comparison, live transfer output and a reviewed device/build recipe catalog.
+
+See [Recovery / Sideload](RECOVERY-SIDELOAD.md). These additions are not in the published Beta 12 assets.
+
 ## Beta 12 — current
 
 - Dedicated Shield TV reference profile and reviewed optional-package rules

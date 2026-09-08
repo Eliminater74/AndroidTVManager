@@ -27,6 +27,10 @@ Available assets:
 
 The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 12 adds a dedicated NVIDIA Shield TV debloat profile, verified animation timing controls with undo, clearer tablet/head-unit connection guidance, and fixes for connection reporting and User 0 package recovery. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
+## Unreleased development
+
+The local development tree adds **Recovery / Sideload** with native file pickers, guided Lineage Recovery ZIP transfer and guarded Pixel C recovery-image flashing. This feature is not in the published Beta 12 assets. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) for steps and validation limits.
+
 ## Highlights
 
 - USB, traditional TCP/IP ADB, and Android 11+ Wireless Debugging pairing

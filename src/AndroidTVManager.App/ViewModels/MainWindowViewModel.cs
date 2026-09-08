@@ -64,6 +64,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IDeviceComparisonService _deviceComparison;
     private readonly IScreenRecordingService _screenRecording;
     private readonly IDeviceTweakService _tweaks;
+    private readonly IRecoveryService _recovery;
     private readonly IAppLogger _logger;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
@@ -119,6 +120,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IDeviceComparisonService deviceComparison,
         IScreenRecordingService screenRecording,
         IDeviceTweakService tweaks,
+        IRecoveryService recovery,
         IAppLogger logger)
     {
         _toolsManager = toolsManager;
@@ -166,6 +168,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _deviceComparison = deviceComparison;
         _screenRecording = screenRecording;
         _tweaks = tweaks;
+        _recovery = recovery;
         _logger = logger;
         Navigation = new ObservableCollection<NavigationEntry>
         {
@@ -187,6 +190,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("Debloat", "◌"),
             new("Tweaks", "◐"),
             new("Backup / Restore", "⇩"),
+            new("Recovery / Sideload", "⇧"),
             new("Scripts", "◇"),
             new("Tools", "⚙"),
             new("Logs", "≡"),
@@ -227,6 +231,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             device => SelectedDevice = device),
         "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
         "Tweaks" => new TweaksPageViewModel(_tweaks, _confirmation),
+        "Recovery / Sideload" => new RecoveryPageViewModel(_recovery, _confirmation),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
         "Deployment Profiles" => new DeploymentProfilesPageViewModel(
             _deploymentProfiles,
@@ -369,6 +374,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Applications" => "Inspect and manage installed packages.",
         "Debloat" => "Preview conservative, device-specific package changes.",
         "Tweaks" => "Verified animation timing controls and NVIDIA Shield settings guidance.",
+        "Recovery / Sideload" => "Guided recovery preparation and file-based Android update sideloading.",
         "Backup / Restore" => "Create safe device backups and restore APKs.",
         "Scripts" => "Preview safe, structured ADB automation.",
         "Tools" => "Targeted device utilities and diagnostics.",

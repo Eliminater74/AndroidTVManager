@@ -1,0 +1,84 @@
+<UserControl x:Class="AndroidTVManager.App.Views.Pages.RecoveryPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="{StaticResource CyanAccent}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="{StaticResource CyanAccent}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <StackPanel Margin="34,26,34,28">
+        <TextBlock Text="RECOVERY / SIDELOAD" Style="{StaticResource SectionLabelStyle}"/>
+        <TextBlock Text="Install from a file, step by step" FontSize="30" FontWeight="SemiBold" Margin="0,5,0,12"/>
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}"/>
+        <ProgressBar Height="4" Margin="0,12,0,8" IsIndeterminate="{Binding IsBusy}"/>
+        <WrapPanel Margin="0,10,0,12">
+            <Button Content="Refresh USB / recovery devices" Command="{Binding RefreshCommand}" Margin="0,0,12,8"/>
+            <ComboBox ItemsSource="{Binding Targets}" SelectedItem="{Binding SelectedTarget}" DisplayMemberPath="DisplayName"
+                      IsEnabled="{Binding IsIdle}" Width="330" AutomationProperties.Name="Recovery target serial and mode" Margin="0,0,12,8"/>
+            <Button Content="Stop waiting / transfer" Command="{Binding CancelCommand}" Margin="0,0,0,8"/>
+        </WrapPanel>
+        <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="20">
+            <StackPanel>
+                <TextBlock Text="1 · Recovery preparation (optional for updates)" FontSize="21" FontWeight="SemiBold"/>
+                <TextBlock Text="Use the recovery image and instructions for your exact ROM build. Flashing here is limited to a Pixel C reporting product dragon, an unlocked bootloader and a recovery partition large enough for the image. No unlocking or wiping is automated."
+                           TextWrapping="Wrap" Margin="0,8,0,12"/>
+                <TextBlock Text="{Binding ImageSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
+                <WrapPanel>
+                    <Button Content="Choose recovery .img" Command="{Binding ChooseImageCommand}" Margin="0,0,10,8"/>
+                    <Button Content="Reboot to bootloader" Command="{Binding BootloaderCommand}" Margin="0,0,10,8"/>
+                    <Button Content="Flash Pixel C recovery" Command="{Binding FlashRecoveryCommand}" Margin="0,0,10,8"/>
+                    <Button Content="Reboot to recovery (ADB)" Command="{Binding RecoveryCommand}" Margin="0,0,10,8"/>
+                </WrapPanel>
+                <TextBlock Text="After flashing, select Recovery in the tablet's bootloader menu, then refresh here. From Android, the ADB recovery button handles the reboot. Mode changes never switch to another serial automatically."
+                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}"/>
+            </StackPanel>
+        </Border>
+        <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,16,0,0">
+            <StackPanel>
+                <TextBlock Text="2 · Lineage Recovery checkpoint" FontSize="21" FontWeight="SemiBold"/>
+                <TextBlock Text="For an ordinary update, do not assume a wipe is needed. For a clean installation, follow your build's instructions for Factory Reset / Format data. Do not wipe system or every partition by default. Any required wipe is performed on the tablet, where recovery shows what will be erased."
+                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+        <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,16,0,0">
+            <StackPanel>
+                <TextBlock Text="3 · Select a ZIP and sideload" FontSize="21" FontWeight="SemiBold"/>
+                <TextBlock Text="Choose the ROM ZIP below. The app checks its structure and SHA-256, asks you to confirm the target, reboots Android to recovery if needed, and waits for Apply Update → Apply from ADB. The transfer starts when that same serial enters sideload mode."
+                           TextWrapping="Wrap" Margin="0,8,0,12"/>
+                <TextBlock Text="{Binding ZipSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
+                <WrapPanel>
+                    <Button Content="Choose ZIP and sideload…" Command="{Binding ChooseAndSideloadCommand}" Margin="0,0,10,8"/>
+                    <Button Content="Send selected ZIP again" Command="{Binding SideloadCommand}" Margin="0,0,10,8"/>
+                    <Button Content="Reboot Android…" Command="{Binding RebootAndroidCommand}" Margin="0,0,10,8"/>
+                </WrapPanel>
+                <TextBlock Text="Check installation success on the tablet. ADB can stop near 47% without proving failure or success. Choose another ZIP for any required add-ons before rebooting; the app never reboots Android automatically after a transfer. Stop does not undo an installation."
+                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}"/>
+                <TextBox Text="{Binding Output, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="180" VerticalScrollBarVisibility="Auto"
+                         AutomationProperties.Name="Recovery command output" Margin="0,12,0,0"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

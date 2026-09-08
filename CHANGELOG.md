@@ -6,6 +6,13 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+### Added
+
+- Recovery / Sideload page with explicit ADB/Fastboot target selection, native IMG/ZIP file pickers, SHA-256 review, recovery reboot and bounded waiting for Lineage Recovery's Apply from ADB mode.
+- Pixel C recovery flashing gated by live product `dragon`, confirmed unlocked bootloader and recovery partition size. Selected files are checked again and held against modification during transfer.
+- Cancellation for recovery waiting/sideload, exact-serial routing, failure diagnostics and explicit installation verification on the tablet. Wipes, unlocking and automatic post-install reboot are excluded.
+- Device-independent recovery regression coverage and native WPF page rendering checks. Hardware validation remains pending.
+
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [1.0.0-B12] - 2026-09-07
