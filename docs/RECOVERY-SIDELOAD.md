@@ -1,6 +1,6 @@
 # Recovery / Sideload
 
-Status: unreleased development after Beta 12. Automated tests use fake transports; no physical device has been flashed, wiped or updated during development.
+Status: included in Beta 13. Automated tests use fake transports; no physical device has been flashed, wiped or updated during development.
 
 ## Update using Lineage Recovery
 

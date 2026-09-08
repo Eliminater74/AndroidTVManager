@@ -6,6 +6,12 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## [1.0.0-B13] - 2026-09-08
+
+Beta 13 adds guided recovery/sideload and deeper device inspection for ADB-capable TVs, tablets and head units.
+
 ### Added
 
 - Device Status Deep scan: 32 additional fixed read-only probes, searchable full stdout/stderr, per-command coverage states and JSON report export. Preserve reported vendor/head-unit properties without inferring hidden hardware support.
@@ -15,7 +21,11 @@ The project follows a beta-first release cycle while real Android TV hardware va
 - Cancellation for recovery waiting/sideload, exact-serial routing, failure diagnostics and explicit installation verification on the tablet. Wipes, unlocking and automatic post-install reboot are excluded.
 - Device-independent recovery regression coverage and native WPF page rendering checks. Hardware validation remains pending.
 
-Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Release and validation
+
+- Updated app and installer metadata to 1.0.0-B13 (assembly/file version 1.0.0.13), release documentation, download links and feature guides. Package rules remain at the Beta 12 revision.
+- Debug/Release builds and 175 device-independent tests cover recovery safety, exact-serial routing, deep-scan evidence, stale-result suppression and WPF rendering.
+- Physical-device validation remains pending. Pixel C flashing requires compatible files and confirmed bootloader/partition evidence; no Lineage 22 compatibility is claimed. Deep inspection reports exposed data and does not provide hidden MCU/CAN-bus firmware access.
 
 ## [1.0.0-B12] - 2026-09-07
 

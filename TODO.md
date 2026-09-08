@@ -4,9 +4,9 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 
 ## Before hardware validation
 
-- [x] Add optional deep device inspection and full searchable/exportable command evidence (unreleased).
+- [x] Add optional deep device inspection and full searchable/exportable command evidence (Beta 13).
 - [ ] Validate deep inspection on physical TV/Shield and ATOTO firmware; confirm failed probes remain clearly labeled.
-- [x] Add guided Lineage Recovery file selection/sideload and guarded Pixel C recovery flashing (unreleased).
+- [x] Add guided Lineage Recovery file selection/sideload and guarded Pixel C recovery flashing (Beta 13).
 - [ ] Validate the [recovery hardware checklist](docs/RECOVERY-SIDELOAD.md#hardware-acceptance) with the exact Pixel C ROM/recovery build.
 - [ ] Test USB discovery with a physical Android TV device.
 - [ ] Test traditional TCP/IP ADB and saved-device reconnect.

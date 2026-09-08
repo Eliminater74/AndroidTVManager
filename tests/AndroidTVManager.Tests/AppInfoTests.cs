@@ -16,8 +16,8 @@ public sealed class AppInfoTests
     [Fact]
     public void Version_and_channel_are_derived_from_the_current_build()
     {
-        AppInfo.Version.Should().Be("1.0.0-B12");
-        AppInfo.ReleaseChannel.Should().Be("Beta 12");
+        AppInfo.Version.Should().Be("1.0.0-B13");
+        AppInfo.ReleaseChannel.Should().Be("Beta 13");
         AppInfo.Version.Should().NotBe("1.0.0-B1");
         Assert.InRange(AppInfo.BuildIdentifier.Length, 0, 8);
     }

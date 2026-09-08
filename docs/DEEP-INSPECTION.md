@@ -1,6 +1,6 @@
 # Deep device inspection
 
-Status: unreleased after Beta 12. No physical device was queried during implementation.
+Status: included in Beta 13. No physical device was queried during implementation.
 
 Connect an authorized ADB device, open **Device Status**, select it and choose **Deep scan**. Standard automatic inspection remains available; deep scanning is explicit because it runs additional diagnostics. Up to four commands run concurrently with a 20-second host timeout each. Cancel stops the scan, and changing targets invalidates previous results and progress.
 

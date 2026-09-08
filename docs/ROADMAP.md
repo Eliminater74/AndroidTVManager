@@ -1,21 +1,21 @@
 # Roadmap
 
-## Unreleased device inspection
+## Beta 13 — current: device inspection
 
 - Implemented Device Status Deep scan with 32 additional read-only probes, full searchable evidence, explicit command coverage and JSON export.
 - Pending physical TV/Shield/tablet/head-unit validation, especially vendor-specific MCU and service visibility.
 - Next: build-specific parsers for exposed vendor data based on reviewed hardware reports.
 
-## Unreleased recovery workflow
+## Beta 13 — recovery workflow
 
 - Implemented file-picker sideload with recovery reboot, exact-serial waiting and package hash review.
 - Implemented guarded Pixel C recovery flashing; Lineage Recovery wipe/menu steps remain explicit on-device checkpoints.
 - Pending physical Pixel C validation against the exact installed Lineage build; no Lineage 22 compatibility claim is made.
 - Future improvements: optional expected-checksum comparison, live transfer output and a reviewed device/build recipe catalog.
 
-See [Recovery / Sideload](RECOVERY-SIDELOAD.md). These additions are not in the published Beta 12 assets.
+See [Recovery / Sideload](RECOVERY-SIDELOAD.md). These additions are included in Beta 13.
 
-## Beta 12 — current
+## Beta 12 — previous release
 
 - Dedicated Shield TV reference profile and reviewed optional-package rules
 - Verified animation timing controls, exact-value undo and Shield settings guidance
