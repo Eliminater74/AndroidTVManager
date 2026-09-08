@@ -1,6 +1,6 @@
 # Device support audit — 2026-09-07
 
-This audit adds Shield TV debloat coverage, a Tweaks page, and fixes in connection reporting and package recovery. Product version remains **1.0.0-B11**. All changes are local commits; nothing was pushed or released.
+This audit adds Shield TV debloat coverage, a Tweaks page, and fixes in connection reporting and package recovery. At audit completion, product version remained **1.0.0-B11** and changes were local only. These changes are now included in the authorized **1.0.0-B12** release; the original audit evidence and hardware limitations below remain applicable.
 
 This is a source, automated-test and WPF-render audit, not a hardware certification. No ADB commands were sent to a physical device, and no installed packages or device settings were changed during validation. Firmware-specific behavior still requires the hardware checks below.
 
@@ -96,7 +96,7 @@ These are design recommendations, not features represented as already implemente
 - The Tweaks page was rendered offscreen and visually inspected for layout, wrapping and legibility. This is not full interactive app testing or high-DPI/accessibility certification.
 - `dotnet list AndroidTVManager.sln package --vulnerable --include-transitive`: no known vulnerable packages reported.
 - Before each commit: restore/build/test, staged-diff inspection and whitespace checks. No generated files, binaries, runtime data or `/TEMP/` staged.
-- No version bump, push, tag, installer packaging, deployment or physical-device mutation.
+- The audit itself performed no version bump, push, tag, installer packaging, deployment or physical-device mutation. Subsequent B12 release preparation is documented in the changelog.
 
 ## Hardware acceptance checklist
 

@@ -8,6 +8,31 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B12] - 2026-09-07
+
+Beta 12 expands NVIDIA Shield TV support and improves connection, tuning and recovery reliability.
+
+### Added
+
+- Dedicated 17-entry NVIDIA Shield TV debloat reference profile and nine reviewed package rules. Telemetry candidates require Medium or Aggressive; gaming and Plex hosting candidates require Aggressive. Platform, audio, remote, update and accessory protections remain in place.
+- Native WPF Tweaks page with read/apply/undo for Android animation timing, captured previous values, write verification and Shield picture/audio/performance guidance.
+- Tablet and standalone Android head-unit connection guidance, with explicit distinctions for Android Automotive and projection displays.
+- Device support audit with a support matrix, remaining findings, hardware acceptance checklist and prioritized improvement ideas.
+
+### Fixed
+
+- Require ADB connection/pairing acknowledgements instead of treating zero-exit failure messages as successful connections.
+- Scope debloat inventory and active-role queries to User 0. Block incomplete or empty feature evidence, unsupported foreground users and Android Automotive before preview/execution.
+- Clear stale debloat previews and capture the target before asynchronous initialization.
+- Capture exact package identities and User 0 installation state for recovery; explicitly scope enable/restore commands and undo to User 0.
+- Verify setting restoration and allow partial undo to retry only failed actions.
+
+### Release and validation
+
+- Updated application/installer metadata to 1.0.0-B12 (assembly/file version 1.0.0.12), current documentation and download links. Package ruleset revision is vendor-tv-sourced-2026-09-07-v5.
+- Debug and Release builds and all 149 device-independent tests pass, including WPF rendering and stateful tuning/recovery regressions.
+- Physical Shield/tablet/head-unit acceptance remains open. ADB connectivity requires vendor-exposed debugging; vehicle-specific package management and secondary-user workflows are not certified. Vendor-specific Shield settings are guidance, not universal ADB switches.
+
 ## [1.0.0-B11] - 2026-09-01
 
 Beta 11 focuses on making debloat previews behave like a profile-driven recommendation engine instead of a static package list.

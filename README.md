@@ -14,18 +14,18 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B11 — Beta 11
+### 1.0.0-B12 — Beta 12
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 11 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 12 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B11/AndroidTVManager-Setup.exe) — current Beta 11 installer link
-- `AndroidTVManager-1.0.0-B11-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B11-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B12/AndroidTVManager-Setup.exe) — current Beta 12 installer link
+- `AndroidTVManager-1.0.0-B12-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B12-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 11 is a smart debloat profile release that recognizes the Android TV 16 emulator package set, lists loaded and matched reference profiles, promotes reviewed optional packages into cautious disable-first recommendations, and keeps Android TV core packages locked.
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 12 adds a dedicated NVIDIA Shield TV debloat profile, verified animation timing controls with undo, clearer tablet/head-unit connection guidance, and fixes for connection reporting and User 0 package recovery. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
 ## Highlights
 
@@ -114,7 +114,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B11 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B12 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.

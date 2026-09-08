@@ -13,6 +13,16 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Verify installer upgrade and uninstall behavior.
 - [ ] Add code signing when a release certificate is available.
 
+## Beta 12 support follow-up
+
+- [x] Add reviewed Shield TV profile coverage and verified animation controls with journal recovery.
+- [x] Correct connection acknowledgements and User 0 package capture/restore ownership.
+- [x] Document tablet/head-unit support boundaries and Automotive safeguards.
+- [ ] Complete the [device support audit hardware acceptance checklist](docs/DEVICE-SUPPORT-AUDIT.md#hardware-acceptance-checklist).
+- [ ] Share live package safety checks across Applications, Scripts and Deployment Profiles.
+- [ ] Add explicit device capabilities and user scope to the header.
+- [ ] Add touch/gesture remote support for tablets and compatible head units.
+
 ## Beta 9 hotfix
 
 - [x] Restore separate WPF page views that rendered blank because their XAML content was never initialized.
