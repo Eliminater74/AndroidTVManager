@@ -11,6 +11,56 @@ namespace AndroidTVManager.Tests;
 public sealed class DeviceInspectionServiceTests
 {
     [Fact]
+    public async Task Deep_scan_is_opt_in_and_retains_vendor_evidence_and_blocked_probes()
+    {
+        var runner = new FakeAdbProcessRunner();
+        runner.Responses["shell getprop"] = Result("[ro.product.manufacturer]: [ATOTO]\n[vendor.mcu.version]: [example-build]");
+        runner.Responses["shell dumpsys usb"] = Result("USB devices: keyboard");
+        runner.Responses["shell dumpsys sensorservice"] = Result("Permission Denial: not allowed");
+        runner.Responses["shell dumpsys media.codec"] = Result("", "Can't find service: media.codec");
+        var service = new DeviceInspectionService(runner, new FakeDeviceSnapshotRepository(), new FakeAppLogger());
+        var standard = await service.InspectAsync("unit-1");
+        standard.Commands.Should().NotContain(c => c.Command == "usb");
+        runner.Calls.Clear();
+
+        var deep = await service.InspectAsync("unit-1", deepScan: true);
+
+        standard.IsDeepScan.Should().BeFalse();
+        deep.IsDeepScan.Should().BeTrue();
+        deep.Commands.Should().HaveCount(standard.Commands.Count + DeepInspectionCatalog.Probes.Count);
+        deep.RawProperties["vendor.mcu.version"].Should().Be("example-build");
+        deep.Commands.Single(c => c.Command == "usb").StandardOutput.Should().Contain("keyboard");
+        deep.Commands.Single(c => c.Command == "sensors").State.Should().Be(InspectionSectionState.PermissionDenied);
+        deep.Commands.Single(c => c.Command == "media-codecs").State.Should().Be(InspectionSectionState.Unavailable);
+        runner.Calls.Should().OnlyContain(call => call.Serial == "unit-1");
+        runner.Calls.Should().NotContain(call => call.Arguments.Contains("reboot") || call.Arguments.Contains("setprop")
+            || call.Arguments.Contains("put") || call.Arguments.Contains("su") || call.Arguments.Contains("install"));
+        DeepInspectionCatalog.Describe(deep).Should().Contain("need review");
+        var json = System.Text.Json.JsonSerializer.Serialize(deep);
+        var restored = System.Text.Json.JsonSerializer.Deserialize<DeviceInspectionResult>(json)!;
+        restored.Commands.Single(c => c.Command == "sensors").State.Should().Be(InspectionSectionState.PermissionDenied);
+        restored.RawProperties["vendor.mcu.version"].Should().Be("example-build");
+    }
+
+    [Theory]
+    [InlineData("Permission denied", 0, InspectionSectionState.PermissionDenied)]
+    [InlineData("Can't find service: usb", 0, InspectionSectionState.Unavailable)]
+    [InlineData("Unknown command: status", 0, InspectionSectionState.Unavailable)]
+    [InlineData("", 0, InspectionSectionState.Partial)]
+    [InlineData("device offline", 1, InspectionSectionState.Failed)]
+    [InlineData("USB device: keyboard", 0, InspectionSectionState.Completed)]
+    [InlineData("Optional vendor description not found in database", 0, InspectionSectionState.Completed)]
+    public void Command_classification_does_not_equate_exit_zero_with_available_data(string output, int exit, InspectionSectionState expected)
+        => DeepInspectionCatalog.Classify(Result(output, exitCode: exit)).Should().Be(expected);
+
+    [Fact]
+    public void Timeout_and_cancellation_are_distinct_from_missing_services()
+    {
+        DeepInspectionCatalog.Classify(Result("partial") with { WasTimedOut = true }).Should().Be(InspectionSectionState.TimedOut);
+        DeepInspectionCatalog.Classify(Result("partial") with { WasCanceled = true }).Should().Be(InspectionSectionState.Canceled);
+    }
+
+    [Fact]
     public async Task Inspects_categories_with_one_target_and_keeps_partial_failures()
     {
         var runner = new FakeAdbProcessRunner();

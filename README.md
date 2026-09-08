@@ -31,6 +31,8 @@ The installer is currently unsigned. Windows SmartScreen may display a warning u
 
 The local development tree adds **Recovery / Sideload** with native file pickers, guided Lineage Recovery ZIP transfer and guarded Pixel C recovery-image flashing. This feature is not in the published Beta 12 assets. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) for steps and validation limits.
 
+**Device Status → Deep scan** adds 32 read-only hardware/service probes, searchable complete command output, coverage results and JSON export. It can preserve ATOTO/vendor identity properties when exposed, without claiming access to hidden MCU firmware. See [Deep device inspection](docs/DEEP-INSPECTION.md). This is also unreleased.
+
 ## Highlights
 
 - USB, traditional TCP/IP ADB, and Android 11+ Wireless Debugging pairing

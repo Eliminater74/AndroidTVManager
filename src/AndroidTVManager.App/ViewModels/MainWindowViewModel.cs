@@ -572,7 +572,52 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
     private AndroidDevice? _selectedDevice;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CoverageSummary), nameof(EvidenceEntries))]
+    [NotifyCanExecuteChangedFor(nameof(ExportInspectionCommand))]
     private DeviceInspectionResult? _inspection;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EvidenceEntries))]
+    private string _evidenceSearch = "";
+
+    [ObservableProperty]
+    private InspectionCommandEvidence? _selectedEvidence;
+
+    public string CoverageSummary => Inspection is null ? "Deep scan adds hardware, input, media, storage, users and vendor-service evidence. Read-only; no root or reboot."
+        : DeepInspectionCatalog.Describe(Inspection);
+
+    public IEnumerable<InspectionCommandEvidence> EvidenceEntries => (Inspection?.Commands ?? [])
+        .Where(item => string.IsNullOrWhiteSpace(EvidenceSearch)
+            || string.Join("\n", item.Command, item.Category, item.StandardOutput, item.StandardError)
+                .Contains(EvidenceSearch, StringComparison.OrdinalIgnoreCase));
+
+    partial void OnInspectionChanged(DeviceInspectionResult? value) => SelectedEvidence = value?.Commands.FirstOrDefault();
+
+    private bool CanExportInspection() => Inspection is not null;
+
+    [RelayCommand(CanExecute = nameof(CanExportInspection))]
+    private async Task ExportInspectionAsync()
+    {
+        var snapshot = Inspection;
+        if (snapshot is null) return;
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save device report — includes device identifiers and raw diagnostics; review before sharing",
+            FileName = "device-inspection.json", Filter = "Device inspection JSON (*.json)|*.json"
+        };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            await Task.Run(async () =>
+            {
+                await using var stream = new FileStream(dialog.FileName, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+                await System.Text.Json.JsonSerializer.SerializeAsync(stream, snapshot,
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            });
+            if (ReferenceEquals(Inspection, snapshot)) ProgressText = "Report saved. It includes identifiers and raw diagnostics; review before sharing.";
+        }
+        catch (Exception exception) { ProgressText = $"Report export failed: {exception.Message}"; }
+    }
 
     [ObservableProperty]
     private string _progressText = "Select a connected device and inspect it.";
@@ -588,8 +633,10 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
 
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
-        if (value is null)
-            Inspection = null;
+        _scanSource?.Cancel();
+        _scanSource = null;
+        IsBusy = false;
+        Inspection = null;
         ProgressText = value is null
             ? "Select a connected device and inspect it."
             : $"Scanning {value.FriendlyName ?? value.Model ?? value.Serial} automatically…";
@@ -598,38 +645,50 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
     }
 
     [RelayCommand]
-    private async Task InspectAsync()
+    private Task InspectAsync() => ScanAsync(false);
+
+    [RelayCommand]
+    private Task DeepInspectAsync() => ScanAsync(true);
+
+    private async Task ScanAsync(bool deepScan)
     {
-        if (SelectedDevice is null)
+        if (SelectedDevice is null || SelectedDevice.State != DeviceState.Device)
         {
             ProgressText = "Select a connected device before inspecting.";
             return;
         }
 
         _scanSource?.Cancel();
-        _scanSource?.Dispose();
-        _scanSource = new CancellationTokenSource();
+        using var source = new CancellationTokenSource();
+        _scanSource = source;
         IsBusy = true;
         GuideText = string.Empty;
+        Inspection = null;
         var serial = SelectedDevice.Serial;
+        bool IsCurrent() => ReferenceEquals(_scanSource, source) && SelectedDevice?.Serial == serial;
         try
         {
             var progress = new Progress<DeviceInspectionProgress>(value =>
-                ProgressText = $"{value.Category}: {value.State} ({value.CompletedCategories}/{value.TotalCategories})");
-            Inspection = await _inspectionService.InspectAsync(serial, progress, _scanSource.Token);
-            ProgressText = $"Inspection completed at {Inspection.CapturedUtc.LocalDateTime:g}.";
+            {
+                if (IsCurrent() && !source.IsCancellationRequested)
+                    ProgressText = $"{value.Category}: {value.State} ({value.CompletedCategories}/{value.TotalCategories})";
+            });
+            var result = await _inspectionService.InspectAsync(serial, progress, source.Token, deepScan);
+            if (!IsCurrent() || source.IsCancellationRequested) return;
+            Inspection = result;
+            ProgressText = $"{(deepScan ? "Deep scan" : "Inspection")} finished at {Inspection.CapturedUtc.LocalDateTime:g}. Review command coverage below.";
         }
         catch (OperationCanceledException)
         {
-            ProgressText = "Inspection canceled.";
+            if (IsCurrent()) ProgressText = "Inspection canceled.";
         }
         catch (Exception exception)
         {
-            ProgressText = $"Inspection failed: {exception.Message}";
+            if (IsCurrent()) ProgressText = $"Inspection failed: {exception.Message}";
         }
         finally
         {
-            IsBusy = false;
+            if (IsCurrent()) { _scanSource = null; IsBusy = false; }
         }
     }
 

@@ -1,5 +1,11 @@
 # Roadmap
 
+## Unreleased device inspection
+
+- Implemented Device Status Deep scan with 32 additional read-only probes, full searchable evidence, explicit command coverage and JSON export.
+- Pending physical TV/Shield/tablet/head-unit validation, especially vendor-specific MCU and service visibility.
+- Next: build-specific parsers for exposed vendor data based on reviewed hardware reports.
+
 ## Unreleased recovery workflow
 
 - Implemented file-picker sideload with recovery reboot, exact-serial waiting and package hash review.

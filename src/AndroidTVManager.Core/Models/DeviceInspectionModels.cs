@@ -38,7 +38,10 @@ public enum InspectionSectionState
     Completed,
     Partial,
     Failed,
-    Canceled
+    Canceled,
+    PermissionDenied,
+    Unavailable,
+    TimedOut
 }
 
 public sealed record InspectionCommandEvidence(
@@ -48,7 +51,9 @@ public sealed record InspectionCommandEvidence(
     string? StandardError,
     int? ExitCode,
     TimeSpan Duration,
-    string? ErrorMessage = null);
+    string? ErrorMessage = null,
+    string? Category = null,
+    string? CommandLine = null);
 
 public sealed record InspectionSection<T>(
     string Name,
@@ -247,4 +252,5 @@ public sealed record DeviceInspectionResult(
     InspectionSection<RootInfo>? Root = null,
     InspectionSection<BluetoothInfo>? Bluetooth = null,
     InspectionSection<HdmiInfo>? Hdmi = null,
-    InspectionSection<DrmInfo>? Drm = null);
+    InspectionSection<DrmInfo>? Drm = null,
+    bool IsDeepScan = false);

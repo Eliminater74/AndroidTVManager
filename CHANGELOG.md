@@ -8,6 +8,8 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ### Added
 
+- Device Status Deep scan: 32 additional fixed read-only probes, searchable full stdout/stderr, per-command coverage states and JSON report export. Preserve reported vendor/head-unit properties without inferring hidden hardware support.
+- Distinguish permission-denied, unavailable, timed-out, failed and empty command results. Prevent stale scans/progress from overwriting a newly selected device and preserve cancellation through snapshot persistence.
 - Recovery / Sideload page with explicit ADB/Fastboot target selection, native IMG/ZIP file pickers, SHA-256 review, recovery reboot and bounded waiting for Lineage Recovery's Apply from ADB mode.
 - Pixel C recovery flashing gated by live product `dragon`, confirmed unlocked bootloader and recovery partition size. Selected files are checked again and held against modification during transfer.
 - Cancellation for recovery waiting/sideload, exact-serial routing, failure diagnostics and explicit installation verification on the tablet. Wipes, unlocking and automatic post-install reboot are excluded.

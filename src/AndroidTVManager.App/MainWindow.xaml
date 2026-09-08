@@ -245,12 +245,16 @@
                 </StackPanel>
                 <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,24,0,18">
                     <DockPanel>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <WrapPanel DockPanel.Dock="Right" MaxWidth="410">
                             <Button Content="Inspect device" Style="{StaticResource AccentButtonStyle}"
                                     Command="{Binding InspectCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Deep scan" Style="{StaticResource AccentButtonStyle}"
+                                    Command="{Binding DeepInspectCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Export report…" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding ExportInspectionCommand}" Margin="8,8,0,0"/>
                             <Button Content="Cancel" Style="{StaticResource GhostButtonStyle}"
                                     Command="{Binding CancelInspectionCommand}" Margin="8,0,0,0"/>
-                        </StackPanel>
+                        </WrapPanel>
                         <StackPanel>
                             <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
                             <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
@@ -262,6 +266,7 @@
                 </Border>
                 <StackPanel Grid.Row="2">
                     <StackPanel>
+                        <TextBlock Text="{Binding CoverageSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,14"/>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <TextBlock Text="OVERVIEW" Style="{StaticResource SectionLabelStyle}"/>
@@ -688,23 +693,30 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </Expander>
-                            <ItemsControl ItemsSource="{Binding Inspection.Commands}" Margin="0,10,0,0">
-                                <ItemsControl.ItemTemplate>
+                            <TextBlock Text="Search command names, categories or output (try MCU, ATOTO, CAN, codec or USB)." TextWrapping="Wrap"/>
+                            <TextBox Text="{Binding EvidenceSearch, UpdateSourceTrigger=PropertyChanged, Delay=250}"
+                                     AutomationProperties.Name="Search device evidence" Margin="0,8,0,8"/>
+                            <ListBox ItemsSource="{Binding EvidenceEntries}" SelectedItem="{Binding SelectedEvidence}" Height="180"
+                                     AutomationProperties.Name="Device inspection commands" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="10" Margin="0,0,0,5">
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Command}" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding State}" Foreground="{StaticResource CyanAccent}"
-                                                           Margin="0,3,0,0"/>
-                                                <TextBlock Text="{Binding StandardError}" Foreground="{StaticResource AmberAccent}"
-                                                           TextWrapping="Wrap" Margin="0,3,0,0"/>
-                                                <TextBlock Text="{Binding StandardOutput}" Foreground="{StaticResource TextSecondary}"
-                                                           TextWrapping="Wrap" MaxHeight="120" Margin="0,3,0,0"/>
-                                            </StackPanel>
-                                        </Border>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Category}" Width="155"/>
+                                            <TextBlock Text="{Binding Command}" Width="180"/>
+                                            <TextBlock Text="{Binding State}" Foreground="{StaticResource CyanAccent}"/>
+                                        </StackPanel>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBox Text="{Binding SelectedEvidence.CommandLine, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,8,0,0"
+                                     AutomationProperties.Name="Executed inspection command"/>
+                            <TextBlock Text="{Binding SelectedEvidence.ErrorMessage}" TextWrapping="Wrap" Foreground="{StaticResource AmberAccent}" Margin="0,6,0,0"/>
+                            <TextBox Text="{Binding SelectedEvidence.StandardOutput, Mode=OneWay}" IsReadOnly="True" Height="300"
+                                     FontFamily="Consolas" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                     AutomationProperties.Name="Full inspection standard output" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding SelectedEvidence.StandardError, Mode=OneWay}" IsReadOnly="True" Height="80"
+                                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                     AutomationProperties.Name="Inspection standard error" Margin="0,8,0,0"/>
                             </StackPanel>
                         </Expander>
                     </StackPanel>

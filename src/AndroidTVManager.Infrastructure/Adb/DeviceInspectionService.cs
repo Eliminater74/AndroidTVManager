@@ -28,7 +28,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
     public async Task<DeviceInspectionResult> InspectAsync(
         string serial,
         IProgress<DeviceInspectionProgress>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool deepScan = false)
     {
         if (string.IsNullOrWhiteSpace(serial))
             throw new ArgumentException("A device serial is required.", nameof(serial));
@@ -79,7 +80,11 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             ["services"] = (["shell", "dumpsys", "activity", "services"], ReadTimeout)
         };
 
+        if (deepScan)
+            foreach (var probe in DeepInspectionCatalog.Probes)
+                commands.Add(probe.Key, (probe.Arguments, ReadTimeout));
         var results = await RunCommandsAsync(serial, commands, progress, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         var props = Properties(results, "getprop");
         var metadata = AdbMetadataParser.Parse(Output(results, "getprop"));
         var reportedName = AdbMetadataParser.ParseReportedName(Output(results, "device-name"));
@@ -175,12 +180,13 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Section("Root Feasibility", results, ["getprop", "root"], root),
             Section("Bluetooth", results, ["features", "bluetooth-on", "bluetooth"], bluetooth),
             Section("HDMI / CEC", results, ["hdmi", "audio"], hdmi),
-            Section("DRM", results, ["drm"], drm));
+            Section("DRM", results, ["drm"], drm), deepScan);
 
         try
         {
             await _snapshots.SaveAsync(inspection, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception exception)
         {
             _logger.Warning("Inspection", $"Could not cache inspection for {serial}: {exception.Message}");
@@ -202,10 +208,14 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             try
             {
                 var result = await _runner.RunForDeviceAsync(serial, pair.Value.Arguments, pair.Value.Timeout, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                var state = DeepInspectionCatalog.Classify(result);
                 var evidence = new InspectionCommandEvidence(pair.Key,
-                    result.IsSuccess ? InspectionSectionState.Completed : InspectionSectionState.Partial,
+                    state,
                     result.StandardOutput, result.StandardError, result.ExitCode, result.Duration,
-                    result.IsSuccess ? null : result.StandardError.Trim());
+                    state == InspectionSectionState.Completed ? null : $"{state}: inspect stdout and stderr for details.",
+                    DeepInspectionCatalog.Probes.FirstOrDefault(p => p.Key == pair.Key)?.Category ?? "Standard inspection",
+                    result.CommandText);
                 var count = Interlocked.Increment(ref completed);
                 progress?.Report(new(pair.Key, count, commands.Count, evidence.State));
                 return (pair.Key, Evidence: (IReadOnlyList<InspectionCommandEvidence>)[evidence]);

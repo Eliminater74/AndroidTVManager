@@ -123,7 +123,7 @@ public sealed class BackupServiceTests
         public Task<DeviceInspectionResult> InspectAsync(
             string serial,
             IProgress<DeviceInspectionProgress>? progress = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, bool deepScan = false)
             => throw new NotSupportedException();
     }
 
