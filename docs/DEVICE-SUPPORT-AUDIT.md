@@ -37,11 +37,25 @@ Parser and Debloat correctness from a real Shield (`darcy`) dump. These items ar
 
 Do not mark the [hardware acceptance checklist](#hardware-acceptance-checklist) complete until Device Status and a Debloat preview are confirmed on the physical Shield.
 
+## Follow-up status — unreleased Google TV hardware families
+
+Family identification and conservative overlays for Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box. Automated tests are not physical verification.
+
+| Item | Status |
+|---|---|
+| Streamer vs Chromecast vs onn. 4K Box identity | **Closed in code.** `DeviceFamilies` matches kirkwood/GRS6B, sabrina/sabrina_prod_stable, and YOC/onn_4k_gtv/DV6105Z from hardware fields only. FriendlyName cannot activate a profile. Unrelated Google TV, Chromecast HD (`boreal`), 2021 onn. (`dopinder`), and 4K Pro (`jarvis`/`SNA`) stay on generic Android TV / Google TV handling. |
+| Google TV core vs model overlays | **Closed in code.** `google-tv-chromecast-ga01919` remains the Google TV core. New overlays are `google-tv-streamer-kirkwood-4k`, `google-tv-chromecast-sabrina-4k`, and `onn-google-tv-4k-box-yoc`. Keep/Critical wins when profiles disagree. |
+| Chromecast casting / Streamer Keep-only / onn. OEM | **Closed in code, conservative.** Chromecast overlay keeps casting, OTA DFU, Bluetooth, launcher, and setup; `netoscope` is the only reviewed Disable candidate. Streamer and YOC overlays add no Disable list. Unknown Walmart/onn packages stay manual. |
+| Physical dumps for the three new devices | **Pending.** No Streamer, Chromecast 4K, or YOC diagnostic bundle was captured during this work. |
+
 ## Support matrix
 
 | Device | Connection | Cleanup and tweaks | Limits |
 |---|---|---|---|
-| NVIDIA Shield TV | Existing USB/network ADB transport, when available on that model | Dedicated 17-entry Shield TV reference profile, nine added rules, generic Android rules, verified animation controls and Shield settings guidance | Package presence, accessory behavior and media features need firmware-specific testing |
+| NVIDIA Shield TV | Existing USB/network ADB transport, when available on that model | Dedicated Shield TV reference profile, reviewed NVIDIA rules, generic Android rules, animation controls and Shield settings guidance | Package presence, accessory behavior and media features need firmware-specific testing |
+| Google TV Streamer 4K | USB/network ADB when the device exposes it | Google TV core plus kirkwood Keep overlay; casting/launcher/setup/Assistant protected; Simple may select zero packages | No Streamer package dump yet; no Disable candidates invented; physical verification pending |
+| Chromecast with Google TV 4K | USB/network ADB when the device exposes it | Google TV core plus sabrina overlay; Chromecast receiver, DFU, Bluetooth, launcher, and setup kept; `netoscope` is a Medium/Aggressive candidate | Overlay uses the UAD Chromecast dump plus LineageOS sabrina identity; physical verification pending |
+| onn. Google TV 4K Box (2023 YOC) | USB/network ADB when the device exposes it | Google TV core plus YOC Keep overlay | Not 4K Pro, 2021 dopinder, or Full HD XNA. Walmart/onn OEM packages remain Unknown until a physical dump |
 | Android tablet | USB debugging or Wireless Debugging where exposed | User 0 inventory, existing reviewed package rules, animation controls | No tablet-specific debloat catalog; secondary/work-profile management is not implemented |
 | Standalone Android car/truck head unit | USB or network ADB only if the manufacturer exposes and authorizes it | Generic inspection; User 0 cleanup only where existing reviewed rules apply | No MCU/CAN, camera, radio, climate, steering-control or vehicle package validation; unknown vendor packages are not automatic candidates |
 | Android Automotive OS | Only when OEM ADB access is available | Generic read-only inspection; guided debloat and global animation tuning blocked | Driver users can differ from system User 0; no vehicle-service management support |
@@ -97,7 +111,7 @@ An existing substring comparison could mistake a similarly prefixed disabled pac
 | Applications / Scripts / Deployment Profiles | Closed in B15. Debloat safety is no longer Debloat-only: `IPackageSafetyGate` is required on `PackageManager`, and Applications/Scripts/Deployment pass the live build fingerprint. A complete user selector (inventory, roles, history, restore, UI) is still missing. |
 | User profiles | Debloat and journaled package state now consistently target User 0. Other commands and detail parsing still have single-user assumptions. A complete user selector must carry the user ID through inventory, roles, actions, history, restore and UI; merely changing a command to `--user current` is insufficient. |
 | Restore | Package reinstallation is not a guarantee of restoring app data. Scripts are sequential, not atomic; a later failure can leave earlier actions applied. Review the journal and undo. B15 restore confirmation copy states that APK copy does not restore app data, accounts, or settings. |
-| Device identity | Shield matching excludes editable aliases. Some older generic reference families still permit manufacturer fallback and friendly-name matching. Audit these before introducing more consequential profiles. |
+| Device identity | Shield, Streamer, Chromecast 4K, and onn. YOC matching exclude editable aliases. Older generic OEM baselines may still combine manufacturer fallback with hardware tokens, never FriendlyName, for known families. |
 | Deployment compatibility | Closed in B15. Mandatory ABI and Android TV/Google TV requirements fail closed when live evidence is missing or incompatible. |
 | Backups | Existing APK/split/shared-storage/report support remains. Modern app-private data and complete device images are not generally provided by ordinary ADB. B15 APK restore verifies the expected SHA-256 set and catalog. |
 | Remote | Existing D-pad/media/text controls suit Shield. Touch coordinates, gestures, rotation and multi-display targeting would materially improve tablet/head-unit usefulness. |
@@ -134,6 +148,19 @@ These are design recommendations, not features represented as already implemente
 - Before each commit: restore/build/test, staged-diff inspection and whitespace checks. No generated files, binaries, runtime data or `/TEMP/` staged.
 - The audit itself performed no version bump, push, tag, installer packaging, deployment or physical-device mutation. Subsequent B12 release preparation is documented in the changelog.
 
+## Hardware acceptance matrix
+
+Automated tests are not physical validation. Capture a read-only diagnostic export; do not mutate packages to fill this table.
+
+| Device | Identity | Inspection | Display/HDR | Package inventory | Debloat profile | Mutation readback | Physical validation |
+|---|---|---|---|---|---|---|---|
+| NVIDIA Shield TV | Automated verified | Automated verified | Automated verified | Automated verified | Automated verified | Automated verified | Pending |
+| Google TV Streamer 4K | Automated verified | Partial | Partial | Automated verified | Automated verified | Pending | Pending |
+| Chromecast with Google TV 4K | Automated verified | Partial | Partial | Automated verified | Automated verified | Pending | Pending |
+| onn. Google TV 4K Box | Automated verified | Partial | Partial | Automated verified | Automated verified | Pending | Pending |
+
+Streamer, Chromecast 4K, and onn. YOC inspection/display use the generic Android TV engine. They do not have device-specific parser fixtures yet. Mutation readback is implemented generically and Shield-covered; it has not been exercised against the three new identities.
+
 ## Hardware acceptance checklist
 
 Use a recoverable device. For vehicle hardware, work while parked and follow the manufacturer's service procedure.
@@ -156,3 +183,8 @@ Use a recoverable device. For vehicle hardware, work while parked and follow the
 - [NVIDIA performance settings guidance](https://support-shield.nvidia.com/shield-tv-pro-user-guide/How_to_Optimize_Internet_and_Video_Performance.htm)
 - [Shield Optimizer package observations](https://github.com/bryanroscoe/shield_optimizer) — community evidence, not hardware validation by this project
 - [Shield 2017 package dump](https://gist.github.com/roblav96/340991668988cba1591ce4bad3fad66e) — historical inventory evidence, not proof of safe removal
+- [LineageOS Chromecast with Google TV (4K) sabrina identity](https://wiki.lineageos.org/devices/sabrina/)
+- [Google TV Streamer kirkwood vendor build.prop dump](https://dumps.tadiphone.dev/dumps/google/kirkwood/-/blob/kirkwood-user-14-UTT3.240625.001.K5-12147201-release-keys/vendor/build.prop)
+- [onn. Google TV 4K Box YOC OTA fingerprint](https://xdaforums.com/t/walmart-onn-google-tv.4586587/)
+- [LineageOS 2021 onn. TV Box 4K dopinder identity](https://wiki.lineageos.org/devices/dopinder/)
+- [LineageOS onn. 4K Pro jarvis/SNA extraction source](https://github.com/LineageOS/android_device_amlogic_ne-common/commit/b25bc38d52cb5cd7a40ba13eebea86930475935c)

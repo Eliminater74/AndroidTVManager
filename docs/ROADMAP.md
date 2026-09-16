@@ -5,6 +5,7 @@
 - Confirmation dialogs are a fixed 560px wide with a work-area-capped, scrollable message pane so Cancel and Continue stay visible.
 - If Beta 15's in-app Install dialog hid Continue, download this installer from GitHub Releases.
 - Unreleased after B16: Shield inspection parsers, honest missing-tool states, Debloat darcy matching, and package readback. Physical Device Status confirmation is still open.
+- Also unreleased: hardware-family matching and conservative package overlays for Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box. Physical verification of those three devices is pending.
 
 ## Beta 17 — next: device session and shell
 

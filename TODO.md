@@ -16,6 +16,17 @@ Code-side, fixture-backed fixes on top of 1.0.0-B16. Do not treat this as hardwa
 - [x] Package mutation readback and Debloat preview refresh after execute/restore.
 - [ ] Re-check Device Status and a Debloat preview on the physical Shield without mutating packages.
 
+## Unreleased — Google TV Streamer, Chromecast 4K, and onn. 4K Box profiles
+
+Device-family identification and conservative package overlays. Inspection stays generic. This is not hardware certification and does not replace the B17 MainWindow/session split.
+
+- [x] Match Google TV Streamer 4K from kirkwood / GRS6B hardware evidence, never FriendlyName.
+- [x] Match Chromecast with Google TV 4K from sabrina / sabrina_prod_stable, excluding boreal HD and kirkwood.
+- [x] Match onn. Google TV 4K Box (YOC / onn_4k_gtv / DV6105Z), excluding dopinder, jarvis/SNA 4K Pro, and XNA Full HD.
+- [x] Keep Google TV core separate from sabrina, kirkwood, and YOC overlays; Keep/Critical wins on conflict.
+- [x] Chromecast-only diagnostics stay off the Streamer overlay; Streamer and YOC overlays are Keep-only until a physical dump.
+- [ ] Capture read-only diagnostic bundles on physical Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box.
+
 ## Beta 16 — current: confirmation dialog hotfix
 
 - [x] Keep confirmation dialogs at a fixed width with a work-area-capped message pane and vertical scrollbar so long release notes do not hide Cancel and Continue.
@@ -55,7 +66,7 @@ Shipped. Smoke the exact flows on hardware, then start the shell split.
 
 ## Beta 17 — next: device session and shell
 
-This is the next code project after the B16 hotfix.
+This is the next code project after the B16 hotfix. The Unreleased Google TV hardware-family work is real-device correctness that landed before that split; it does not replace it.
 
 - [ ] Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - [ ] Let pages subscribe to the shared session instead of `MainWindowViewModel` pushing `SelectedDevice` into each page VM.

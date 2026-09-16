@@ -6,7 +6,12 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
-Shield Device Status and Debloat correctness against a real NVIDIA Shield TV (`darcy`) dump. No version bump.
+Shield Device Status/Debloat correctness plus Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box family profiles. No version bump.
+
+### Added
+
+- Device-family matching for Google TV Streamer 4K (`kirkwood` / `GRS6B`), Chromecast with Google TV 4K (`sabrina` / `sabrina_prod_stable`), and onn. Google TV 4K Box (`YOC` / `onn_4k_gtv` / `DV6105Z`). Matching uses manufacturer, brand, model, product, device, board, and fingerprint. FriendlyName cannot activate a hardware profile.
+- Conservative model overlays on top of AOSP TV and Google TV core. Chromecast-only packages stay on the sabrina overlay. Streamer and onn. YOC overlays are Keep-only until a physical package dump. Overlapping Keep and Disable evidence stays Keep.
 
 ### Fixed
 
@@ -19,7 +24,7 @@ Shield Device Status and Debloat correctness against a real NVIDIA Shield TV (`d
 
 ### Release and validation
 
-- Device-independent fixtures cover Shield meminfo, dumpsys display, Vulkan features, stock `uid=2000` shell, and Debloat darcy matching. Debug/Release builds and 254 tests pass. Physical Device Status/Debloat confirmation on the live Shield is still required; hardware certification is not complete.
+- Device-independent fixtures cover Shield meminfo, dumpsys display, Vulkan features, stock `uid=2000` shell, Debloat darcy matching, and Streamer/Chromecast 4K/onn. YOC family overlays. Debug/Release builds and 279 tests pass. Physical Device Status/Debloat confirmation on the live Shield, Streamer, Chromecast 4K, and onn. 4K Box is still required; hardware certification is not complete.
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
