@@ -1,4 +1,5 @@
 using AndroidTVManager.Core.Abstractions;
+using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
 
 namespace AndroidTVManager.Infrastructure.Adb;
@@ -143,7 +144,79 @@ public sealed class PackageManager : IPackageManager
         await _safetyGate.EnsureAllowedAsync(
             new PackageMutationRequest(serial, packageName, kind, expectedBuildFingerprint),
             cancellationToken);
-        return await operation();
+        var result = await operation();
+        if (!result.IsSuccess)
+            return result;
+        return await VerifyMutationAsync(serial, packageName, kind, result, cancellationToken);
+    }
+
+    private async Task<AdbCommandResult> VerifyMutationAsync(
+        string serial,
+        string packageName,
+        PackageMutationKind kind,
+        AdbCommandResult result,
+        CancellationToken cancellationToken)
+    {
+        var expected = ExpectedState(kind);
+        if (expected is null)
+            return result;
+
+        var query = expected == PackageReadbackState.Disabled
+            || expected == PackageReadbackState.Enabled
+            ? await _runner.RunForDeviceAsync(serial, ["shell", "pm", "list", "packages", "-d", "--user", "0"],
+                TimeSpan.FromSeconds(30), cancellationToken)
+            : await _runner.RunForDeviceAsync(serial, ["shell", "pm", "list", "packages", "--user", "0"],
+                TimeSpan.FromSeconds(30), cancellationToken);
+        if (!query.IsSuccess)
+            return Failed(result, "Package state could not be verified after the mutation.");
+
+        var names = PackageInventoryParser.ParsePackageNames(query.StandardOutput);
+        var disabled = expected is PackageReadbackState.Disabled or PackageReadbackState.Enabled
+            && names.Contains(packageName);
+        var installed = expected is PackageReadbackState.Installed or PackageReadbackState.Missing
+            && names.Contains(packageName);
+        var matched = expected switch
+        {
+            PackageReadbackState.Disabled => disabled,
+            PackageReadbackState.Enabled => !disabled,
+            PackageReadbackState.Installed => installed,
+            PackageReadbackState.Missing => !installed,
+            _ => true
+        };
+        return matched
+            ? result
+            : Failed(result, expected == PackageReadbackState.Disabled
+                ? "Package remained enabled after disable reported success."
+                : expected == PackageReadbackState.Missing
+                    ? "Package remained installed for the user after uninstall reported success."
+                    : "Package state did not match the requested mutation.");
+    }
+
+    private static PackageReadbackState? ExpectedState(PackageMutationKind kind)
+        => kind switch
+        {
+            PackageMutationKind.Disable => PackageReadbackState.Disabled,
+            PackageMutationKind.Enable => PackageReadbackState.Enabled,
+            PackageMutationKind.UninstallForUser => PackageReadbackState.Missing,
+            PackageMutationKind.Restore => PackageReadbackState.Installed,
+            _ => null
+        };
+
+    private static AdbCommandResult Failed(AdbCommandResult result, string message)
+        => result with
+        {
+            ExitCode = result.ExitCode == 0 ? 1 : result.ExitCode,
+            StandardError = string.IsNullOrWhiteSpace(result.StandardError)
+                ? message
+                : $"{result.StandardError}{Environment.NewLine}{message}"
+        };
+
+    private enum PackageReadbackState
+    {
+        Disabled,
+        Enabled,
+        Installed,
+        Missing
     }
 
     private static PackageInfo? ParsePackage(string line)
