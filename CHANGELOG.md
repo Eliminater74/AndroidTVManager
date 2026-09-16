@@ -12,11 +12,14 @@ The project follows a beta-first release cycle while real Android TV hardware va
 - Kill timed-out or canceled ADB client processes without tearing down the shared ADB server process tree.
 - Redact pairing codes, credentials, local user paths, and APK/sideload/push/pull file arguments in command logs and script journals. `RedactOutput()` now uses the shared redactor instead of concatenating raw stdout/stderr.
 - Block deployment when a profile's mandatory ABI or Android TV/Google TV requirements cannot be verified. Unknown required evidence is no longer treated as a bypassable warning.
+- Block APK restore unless every `apks/` file listed in `SHA256SUMS.txt` is present with a matching hash and no extra files exist. Failed verification reports zero restored and zero failed packages, and nothing is installed.
+- Restore confirmation copy now states that APK copy does not restore app data, accounts, or settings.
 
 ### Added
 
 - Shared `ISensitiveDataRedactor` for logs, script journals, diagnostic bundles, and ADB argument lists, including IPv6 and local user-path redaction.
 - Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works.
+- Backup manifests now catalog expected package and APK-file counts so restore can compare the on-disk set against what the backup claimed.
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 

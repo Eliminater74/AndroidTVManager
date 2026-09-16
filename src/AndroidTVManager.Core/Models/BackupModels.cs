@@ -44,7 +44,16 @@ public sealed record DeviceBackupManifest(
     DateTimeOffset CreatedUtc,
     IReadOnlyList<BackupKind> RequestedKinds,
     IReadOnlyList<BackupArtifact> Artifacts,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    int? ExpectedPackageCount = null,
+    int? ExpectedApkFileCount = null,
+    IReadOnlyList<BackupPackageEntry>? Packages = null);
+
+public sealed record BackupPackageEntry(
+    string PackageName,
+    string? VersionName,
+    long? VersionCode,
+    IReadOnlyList<string> FileNames);
 
 public sealed record DeviceBackupResult(
     string Serial,

@@ -76,6 +76,40 @@ public sealed class BackupServiceTests
     }
 
     [Fact]
+    public async Task Restores_nothing_when_a_listed_apk_is_missing()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "AndroidTVManagerBackupTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "apks", "com.example.split"));
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "backup-manifest.json"),
+                """{"serial":"tv-1","friendlyDeviceName":"Test TV","createdUtc":"2026-01-01T00:00:00Z","requestedKinds":[2],"artifacts":[],"warnings":[],"expectedPackageCount":1,"expectedApkFileCount":2}""");
+            await File.WriteAllTextAsync(Path.Combine(root, "apks", "com.example.split", "base.apk"), "apk");
+            var apkHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("apk"))).ToLowerInvariant();
+            await File.WriteAllLinesAsync(Path.Combine(root, "SHA256SUMS.txt"),
+            [
+                $"{apkHash}  apks/com.example.split/base.apk",
+                $"{apkHash}  apks/com.example.split/config.tv.apk"
+            ]);
+
+            var runner = new FakeAdbProcessRunner();
+            var result = await CreateService(runner).RestoreApksAsync("tv-1", root);
+
+            result.RestoredPackages.Should().Be(0);
+            result.FailedPackages.Should().Be(0);
+            result.Messages.Should().Contain(message =>
+                message.Contains("nothing was installed", StringComparison.OrdinalIgnoreCase));
+            runner.Calls.Should().BeEmpty();
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Rejects_apk_restore_when_manifest_target_does_not_match()
     {
         var root = Path.Combine(Path.GetTempPath(), "AndroidTVManagerBackupTests", Guid.NewGuid().ToString("N"));

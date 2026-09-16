@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AndroidTVManager.Core.Abstractions;
+using AndroidTVManager.Core.Backup;
 using AndroidTVManager.Core.Models;
 
 namespace AndroidTVManager.Infrastructure.Adb;
@@ -134,6 +135,7 @@ public sealed class DeviceBackupService : IDeviceBackupService
 
         var checksumPath = Path.Combine(destination, "SHA256SUMS.txt");
         await WriteChecksumsAsync(destination, checksumPath, cancellationToken);
+        var apkCatalog = CatalogApkPackages(Path.Combine(destination, "apks"));
         artifacts.Add(new BackupArtifact(
             BackupKind.DeviceReport,
             "Backup checksums",
@@ -149,7 +151,10 @@ public sealed class DeviceBackupService : IDeviceBackupService
             DateTimeOffset.UtcNow,
             kinds,
             artifacts,
-            warnings);
+            warnings,
+            apkCatalog.Count,
+            apkCatalog.Sum(package => package.FileNames.Count),
+            apkCatalog);
         var manifestPath = Path.Combine(destination, "backup-manifest.json");
         await WriteJsonAsync(manifestPath, manifest, cancellationToken);
         artifacts.Add(new BackupArtifact(
@@ -179,10 +184,11 @@ public sealed class DeviceBackupService : IDeviceBackupService
         if (!File.Exists(manifestPath))
             return new BackupRestoreResult(serial, 0, 0, ["backup-manifest.json was not found; choose a folder created by Android TV Manager."]);
 
+        DeviceBackupManifest? manifest;
         try
         {
             await using var manifestStream = File.OpenRead(manifestPath);
-            var manifest = await JsonSerializer.DeserializeAsync<DeviceBackupManifest>(
+            manifest = await JsonSerializer.DeserializeAsync<DeviceBackupManifest>(
                 manifestStream,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true },
                 cancellationToken);
@@ -208,15 +214,11 @@ public sealed class DeviceBackupService : IDeviceBackupService
             return new BackupRestoreResult(serial, 0, 0, ["No APK backup folder was found."]);
 
         var messages = new List<string>();
-        var verification = await VerifyBackupAsync(root, apkRoot, cancellationToken);
+        var verification = await BackupIntegrityVerifier.VerifyApkSetAsync(root, cancellationToken);
         if (!verification.IsValid)
         {
             messages.AddRange(verification.Messages);
-            return new BackupRestoreResult(
-                serial,
-                0,
-                Directory.EnumerateDirectories(apkRoot).Count(),
-                messages);
+            return new BackupRestoreResult(serial, 0, 0, messages);
         }
         var restored = 0;
         var failed = 0;
@@ -248,40 +250,24 @@ public sealed class DeviceBackupService : IDeviceBackupService
         return new BackupRestoreResult(serial, restored, failed, messages);
     }
 
-    private static async Task<(bool IsValid, IReadOnlyList<string> Messages)> VerifyBackupAsync(
-        string root,
-        string apkRoot,
-        CancellationToken cancellationToken)
+    private static IReadOnlyList<BackupPackageEntry> CatalogApkPackages(string apkRoot)
     {
-        var checksumPath = Path.Combine(root, "SHA256SUMS.txt");
-        if (!File.Exists(checksumPath))
-            return (false, ["Backup verification failed: SHA256SUMS.txt is missing."]);
-        var expected = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var line in await File.ReadAllLinesAsync(checksumPath, cancellationToken))
-        {
-            var fields = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-            if (fields.Length >= 2)
-                expected[fields[1].TrimStart('*').Replace('/', Path.DirectorySeparatorChar)] = fields[0];
-        }
-
-        var errors = new List<string>();
-        foreach (var file in Directory.EnumerateFiles(apkRoot, "*.apk", SearchOption.AllDirectories))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var relative = Path.GetRelativePath(root, file).Replace('\\', '/');
-            if (!expected.TryGetValue(relative.Replace('/', Path.DirectorySeparatorChar), out var expectedHash)
-                && !expected.TryGetValue(relative, out expectedHash))
+        if (!Directory.Exists(apkRoot))
+            return [];
+        return Directory.EnumerateDirectories(apkRoot)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Select(directory =>
             {
-                errors.Add($"{relative}: no checksum entry.");
-                continue;
-            }
-            var actualHash = await HashFileAsync(file, cancellationToken);
-            if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
-                errors.Add($"{relative}: checksum mismatch.");
-        }
-        return errors.Count == 0
-            ? (true, [])
-            : (false, errors.Prepend("Backup verification failed; no APKs were installed.").ToArray());
+                var files = Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly)
+                    .Select(Path.GetFileName)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Cast<string>()
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+                return new BackupPackageEntry(Path.GetFileName(directory) ?? string.Empty, null, null, files);
+            })
+            .Where(entry => entry.FileNames.Count > 0)
+            .ToArray();
     }
 
     private async Task<BackupArtifact> WriteInspectionAsync(

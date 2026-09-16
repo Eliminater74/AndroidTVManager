@@ -24,6 +24,10 @@ The tools manager stores official Google Platform-Tools under LocalAppData, down
 
 SQLite is stored in `%LOCALAPPDATA%\AndroidTVManager\Data`. Migrations are explicit and transactional, foreign keys are enabled, and WAL mode is used for normal operation. Devices, sessions, connection events, pairing history, settings, scripts, executions, actions, and snapshots are represented in the schema. Repositories keep SQL out of view models.
 
+## Backups
+
+APK restore verifies the expected `apks/` set in `SHA256SUMS.txt` against the files on disk, including missing, extra, and hash-mismatched files. Verification failure installs nothing and reports zero restored packages. The operation copies APK files only; it does not restore app data.
+
 ## History and transactions
 
 Device arrival and connection transitions create historical records without writing duplicate unchanged events. Script executions are transaction records. Actions retain previous state, requested state, result, and undo status so undo can reverse only the changes made by that execution.

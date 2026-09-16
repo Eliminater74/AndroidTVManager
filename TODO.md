@@ -54,7 +54,8 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [x] Add baseline reference recommendation scoring without treating imported evidence as automatic Safe.
 - [ ] Add explicit Fully Reversible, Partially Reversible, and Not Reversible states to recommendation scoring.
 - [ ] Add device restore points that capture package state, runtime roles, relevant settings, and the ruleset version before mutations.
-- [ ] Add package-data backup warnings so package-state restoration is not presented as application-data restoration.
+- [x] Add package-data backup warnings so package-state restoration is not presented as application-data restoration.
+- [x] Verify APK restore against the expected SHA-256 set and package catalog, and install nothing when files are missing, extra, or mismatched.
 - [ ] Add Xiaomi, Yandex, Fire TV, and additional per-model reference baselines.
 - [ ] Add a richer backup history browser and validation for more backup artifact types.
 - [ ] Improve package icon extraction for more APK/resource formats.

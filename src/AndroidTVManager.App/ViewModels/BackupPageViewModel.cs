@@ -224,7 +224,7 @@ public sealed partial class BackupPageViewModel : PageViewModel
         }
         if (!Confirm(
                 "Restore APKs",
-                $"Install the APKs from this backup onto {SelectedDevice.FriendlyName}?\n\n{RestoreDirectory}\n\nExisting app versions may be replaced. App data is not restored by this operation."))
+                $"Install the APKs from this backup onto {SelectedDevice.FriendlyName}?\n\n{RestoreDirectory}\n\nThis copies APK files onto the device. It does not restore app data, accounts, or settings. Existing app versions may be replaced."))
         {
             Status = "Restore canceled.";
             return;
