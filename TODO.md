@@ -2,9 +2,11 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Unreleased — App Installer
+## Beta 17 — current: App Installer, Shield parsers, and Google TV families
 
-Turn the old Install APK page into a real sideload installer. Do not treat this as hardware certification.
+Shipped in 1.0.0-B17. Remaining items are physical confirmation, not extra code.
+
+### App Installer
 
 - [x] Rename the page to App Installer and route browse/analyze/install through `IBulkApkService`.
 - [x] Support APK, split APK sets, APKS, APKM, and XAPK, including folder selection of splits.
@@ -16,9 +18,7 @@ Turn the old Install APK page into a real sideload installer. Do not treat this 
 - [x] Verify known package identity after ADB success; keep Recovery / Sideload separate.
 - [ ] Sideload a normal APK, a split set, and an XAPK with OBB on the physical Shield; confirm scoped-storage OBB copy honestly if the firmware blocks `Android/obb`.
 
-## Unreleased — Shield inspection and Debloat correctness
-
-Code-side, fixture-backed fixes on top of 1.0.0-B16. Do not treat this as hardware certification.
+### Shield inspection and Debloat correctness
 
 - [x] Parse Shield meminfo so swap free and swap used are distinct.
 - [x] Parse `dumpsys display` `fps=` modes, active refresh, and HDR type 2; keep logical vs physical resolution.
@@ -30,9 +30,7 @@ Code-side, fixture-backed fixes on top of 1.0.0-B16. Do not treat this as hardwa
 - [x] Package mutation readback and Debloat preview refresh after execute/restore.
 - [ ] Re-check Device Status and a Debloat preview on the physical Shield without mutating packages.
 
-## Unreleased — Google TV Streamer, Chromecast 4K, and onn. 4K Box profiles
-
-Device-family identification and conservative package overlays. Inspection stays generic. This is not hardware certification and does not replace the B17 MainWindow/session split.
+### Google TV Streamer, Chromecast 4K, and onn. 4K Box profiles
 
 - [x] Match Google TV Streamer 4K from kirkwood / GRS6B hardware evidence, never FriendlyName.
 - [x] Match Chromecast with Google TV 4K from sabrina / sabrina_prod_stable, excluding boreal HD and kirkwood.
@@ -41,11 +39,13 @@ Device-family identification and conservative package overlays. Inspection stays
 - [x] Chromecast-only diagnostics stay off the Streamer overlay; Streamer and YOC overlays are Keep-only until a physical dump.
 - [ ] Capture read-only diagnostic bundles on physical Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box.
 
-## Beta 16 — current: confirmation dialog hotfix
+Physical smoke from Beta 15 still applies, plus installer upgrade from B16 → B17.
+
+## Beta 16 — confirmation dialog hotfix
+
+Shipped.
 
 - [x] Keep confirmation dialogs at a fixed width with a work-area-capped message pane and vertical scrollbar so long release notes do not hide Cancel and Continue.
-
-Physical smoke from Beta 15 still applies, plus installer upgrade from B15 → B16.
 
 ## Beta 15 — hardening and disconnect
 
@@ -72,21 +72,21 @@ Shipped. Smoke the exact flows on hardware, then start the shell split.
 - [ ] Test Android Wireless Debugging pairing on supported Android versions.
 - [ ] Exercise package inventory and one harmless disable/restore on a disposable device.
 - [ ] Confirm updater check, backup verification, and a normal application exit (tracker stop, session recovery, log flush).
-- [ ] Verify installer upgrade from B15 → B16 and uninstall.
+- [ ] Verify installer upgrade from B16 → B17 and uninstall.
 - [ ] Validate deep inspection on physical TV/Shield and ATOTO firmware; confirm failed probes remain clearly labeled.
 - [ ] Verify Device Status values against at least one Google TV and one manufacturer TV.
 - [ ] Validate the [recovery hardware checklist](docs/RECOVERY-SIDELOAD.md#hardware-acceptance) with the exact Pixel C ROM/recovery build.
 - [ ] Complete the [device support audit hardware acceptance checklist](docs/DEVICE-SUPPORT-AUDIT.md#hardware-acceptance-checklist).
 
-## Beta 17 — next: device session and shell
+## Beta 18 — next: device session and shell
 
-This is the next code project after the B16 hotfix. The Unreleased Google TV hardware-family work is real-device correctness that landed before that split; it does not replace it.
+This is the next code project after Beta 17. Pages still receive `SelectedDevice` from `MainWindowViewModel`.
 
 - [ ] Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - [ ] Let pages subscribe to the shared session instead of `MainWindowViewModel` pushing `SelectedDevice` into each page VM.
 - [ ] Add explicit device capabilities and user scope to the header after that context exists (`SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for secondary user, Automotive, offline, unauthorized, and unknown capability).
 
-## After B17 — safety, quality, and release
+## After B18 — safety, quality, and release
 
 - [ ] Add explicit Fully Reversible, Partially Reversible, and Not Reversible states to recommendation scoring.
 - [ ] Add device restore points that capture package state, runtime roles, relevant settings, fingerprint, and the ruleset version before mutations.
@@ -132,3 +132,6 @@ This is the next code project after the B16 hotfix. The Unreleased Google TV har
 - [x] Add read-only reference package dump export for device contributors.
 - [x] Add baseline reference recommendation scoring without treating imported evidence as automatic Safe.
 - [x] Add package-data backup warnings so package-state restoration is not presented as application-data restoration.
+- [x] Replace Install APK with App Installer for APK, split APK, APKS, APKM, and XAPK, including safe XAPK OBB copy (Beta 17).
+- [x] Correct Shield Device Status parsers, missing-tool states, Debloat darcy matching, and package readback (Beta 17).
+- [x] Identify Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box from hardware evidence with conservative overlays (Beta 17).

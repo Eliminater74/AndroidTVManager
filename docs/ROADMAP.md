@@ -1,20 +1,18 @@
 # Roadmap
 
-## Beta 16 — current: confirmation dialog hotfix
+## Beta 17 — current: App Installer, Shield parsers, and Google TV families
 
-- Confirmation dialogs are a fixed 560px wide with a work-area-capped, scrollable message pane so Cancel and Continue stay visible.
-- If Beta 15's in-app Install dialog hid Continue, download this installer from GitHub Releases.
-- Unreleased after B16: Shield inspection parsers, honest missing-tool states, Debloat darcy matching, and package readback. Physical Device Status confirmation is still open.
-- Also unreleased: hardware-family matching and conservative package overlays for Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box. Physical verification of those three devices is pending.
-- Also unreleased: App Installer sideload for APK, split APK, APKS, APKM, and XAPK, including safe XAPK OBB copy. Physical Shield validation of split installs and OBB copy (especially scoped-storage firmware) is still required.
+- App Installer sideloads APK, split APK, APKS, APKM, and XAPK after an analyze-before-install preview. Split sets use `install-multiple`. XAPK OBB copies only to `/sdcard/Android/obb/<package>/`. Physical Shield sideload and OBB copy remain open.
+- Shield Device Status parsers, honest missing-tool states, Debloat darcy matching, and package readback. Physical Device Status confirmation is still open.
+- Hardware-family matching and conservative package overlays for Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box. Physical verification of those three devices is pending.
 
-## Beta 17 — next: device session and shell
+## Beta 18 — next: device session and shell
 
 - Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - Pages subscribe to the shared session instead of the shell pushing `SelectedDevice` into each page VM.
 - Immediately after that context exists, add capability and user-scope header badges.
 
-## After B17
+## After B18
 
 - Restore points and Fully / Partially / Not reversible classifications before batch mutations.
 - Feature-aware debloat protection (Plex, casting, voice, game streaming, accessibility).

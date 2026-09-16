@@ -14,24 +14,28 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B16 — Beta 16
+### 1.0.0-B17 — Beta 17
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 16 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 17 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B16/AndroidTVManager-Setup.exe) — current Beta 16 installer link
-- `AndroidTVManager-1.0.0-B16-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B16-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B17/AndroidTVManager-Setup.exe) — current Beta 17 installer link
+- `AndroidTVManager-1.0.0-B17-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B17-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 16 is a hotfix so confirmation dialogs can scroll long release notes. If Beta 15's in-app Install window hid Continue, download this installer from GitHub Releases instead of using that dialog. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
-## New in Beta 16
+## New in Beta 17
 
-Confirmation dialogs are a fixed 560px wide, cap the message pane to the work area, and show a vertical scrollbar. Cancel and Continue stay on screen when GitHub release notes are longer than the display.
+**App Installer** replaces Install APK. Analyze, then sideload APK, split APK sets, APKS, APKM, and XAPK on the selected TARGET. Splits use `adb install-multiple`. XAPK OBB files copy only to `/sdcard/Android/obb/<package>/` after a successful APK install; `Android/data` is not pushed. Scoped-storage firmware may still block OBB copy, and that is reported as partial success. Recovery / Sideload remains the OTA ZIP workflow.
 
-Beta 15 remains the hardening and disconnect release: Network/Wireless disconnect, live package safety, fail-closed Platform-Tools/backup/updater/recovery/database paths, and `IAdbDeviceSession`. The MainWindow subscribe split stays next after this hotfix.
+Device Status and Debloat now parse Shield meminfo, display modes, Vulkan features, and missing optional tools honestly, and match Shield TV by NVIDIA + `darcy`/`foster` rather than FriendlyName.
+
+Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box get hardware-family matching and conservative overlays. Physical dumps for those three devices are still pending.
+
+Beta 16 remains the confirmation-dialog hotfix. Beta 15 remains the hardening and disconnect release. The MainWindow subscribe split is next as Beta 18.
 
 Beta 14 made a newly connected Shield or other network device selectable while an emulator stays attached. Beta 13 added **Recovery / Sideload** and **Device Status → Deep scan**. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) and [Deep device inspection](docs/DEEP-INSPECTION.md).
 
@@ -122,7 +126,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B16 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B17 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.

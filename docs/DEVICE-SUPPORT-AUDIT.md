@@ -24,7 +24,7 @@ Beta 15 also introduces `IAdbDeviceSession` for the live list, TARGET selection,
 
 Physical-device certification remains open. Automated tests and WPF rendering are not a substitute for the [hardware acceptance checklist](#hardware-acceptance-checklist).
 
-## Follow-up status — unreleased after 1.0.0-B16
+## Follow-up status — 1.0.0-B17
 
 Parser and Debloat correctness from a real Shield (`darcy`) dump. These items are closed in code with fixtures; they do not complete hardware acceptance.
 
@@ -37,7 +37,7 @@ Parser and Debloat correctness from a real Shield (`darcy`) dump. These items ar
 
 Do not mark the [hardware acceptance checklist](#hardware-acceptance-checklist) complete until Device Status and a Debloat preview are confirmed on the physical Shield.
 
-## Follow-up status — unreleased Google TV hardware families
+## Follow-up status — 1.0.0-B17 Google TV hardware families
 
 Family identification and conservative overlays for Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box. Automated tests are not physical verification.
 
@@ -47,6 +47,16 @@ Family identification and conservative overlays for Google TV Streamer 4K, Chrom
 | Google TV core vs model overlays | **Closed in code.** `google-tv-chromecast-ga01919` remains the Google TV core. New overlays are `google-tv-streamer-kirkwood-4k`, `google-tv-chromecast-sabrina-4k`, and `onn-google-tv-4k-box-yoc`. Keep/Critical wins when profiles disagree. |
 | Chromecast casting / Streamer Keep-only / onn. OEM | **Closed in code, conservative.** Chromecast overlay keeps casting, OTA DFU, Bluetooth, launcher, and setup; `netoscope` is the only reviewed Disable candidate. Streamer and YOC overlays add no Disable list. Unknown Walmart/onn packages stay manual. |
 | Physical dumps for the three new devices | **Pending.** No Streamer, Chromecast 4K, or YOC diagnostic bundle was captured during this work. |
+
+## Follow-up status — 1.0.0-B17 App Installer
+
+App Installer is shipped in code. Physical sideload, especially XAPK OBB on scoped-storage firmware, is not certified.
+
+| Item | Status |
+|---|---|
+| APK, split APK, APKS, APKM, XAPK analyze-then-install | **Closed in code.** Uses `IBulkApkService`; splits use `install-multiple`; APKS multi-variant archives fail closed. |
+| XAPK OBB copy | **Closed in code.** After a successful APK install, OBB is pushed only to `/sdcard/Android/obb/<package>/`. `Android/data` is not pushed. OBB copy failure is partial success. |
+| Physical Shield sideload | **Pending.** A real APK, split set, and XAPK-with-OBB still need to be installed on the Shield. |
 
 ## Support matrix
 
@@ -126,7 +136,7 @@ An existing substring comparison could mistake a similarly prefixed disabled pac
 
 Do not add another large subsystem to Beta 15. Smoke the hardening release on hardware, then continue in this order:
 
-1. **B16 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists.
+1. **B18 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists. B16 was the confirmation-dialog hotfix; B17 shipped App Installer and the Google TV family overlays.
 2. **Capability and user summary in the header.** Show facts such as `SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for `Secondary user`, `Automotive`, `Offline`, `Unauthorized`, and `Unknown capability`. Separate detected facts from saved labels.
 3. **Restore points and reversibility.** Tell the user whether an operation is Fully reversible, Partially reversible, or Not reversible, and capture package state, runtime roles, relevant settings, fingerprint, and ruleset before a batch mutation.
 4. **Feature-based cleanup choices.** Let users declare “I use Plex hosting / casting / voice / game streaming / accessibility,” then protect the corresponding dependencies even in Aggressive mode.

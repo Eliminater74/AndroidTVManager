@@ -6,7 +6,11 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
-App Installer sideload support for APK, split APK, APKS, APKM, and XAPK, plus the earlier Shield inspection/Debloat and Google TV family-profile work. No version bump.
+Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## [1.0.0-B17] - 2026-09-16
+
+Beta 17 ships App Installer sideload, Shield Device Status/Debloat correctness, and conservative Google TV Streamer 4K / Chromecast 4K / onn. 4K Box family profiles.
 
 ### Added
 
@@ -25,9 +29,9 @@ App Installer sideload support for APK, split APK, APKS, APKM, and XAPK, plus th
 
 ### Release and validation
 
-- Device-independent fixtures cover Shield meminfo, dumpsys display, Vulkan features, stock `uid=2000` shell, Debloat darcy matching, Streamer/Chromecast 4K/onn. YOC family overlays, and App Installer prepare/install/OBB/archive-safety cases. Debug/Release builds and 300 tests pass. Physical Device Status/Debloat confirmation and Shield-first App Installer sideload (including a real XAPK with OBB) are still required; hardware certification is not complete.
-
-Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+- Updated app and installer metadata to 1.0.0-B17 (assembly/file version 1.0.0.17), release documentation, and download links. Streamer/Chromecast 4K/onn. YOC overlays are included; core package-rule revision remains the Beta 12 set plus those conservative overlays.
+- Debug/Release builds and 300 device-independent tests cover Shield parsers, family overlays, and App Installer prepare/install/OBB/archive-safety cases.
+- Physical Device Status/Debloat confirmation, Shield-first App Installer sideload (including a real XAPK with OBB), and Streamer/Chromecast 4K/onn. 4K Box dumps are still required; hardware certification is not complete.
 
 ## [1.0.0-B16] - 2026-09-16
 
