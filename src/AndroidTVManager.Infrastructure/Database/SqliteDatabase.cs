@@ -97,11 +97,40 @@ public sealed class SqliteDatabase
                 File.Copy(source, backupPath + sidecar, overwrite: false);
         }
 
-        foreach (var stale in Directory.EnumerateFiles(directory, PreMigrationBackupPattern)
-                     .OrderByDescending(File.GetLastWriteTimeUtc)
-                     .Skip(RetainedPreMigrationBackups))
+        PrunePreMigrationBackups(directory);
+    }
+
+    private static void PrunePreMigrationBackups(string directory)
+    {
+        var backups = Directory.EnumerateFiles(directory, PreMigrationBackupPattern)
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .ToArray();
+        var retained = backups.Take(RetainedPreMigrationBackups)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var stale in backups.Where(path => !retained.Contains(path)))
         {
-            try { File.Delete(stale); } catch (IOException) { }
+            TryDelete(stale);
+            TryDelete(stale + "-wal");
+            TryDelete(stale + "-shm");
+        }
+
+        foreach (var sidecar in Directory.EnumerateFiles(directory, "*.pre-migrate.bak-wal")
+                     .Concat(Directory.EnumerateFiles(directory, "*.pre-migrate.bak-shm")))
+        {
+            if (!retained.Contains(sidecar[..^4]))
+                TryDelete(sidecar);
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch (IOException)
+        {
         }
     }
 

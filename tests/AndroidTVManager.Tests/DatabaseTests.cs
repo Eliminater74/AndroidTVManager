@@ -55,6 +55,8 @@ public sealed class DatabaseTests
             {
                 var stale = Path.Combine(directory, $"old-{i}.pre-migrate.bak");
                 await File.WriteAllTextAsync(stale, "stale");
+                await File.WriteAllTextAsync(stale + "-wal", "wal");
+                await File.WriteAllTextAsync(stale + "-shm", "shm");
                 File.SetLastWriteTimeUtc(stale, DateTime.UtcNow.AddMinutes(-10 + i));
             }
 
@@ -85,6 +87,8 @@ public sealed class DatabaseTests
             var backups = Directory.EnumerateFiles(directory, SqliteDatabase.PreMigrationBackupPattern).ToArray();
             backups.Should().HaveCount(SqliteDatabase.RetainedPreMigrationBackups);
             backups.Should().Contain(path => Path.GetFileName(path).StartsWith("androidtvmanager-v1-", StringComparison.Ordinal));
+            Directory.GetFiles(directory, "old-0.pre-migrate.bak*").Should().BeEmpty();
+            Directory.GetFiles(directory, "old-1.pre-migrate.bak*").Should().BeEmpty();
             database.SchemaVersion.Should().Be(5);
             await using var migrated = await database.OpenAsync();
             await using var check = migrated.CreateCommand();
