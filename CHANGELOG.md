@@ -6,6 +6,18 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+### Fixed
+
+- Restore the previous Platform-Tools install if activation fails after the live tools folder has already been moved aside, and verify `adb version` plus `fastboot.exe` from the active directory before discarding the backup.
+- Kill timed-out or canceled ADB client processes without tearing down the shared ADB server process tree. Another ADB consumer on the same PC (for example Meta Quest tools) can still restart `adb` and drop this app's sessions; keep those tools closed while using Android TV Manager.
+- Redact pairing codes, credentials, local user paths, and APK/sideload/push/pull file arguments in command logs and script journals. `RedactOutput()` now uses the shared redactor instead of concatenating raw stdout/stderr.
+- Block deployment when a profile's mandatory ABI or Android TV/Google TV requirements cannot be verified. Unknown required evidence is no longer treated as a bypassable warning.
+
+### Added
+
+- Shared `ISensitiveDataRedactor` for logs, script journals, diagnostic bundles, and ADB argument lists, including IPv6 and local user-path redaction.
+- Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works.
+
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [1.0.0-B14] - 2026-09-15

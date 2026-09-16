@@ -10,7 +10,7 @@ The shell is a single WPF window with a left navigation rail and a status bar. P
 
 ## ADB process architecture
 
-`IAdbProcessRunner` is the only path to `adb.exe`. It uses `ProcessStartInfo.ArgumentList`, redirected output, cancellation, timeouts, and a structured result. Pairing codes are passed in memory and redacted from diagnostics. Command-specific services capture the target serial before starting work.
+`IAdbProcessRunner` is the only path to `adb.exe`. It uses `ProcessStartInfo.ArgumentList`, redirected output, cancellation, timeouts, and a structured result. Pairing codes and local payload paths are redacted from diagnostics. Timed-out clients are killed without `entireProcessTree`, so the shared ADB server stays up. Other ADB tools on the same PC can still restart the server and drop sessions. Command-specific services capture the target serial before starting work.
 
 ## Device tracker
 
@@ -18,7 +18,7 @@ The shell is a single WPF window with a left navigation rail and a status bar. P
 
 ## Platform-Tools
 
-The tools manager stores official Google Platform-Tools under LocalAppData, downloads into a staging directory, validates `adb.exe`, parses `adb version`, and activates only a successful installation. The repository never contains the downloaded binaries.
+The tools manager stores official Google Platform-Tools under LocalAppData, downloads into a staging directory, validates `adb.exe` and `fastboot.exe`, then swaps the active folder transactionally. `adb version` is run from the active directory after the swap. If verification fails, the previous installation is restored. The repository never contains the downloaded binaries.
 
 ## Database
 
