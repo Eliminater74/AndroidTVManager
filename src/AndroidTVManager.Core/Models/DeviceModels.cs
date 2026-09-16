@@ -40,6 +40,27 @@ public sealed class AndroidDevice
     public string? BuildType { get; init; }
     public string? BuildFingerprint { get; init; }
     public DateTimeOffset SeenAtUtc { get; init; } = DateTimeOffset.UtcNow;
+
+    public string DisplayLabel =>
+        FirstNonEmpty(FriendlyName, ReportedName, Model, Serial) ?? "Unknown device";
+
+    public string DisplaySubtitle
+    {
+        get
+        {
+            var transport = ConnectionType switch
+            {
+                ConnectionType.Usb => "USB",
+                ConnectionType.Network => "Network",
+                ConnectionType.WirelessDebugging => "Wireless",
+                _ => "ADB"
+            };
+            return string.IsNullOrWhiteSpace(Serial) ? transport : $"{transport} · {Serial}";
+        }
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+        => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 }
 
 public sealed class SavedDevice
