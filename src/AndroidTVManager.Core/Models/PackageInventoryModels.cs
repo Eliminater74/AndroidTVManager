@@ -285,3 +285,61 @@ public sealed record DebloatPlan(
     IReadOnlyList<DebloatPlanItem> Items,
     IReadOnlyList<string> Warnings,
     PackageReferenceSummary? ReferenceSummary = null);
+
+public enum DebloatCleanupKind
+{
+    Safe,
+    Recommended,
+    Deep,
+    Custom
+}
+
+public sealed record DebloatCleanupProfileState(
+    DebloatCleanupKind Kind,
+    string Id,
+    string DisplayName,
+    string Description,
+    DebloatPreset PlannerPreset,
+    string ReversibilityLabel,
+    IReadOnlyList<string> FeatureImpacts,
+    int ActionCount,
+    int AlreadyCleanedCount,
+    int AdditionalActionCount,
+    int DisableCount,
+    int UninstallCount,
+    bool HasActions,
+    bool IsAlreadyClean,
+    string StatusText,
+    string ActionLabel);
+
+public sealed record DebloatCleanupOverview(
+    string Serial,
+    string? BuildFingerprint,
+    string DeviceLabel,
+    string DetectedProfileLabel,
+    string ProfileDetail,
+    bool HasModelSpecificProfile,
+    int PackagesScanned,
+    int UnknownLeftUntouched,
+    IReadOnlyList<string> ProtectedHighlights,
+    IReadOnlyList<DebloatCleanupProfileState> Profiles,
+    IReadOnlyList<PackageReferenceProfileMatch> ActiveProfiles,
+    DebloatPlan SourcePlan,
+    DateTimeOffset CreatedUtc)
+{
+    public DebloatCleanupProfileState? Profile(DebloatCleanupKind kind)
+        => Profiles.FirstOrDefault(profile => profile.Kind == kind);
+}
+
+public sealed record DebloatCleanupResult(
+    DebloatCleanupKind Kind,
+    string ProfileName,
+    string DeviceLabel,
+    string Serial,
+    DateTimeOffset CompletedUtc,
+    int Succeeded,
+    int Failed,
+    int AlreadyClean,
+    bool CanRestore,
+    long? ExecutionId,
+    string Summary);

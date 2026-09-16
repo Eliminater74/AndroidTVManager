@@ -38,7 +38,8 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
         if (plan.BuildFingerprint is not null
             && liveFingerprint is not null
             && !string.Equals(plan.BuildFingerprint, liveFingerprint, StringComparison.Ordinal))
-            throw new InvalidOperationException("The device build changed since the debloat plan was created. Refresh and review the plan.");
+            throw new InvalidOperationException(
+                "The device state changed since this cleanup was prepared. AndroidTVManager rebuilt the cleanup plan. Review the updated result.");
         var expected = plan.Items.Where(item => item.Selected)
             .Select(item => new { item.Package.PackageName, item.Package.IsEnabled, item.Package.IsInstalled })
             .OrderBy(item => item.PackageName, StringComparer.OrdinalIgnoreCase)
@@ -49,7 +50,8 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
             .OrderBy(item => item.PackageName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         if (!expected.SequenceEqual(actual))
-            throw new InvalidOperationException("The device package state changed since the debloat plan was created. Refresh and review the plan.");
+            throw new InvalidOperationException(
+                "The device state changed since this cleanup was prepared. AndroidTVManager rebuilt the cleanup plan. Review the updated result.");
 
         var device = live.Overview.Value ?? new AndroidDevice
         {
@@ -89,8 +91,14 @@ public sealed class DebloatExecutionService : IDebloatExecutionService
         return await _scripts.ExecuteAsync(new ScriptDefinition
         {
             SchemaVersion = 1,
-            Name = $"{plan.Preset} debloat",
-            Description = "Generated from an approved, device-specific debloat preview.",
+            Name = plan.Preset switch
+            {
+                DebloatPreset.Simple => "Safe Cleanup",
+                DebloatPreset.Medium => "Recommended Cleanup",
+                DebloatPreset.Aggressive => "Deep Cleanup",
+                _ => $"{plan.Preset} cleanup"
+            },
+            Description = "Generated from an approved, device-specific cleanup profile.",
             Actions = actions
         }, new AndroidDevice
         {

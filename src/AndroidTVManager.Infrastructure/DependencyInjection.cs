@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddSingleton<IPackageSafetyGate, PackageSafetyGate>();
         services.AddSingleton<IPackageClassifier, PackageClassifier>();
         services.AddSingleton<IDebloatPlanner, DebloatPlanner>();
+        services.AddSingleton<IDebloatCleanupService, DebloatCleanupService>();
         services.AddSingleton<IDebloatExecutionService, DebloatExecutionService>();
         services.AddSingleton<IDeveloperVerificationPolicyProvider, DeveloperVerificationPolicyProvider>();
         services.AddSingleton<IRootGuidanceProvider, RootGuidanceProvider>();

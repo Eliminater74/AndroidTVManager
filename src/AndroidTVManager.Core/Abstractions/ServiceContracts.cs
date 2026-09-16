@@ -545,6 +545,16 @@ public interface IDebloatPlanner
         CancellationToken cancellationToken = default);
 }
 
+public interface IDebloatCleanupService
+{
+    Task<DebloatCleanupOverview> CreateOverviewAsync(
+        string serial,
+        AndroidDevice? targetDevice = null,
+        CancellationToken cancellationToken = default);
+
+    DebloatPlan CreateProfilePlan(DebloatCleanupOverview overview, DebloatCleanupKind kind);
+}
+
 public interface IDebloatExecutionService
 {
     Task<ScriptExecutionResult> ExecuteAsync(

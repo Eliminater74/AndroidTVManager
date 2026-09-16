@@ -100,43 +100,10 @@ public sealed class DebloatPlanner : IDebloatPlanner
         DebloatPreset preset,
         PackageReferenceAnalysisItem? reference)
     {
-        var autoAction = PackageAssessmentReferenceEnricher.IsAutoDebloatAction(assessment);
+        var selected = DebloatPresetSelection.IsSelected(package, assessment, preset);
         var action = ResolveAction(assessment);
-        var allowed = assessment.Override == PackageOverride.UserApproved
-            || (autoAction && assessment.Risk switch
-            {
-                PackageRiskLevel.Safe => true,
-                PackageRiskLevel.Caution => preset is DebloatPreset.Medium or DebloatPreset.Aggressive,
-                PackageRiskLevel.HighRisk => preset == DebloatPreset.Aggressive,
-                _ => false
-        });
-        var protectedPackage = PackageAssessmentReferenceEnricher.IsSafetyLocked(assessment);
-        var selected = allowed && !protectedPackage && package.IsInstalled && package.IsEnabled;
-        var reason = GetSelectionBlockReason(package, assessment, preset, selected, protectedPackage, autoAction);
+        var reason = DebloatPresetSelection.BlockReason(package, assessment, preset, selected);
         return new(package, assessment, action, selected, reason, reference);
-    }
-
-    private static string? GetSelectionBlockReason(
-        PackageInventoryEntry package,
-        PackageAssessment assessment,
-        DebloatPreset preset,
-        bool selected,
-        bool protectedPackage,
-        bool autoAction)
-    {
-        if (selected)
-            return null;
-        if (protectedPackage)
-            return "Locked: critical package, Keep rule, or active device role.";
-        if (!package.IsInstalled)
-            return "Package is not currently installed for the user.";
-        if (!package.IsEnabled)
-            return "Package is already disabled.";
-        if (assessment.Risk == PackageRiskLevel.Unknown)
-            return "Not auto-selected: unknown package. You may select it manually after review.";
-        if (!autoAction)
-            return $"Not auto-selected: reviewed action is {assessment.RecommendedAction}.";
-        return $"Not included in {preset} preset.";
     }
 
     private static DebloatAction ResolveAction(PackageAssessment assessment)
