@@ -6,7 +6,11 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
-Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Fixed
+
+- Shared `GhostButtonStyle` and `AccentButtonStyle` now use themed control templates with an `IsEnabled=False` trigger, so disabled buttons such as App Installer **Analyze** and **Install** keep Dark / Pure Black / Light colors instead of stock WPF white chrome.
+
+Planned follow-up work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [1.0.0-B18] - 2026-09-16
 

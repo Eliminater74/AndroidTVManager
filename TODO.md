@@ -2,6 +2,10 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Unreleased
+
+- [x] Theme disabled Ghost and Accent buttons so Analyze / Install (and other shared buttons) keep Dark, Pure Black, and Light colors.
+
 ## Beta 18 — current: device-specific one-click Debloat profiles
 
 Shipped in 1.0.0-B18. Remaining items are physical confirmation.
