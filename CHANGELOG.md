@@ -6,6 +6,21 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+Shield Device Status and Debloat correctness against a real NVIDIA Shield TV (`darcy`) dump. No version bump.
+
+### Fixed
+
+- Memory inspection stores swap free and swap used separately instead of putting used bytes in `SwapFreeBytes`.
+- Display inspection parses `dumpsys display` `fps=` modes and HDR type 2 (HDR10), and keeps logical 1920x1080 distinct from the active 3840x2160 HDMI mode.
+- Graphics reads Vulkan from `pm list features` (`android.hardware.vulkan.version`) instead of a GLES extension line that happens to contain "vulkan". `ro.hardware=darcy` stays hardware, not a SoC name.
+- Inspection no longer uses compound `sh -c` scripts for `id`/`which su`, `gsi_tool`, CPU frequency, or configuration `build.prop` files.
+- Missing `su`, missing `gsi_tool`, and `Can't find service: media.drm` are absence, not Partial Security/Root/GSI or a mysterious DRM failure. HDMI/CEC is Supported when the HDMI CEC feature and `hdmi_control` agree.
+- Debloat matches Shield TV by NVIDIA identity plus `SHIELD Android TV` or `darcy`/`foster` product/device codes, never by FriendlyName. Simple may select zero packages and says so. `PackageManager` fails a disable that still reads enabled, and Debloat reloads the preview after execute/restore.
+
+### Release and validation
+
+- Device-independent fixtures cover Shield meminfo, dumpsys display, Vulkan features, stock `uid=2000` shell, and Debloat darcy matching. Debug/Release builds and 254 tests pass. Physical Device Status/Debloat confirmation on the live Shield is still required; hardware certification is not complete.
+
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [1.0.0-B16] - 2026-09-16

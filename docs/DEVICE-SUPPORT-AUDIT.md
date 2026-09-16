@@ -24,6 +24,19 @@ Beta 15 also introduces `IAdbDeviceSession` for the live list, TARGET selection,
 
 Physical-device certification remains open. Automated tests and WPF rendering are not a substitute for the [hardware acceptance checklist](#hardware-acceptance-checklist).
 
+## Follow-up status — unreleased after 1.0.0-B16
+
+Parser and Debloat correctness from a real Shield (`darcy`) dump. These items are closed in code with fixtures; they do not complete hardware acceptance.
+
+| Original finding | Status |
+|---|---|
+| Device Status swap used/free, display fps=/HDR type 2, and Vulkan GLES-extension false positive | **Closed in code.** Shield meminfo, `dumpsys display` modes, and `pm list features` Vulkan parsing are fixture-covered. Re-check values on the live Shield. |
+| Compound `sh -c` probes (`which gsi_tool && …`) fail on the device | **Closed in code.** Inspection uses separate `id`, `which su`, `gsi_tool status`, and discrete CPU frequency files. |
+| Stock non-root, missing `gsi_tool`, HDMI/CEC, and missing `media.drm` looked like Partial/failure | **Closed in code.** Optional missing tools do not Partial Security/Root/GSI; HDMI/CEC is Supported when feature + `hdmi_control` agree; missing DRM is Unavailable. |
+| Debloat Shield matching and post-execute package state | **Closed in code.** Profile matches NVIDIA + SHIELD Android TV or `darcy`/`foster` product/device, never FriendlyName. Disable readback fails if the package stays enabled. Debloat reloads the preview after execute/restore. Simple may select 0 packages. |
+
+Do not mark the [hardware acceptance checklist](#hardware-acceptance-checklist) complete until Device Status and a Debloat preview are confirmed on the physical Shield.
+
 ## Support matrix
 
 | Device | Connection | Cleanup and tweaks | Limits |

@@ -4,6 +4,7 @@
 
 - Confirmation dialogs are a fixed 560px wide with a work-area-capped, scrollable message pane so Cancel and Continue stay visible.
 - If Beta 15's in-app Install dialog hid Continue, download this installer from GitHub Releases.
+- Unreleased after B16: Shield inspection parsers, honest missing-tool states, Debloat darcy matching, and package readback. Physical Device Status confirmation is still open.
 
 ## Beta 17 — next: device session and shell
 

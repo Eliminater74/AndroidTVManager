@@ -8,11 +8,11 @@ Connect an authorized ADB device, open **Device Status**, select it and choose *
 
 Standard inspection already includes Android properties and identity/build/security evidence, CPU/memory, graphics/display, storage, network, Bluetooth, HDMI/CEC, DRM, battery/thermal/runtime state, features, package summaries and running services.
 
-Deep scan adds 32 fixed read-only commands:
+Deep scan adds 34 fixed read-only commands:
 
 | Area | Additional evidence |
 |---|---|
-| Kernel / CPU | Kernel/version, online cores, exposed frequency policy readings and governors |
+| Kernel / CPU | Kernel/version, online cores, and discrete cpu0 current/max frequency and governor files (no `sh -c` loops) |
 | Storage / memory | Partition listing, mounted filesystems, swap, storage volumes/disks, process memory summary |
 | Input / peripherals | Kernel input devices, Android input state, USB, sensors and camera service diagnostics |
 | Media | AudioFlinger, audio policy, codec service and TV input diagnostics |

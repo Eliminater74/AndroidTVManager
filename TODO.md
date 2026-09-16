@@ -2,6 +2,20 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Unreleased — Shield inspection and Debloat correctness
+
+Code-side, fixture-backed fixes on top of 1.0.0-B16. Do not treat this as hardware certification.
+
+- [x] Parse Shield meminfo so swap free and swap used are distinct.
+- [x] Parse `dumpsys display` `fps=` modes, active refresh, and HDR type 2; keep logical vs physical resolution.
+- [x] Read Vulkan from `pm list features`; do not treat `darcy` as a SoC.
+- [x] Replace inspection `sh -c` compound probes with separate commands.
+- [x] Stock non-root, missing `gsi_tool`, HDMI/CEC Supported, and missing DRM service classified honestly.
+- [x] Device Status labels for RAM, logical/physical display, HDR, swap, and unknown SoC.
+- [x] Shield Debloat profile matches NVIDIA + SHIELD Android TV / `darcy` without FriendlyName; Simple empty selection is explained.
+- [x] Package mutation readback and Debloat preview refresh after execute/restore.
+- [ ] Re-check Device Status and a Debloat preview on the physical Shield without mutating packages.
+
 ## Beta 16 — current: confirmation dialog hotfix
 
 - [x] Keep confirmation dialogs at a fixed width with a work-area-capped message pane and vertical scrollbar so long release notes do not hide Cancel and Continue.
