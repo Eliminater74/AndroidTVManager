@@ -359,10 +359,10 @@
       }
     ],
     "manufacturer": "Google",
-    "Product": "sabrina",
-    "sourceIds": ["uad-chromecast-100"],
-    "observedModels": "Chromecast with Google TV GA01919-US",
-    "evidenceNotes": "Observed in a real package dump; package role was not independently tested by Android TV Manager."
+    "deviceFamily": "Chromecast with Google TV 4K",
+    "sourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+    "observedModels": "Chromecast with Google TV (4K) sabrina / sabrina_prod_stable",
+    "evidenceNotes": "Observed in a Chromecast 4K package dump; package role was not independently tested by Android TV Manager. Do not treat this as a Streamer rule."
   },
   {
     "package": "com.google.android.tv.dfuservice",
@@ -378,9 +378,9 @@
       }
     ],
     "manufacturer": "Google",
-    "Product": "sabrina",
-    "sourceIds": ["uad-chromecast-100"],
-    "observedModels": "Chromecast with Google TV GA01919-US"
+    "deviceFamily": "Chromecast with Google TV 4K",
+    "sourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+    "observedModels": "Chromecast with Google TV (4K) sabrina / sabrina_prod_stable"
   },
   {
     "package": "com.android.bluetooth.chromecast",
@@ -396,9 +396,47 @@
       }
     ],
     "manufacturer": "Google",
-    "Product": "sabrina",
-    "sourceIds": ["uad-chromecast-100"],
-    "observedModels": "Chromecast with Google TV GA01919-US"
+    "deviceFamily": "Chromecast with Google TV 4K",
+    "sourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+    "observedModels": "Chromecast with Google TV (4K) sabrina / sabrina_prod_stable"
+  },
+  {
+    "package": "com.google.android.chromecast.chromecastservice",
+    "risk": "Critical",
+    "confidence": "High",
+    "category": "Casting platform",
+    "description": "Chromecast/cast platform service protected on Google TV Streamer when present.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Casting and platform",
+        "description": "Casting, device integration, or platform behavior may fail."
+      }
+    ],
+    "manufacturer": "Google",
+    "deviceFamily": "Google TV Streamer 4K",
+    "sourceIds": ["google-kirkwood-vendor-dump", "google-streamer-launcher-report"],
+    "observedModels": "Google TV Streamer (kirkwood)",
+    "evidenceNotes": "Keep-only Streamer overlay. Package presence on kirkwood is not hardware-verified; if inventory shows it, do not recommend removal. Physical verification pending."
+  },
+  {
+    "package": "com.google.android.apps.mediashell",
+    "risk": "HighRisk",
+    "confidence": "High",
+    "category": "Cast/media shell",
+    "description": "Android Media Shell / Cast receiver protected on Google TV Streamer when present.",
+    "recommendedAction": "Keep",
+    "impacts": [
+      {
+        "area": "Casting and media",
+        "description": "Cast receiver or Google media shell behavior may be affected."
+      }
+    ],
+    "manufacturer": "Google",
+    "deviceFamily": "Google TV Streamer 4K",
+    "sourceIds": ["google-kirkwood-vendor-dump", "android-tv-manager-atv16-emulator"],
+    "observedModels": "Google TV Streamer (kirkwood); Android TV emulator",
+    "evidenceNotes": "Role evidence is from Android TV Cast/media shell. Streamer-specific presence is not hardware-verified. Physical verification pending."
   },
   {
     "package": "com.google.android.tv.remote.service",
@@ -432,10 +470,10 @@
       }
     ],
     "manufacturer": "Google",
-    "Product": "sabrina",
-    "sourceIds": ["uad-chromecast-100"],
-    "observedModels": "Chromecast with Google TV GA01919-US",
-    "evidenceNotes": "Package presence is verified by a dump; optional status is inferred from its apparent diagnostic role."
+    "deviceFamily": "Chromecast with Google TV 4K",
+    "sourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+    "observedModels": "Chromecast with Google TV (4K) sabrina / sabrina_prod_stable",
+    "evidenceNotes": "Package presence is verified by a Chromecast dump; optional status is inferred from its apparent diagnostic role. Not applied to Google TV Streamer."
   },
   {
     "package": "com.google.android.backdrop",

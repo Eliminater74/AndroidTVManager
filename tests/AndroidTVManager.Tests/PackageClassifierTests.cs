@@ -122,6 +122,31 @@ public sealed class PackageClassifierTests
     }
 
     [Fact]
+    public void Chromecast_diagnostics_do_not_apply_to_the_streamer()
+    {
+        var streamer = Context(
+            "Google",
+            "Google TV Streamer",
+            product: "kirkwood",
+            deviceName: "kirkwood");
+        var chromecast = Context(
+            "Google",
+            "Chromecast",
+            product: "sabrina_prod_stable",
+            deviceName: "sabrina");
+
+        var streamerNetoscope = _classifier.Classify(Package("com.google.android.apps.tv.netoscope"), streamer);
+        var chromecastNetoscope = _classifier.Classify(Package("com.google.android.apps.tv.netoscope"), chromecast);
+        var streamerCast = _classifier.Classify(
+            Package("com.google.android.chromecast.chromecastservice"), streamer);
+
+        streamerNetoscope.RecommendedAction.Should().Be("Review manually");
+        chromecastNetoscope.RecommendedAction.Should().Be("Disable");
+        streamerCast.RecommendedAction.Should().Be("Keep");
+        streamerCast.Risk.Should().Be(PackageRiskLevel.Critical);
+    }
+
+    [Fact]
     public void Vendor_rules_cover_shield_tcl_and_cultraview_without_marking_candidates_safe()
     {
         var shield = _classifier.Classify(
@@ -256,14 +281,20 @@ public sealed class PackageClassifierTests
         => new(name, null, null, null, "0", isSystem, false, true, true, false, [],
             DateTimeOffset.UtcNow, "tv-1", "14", "fingerprint");
 
-    private static PackageClassificationContext Context(string manufacturer, string model, string? product = null)
+    private static PackageClassificationContext Context(
+        string manufacturer,
+        string model,
+        string? product = null,
+        string? deviceName = null)
         => new(
             new AndroidDevice
             {
                 Serial = "tv-1",
                 Manufacturer = manufacturer,
+                Brand = manufacturer,
                 Model = model,
                 Product = product,
+                DeviceName = deviceName,
                 State = DeviceState.Device
             },
             null,

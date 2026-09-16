@@ -126,6 +126,121 @@ public sealed class DebloatPlannerTests
         plan.ReferenceSummary!.ProfileMatches.Should().NotContain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
     }
 
+    [Theory]
+    [InlineData(DebloatPreset.Simple, false)]
+    [InlineData(DebloatPreset.Medium, true)]
+    [InlineData(DebloatPreset.Aggressive, true)]
+    public async Task Chromecast_4k_selects_reviewed_diagnostics_but_keeps_casting(DebloatPreset preset, bool selected)
+    {
+        var plan = await CreatePlanner([
+            Package("com.google.android.apps.tv.netoscope", isSystem: true),
+            Package("com.google.android.chromecast.chromecastservice", isSystem: true),
+            Package("com.google.android.apps.tv.launcherx", isSystem: true) with { IsActiveLauncher = true },
+            Package("com.google.android.gms", isSystem: true),
+            Package("com.vendor.unknown", isSystem: true)
+        ]).CreatePlanAsync("tv-1", preset, Hardware(
+            manufacturer: "Google",
+            brand: "google",
+            model: "Chromecast",
+            product: "sabrina_prod_stable",
+            deviceName: "sabrina",
+            androidVersion: "12",
+            fingerprint: "google/sabrina_prod_stable/sabrina:12/STTE.240615.007/12033466:user/release-keys"));
+
+        plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "google-tv-chromecast-sabrina-4k");
+        plan.ReferenceSummary.ProfileMatches.Should().Contain(p => p.BaselineId == "google-tv-chromecast-ga01919");
+        plan.ReferenceSummary.ProfileMatches.Should().NotContain(p => p.BaselineId == "google-tv-streamer-kirkwood-4k");
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.apps.tv.netoscope")
+            .Selected.Should().Be(selected);
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.chromecast.chromecastservice")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.apps.tv.launcherx")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.gms")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.vendor.unknown")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.apps.tv.launcherx")
+            .Assessment.IsProtected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Streamer_simple_plan_explains_empty_selection_and_does_not_use_chromecast_diagnostics()
+    {
+        var plan = await CreatePlanner([
+            Package("com.google.android.apps.tv.launcherx", isSystem: true) with { IsActiveLauncher = true },
+            Package("com.google.android.gms", isSystem: true),
+            Package("com.google.android.apps.tv.netoscope", isSystem: true),
+            Package("com.google.android.chromecast.chromecastservice", isSystem: true)
+        ]).CreatePlanAsync("tv-1", DebloatPreset.Simple, Hardware(
+            manufacturer: "Google",
+            brand: "google",
+            model: "Google TV Streamer",
+            product: "kirkwood",
+            deviceName: "kirkwood",
+            androidVersion: "14",
+            board: "kirkwood",
+            fingerprint: "google/kirkwood/kirkwood:14/UTT3.240625.001.K5/12147201:user/release-keys"));
+
+        plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "google-tv-streamer-kirkwood-4k");
+        plan.ReferenceSummary.ProfileMatches.Should().NotContain(p => p.BaselineId == "google-tv-chromecast-sabrina-4k");
+        plan.Items.Should().OnlyContain(item => !item.Selected);
+        plan.Warnings.Should().Contain(warning => warning.Contains("Simple selected 0 packages", StringComparison.Ordinal));
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.apps.tv.netoscope")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.chromecast.chromecastservice")
+            .Assessment.RecommendedAction.Should().Be("Keep");
+    }
+
+    [Fact]
+    public async Task Onn_yoc_keeps_google_tv_core_and_leaves_unknown_oem_manual()
+    {
+        var plan = await CreatePlanner([
+            Package("com.google.android.apps.tv.launcherx", isSystem: true) with { IsActiveLauncher = true },
+            Package("com.android.tv.settings", isSystem: true),
+            Package("com.walmart.onn.unknown", isSystem: true),
+            Package("com.google.android.tvrecommendations", isSystem: true)
+        ]).CreatePlanAsync("tv-1", DebloatPreset.Medium, Hardware(
+            manufacturer: "onn",
+            brand: "onn",
+            model: "onn. 4K Streaming Box",
+            product: "onn_4k_gtv",
+            deviceName: "YOC",
+            androidVersion: "12",
+            fingerprint: "onn/onn_4k_gtv/YOC:12/SGZ2.230609.049.A1/11261715:user/release-keys"));
+
+        plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "onn-google-tv-4k-box-yoc");
+        plan.ReferenceSummary.ProfileMatches.Should().NotContain(p => p.BaselineId == "google-tv-chromecast-sabrina-4k");
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.apps.tv.launcherx")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.android.tv.settings")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.walmart.onn.unknown")
+            .Selected.Should().BeFalse();
+        plan.Items.Single(i => i.Package.PackageName == "com.walmart.onn.unknown")
+            .Assessment.RecommendedAction.Should().Be("Review manually");
+        plan.Items.Single(i => i.Package.PackageName == "com.google.android.tvrecommendations")
+            .Selected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Already_disabled_chromecast_diagnostics_are_not_selected_again()
+    {
+        var plan = await CreatePlanner([
+            Package("com.google.android.apps.tv.netoscope", isSystem: true, isEnabled: false)
+        ]).CreatePlanAsync("tv-1", DebloatPreset.Aggressive, Hardware(
+            manufacturer: "Google",
+            brand: "google",
+            model: "Chromecast with Google TV 4K",
+            product: "sabrina",
+            deviceName: "sabrina",
+            androidVersion: "12"));
+
+        var item = plan.Items.Single();
+        item.Selected.Should().BeFalse();
+        item.SelectionBlockReason.Should().Be("Package is already disabled.");
+    }
+
     [Fact]
     public async Task Planner_uses_selected_device_identity_for_manufacturer_rules()
     {
@@ -295,6 +410,31 @@ public sealed class DebloatPlannerTests
             new PackageReferenceCatalog(),
             new FakeDeviceSnapshotRepository(),
             new EmptyPackagePreferenceRepository());
+
+    private static AndroidDevice Hardware(
+        string manufacturer,
+        string brand,
+        string model,
+        string product,
+        string deviceName,
+        string androidVersion,
+        string? board = null,
+        string? fingerprint = null)
+        => new()
+        {
+            Serial = "tv-1",
+            Manufacturer = manufacturer,
+            Brand = brand,
+            Model = model,
+            Product = product,
+            DeviceName = deviceName,
+            Board = board,
+            BuildFingerprint = fingerprint,
+            AndroidVersion = androidVersion,
+            ApiLevel = int.Parse(androidVersion) + 19,
+            State = DeviceState.Device,
+            ConnectionType = ConnectionType.Network
+        };
 
     private static AndroidDevice Device(
         string manufacturer,

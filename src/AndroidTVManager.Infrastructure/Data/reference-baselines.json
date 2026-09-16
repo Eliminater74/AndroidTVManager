@@ -543,6 +543,111 @@
         "observedOn": ["Chromecast with Google TV GA01919-US"],
         "evidenceSourceIds": ["uad-chromecast-100"],
         "notes": "Presence does not make disablement safe; risk is supplied by the independent classifier."
+      },
+      {
+        "packageName": "com.google.android.gms",
+        "displayName": "Google Play services",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV",
+        "role": "Google services framework runtime",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Chromecast with Google TV GA01919-US", "Google Android TV emulator"],
+        "evidenceSourceIds": ["uad-chromecast-100", "android-tv-manager-atv16-emulator"],
+        "neededBy": ["Google account", "Play Store", "casting"],
+        "featureImpacts": [
+          {
+            "area": "Google services",
+            "description": "Play Store, account, licensing, casting, push, and Google-backed APIs can fail.",
+            "isKnownDependency": true
+          }
+        ],
+        "notes": "Google TV dependency. Not bloat. Physical verification pending on Streamer, Chromecast 4K, and onn. 4K Box."
+      },
+      {
+        "packageName": "com.google.android.gsf",
+        "displayName": "Google Services Framework",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV",
+        "role": "Google account and service registration",
+        "risk": "Critical",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google Android TV emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Account and login",
+            "description": "Google account/service registration and dependent Google apps can fail.",
+            "isKnownDependency": true
+          }
+        ],
+        "notes": "Physical verification pending on Streamer, Chromecast 4K, and onn. 4K Box."
+      },
+      {
+        "packageName": "com.android.vending",
+        "displayName": "Google Play Store",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV",
+        "role": "App store and package delivery",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google Android TV emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Package management",
+            "description": "Store installs, app updates, licensing, and purchase flows may fail.",
+            "isKnownDependency": true
+          }
+        ],
+        "notes": "Physical verification pending on Streamer, Chromecast 4K, and onn. 4K Box."
+      },
+      {
+        "packageName": "com.google.android.tv.remote.service",
+        "displayName": "Android TV remote service",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV",
+        "role": "Remote and input",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Chromecast with Google TV GA01919-US"],
+        "evidenceSourceIds": ["uad-chromecast-100"],
+        "featureImpacts": [
+          {
+            "area": "Remote and input",
+            "description": "Remote discovery, Bluetooth remote pairing, or accessory behavior may fail.",
+            "isKnownDependency": true
+          }
+        ]
+      },
+      {
+        "packageName": "com.google.android.apps.mediashell",
+        "displayName": "Android Media Shell",
+        "origin": "GoogleTvGms",
+        "generation": "Google TV",
+        "role": "Cast/media shell",
+        "risk": "HighRisk",
+        "recommendedAction": "Keep",
+        "confidence": "High",
+        "sourceConfidence": "RealHardwareDump",
+        "observedOn": ["Google Android TV emulator"],
+        "evidenceSourceIds": ["android-tv-manager-atv16-emulator"],
+        "featureImpacts": [
+          {
+            "area": "Casting and media",
+            "description": "Cast receiver or Google media shell behavior may be affected.",
+            "isKnownDependency": true
+          }
+        ],
+        "notes": "Physical verification pending on Streamer, Chromecast 4K, and onn. 4K Box."
       }
     ]
   },
@@ -1570,6 +1675,348 @@
         "NVIDIA Shield TV"
       ],
       "notes": "Model and firmware dependent; not hardware verified by Android TV Manager."
+    }
+  ]
+}
+,
+{
+  "baseline": {
+    "id": "google-tv-chromecast-sabrina-4k",
+    "name": "Chromecast with Google TV 4K — sabrina overlay",
+    "origin": "Oem",
+    "generation": "Chromecast with Google TV 4K (sabrina)",
+    "deviceFamily": "Chromecast with Google TV 4K",
+    "sourceIds": [
+      "uad-chromecast-100",
+      "lineageos-sabrina-identity"
+    ]
+  },
+  "packages": [
+    {
+      "packageName": "com.google.android.chromecast.chromecastservice",
+      "displayName": "Chromecast platform service",
+      "origin": "Oem",
+      "generation": "Chromecast with Google TV 4K (sabrina)",
+      "role": "Chromecast receiver/casting",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "RealHardwareDump",
+      "observedOn": ["Chromecast with Google TV GA01919-US"],
+      "evidenceSourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+      "featureImpacts": [
+        {
+          "area": "Casting",
+          "description": "Chromecast receiver and Google Home casting can fail.",
+          "isKnownDependency": true
+        }
+      ],
+      "notes": "Chromecast 4K overlay only. Do not copy this package into the Streamer overlay just because it exists here."
+    },
+    {
+      "packageName": "com.google.android.tv.dfuservice",
+      "displayName": "Chromecast firmware update service",
+      "origin": "Oem",
+      "generation": "Chromecast with Google TV 4K (sabrina)",
+      "role": "OTA/update",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "RealHardwareDump",
+      "observedOn": ["Chromecast with Google TV GA01919-US"],
+      "evidenceSourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+      "featureImpacts": [
+        {
+          "area": "OTA and updates",
+          "description": "Firmware or system update workflows may stop working.",
+          "isKnownDependency": true
+        }
+      ]
+    },
+    {
+      "packageName": "com.android.bluetooth.chromecast",
+      "displayName": "Chromecast Bluetooth",
+      "origin": "Oem",
+      "generation": "Chromecast with Google TV 4K (sabrina)",
+      "role": "Remote and Bluetooth",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "RealHardwareDump",
+      "observedOn": ["Chromecast with Google TV GA01919-US"],
+      "evidenceSourceIds": ["uad-chromecast-100", "lineageos-sabrina-identity"],
+      "featureImpacts": [
+        {
+          "area": "Remote and input",
+          "description": "Bluetooth accessories or the Chromecast remote may stop working.",
+          "isKnownDependency": true
+        }
+      ]
+    },
+    {
+      "packageName": "com.google.android.apps.tv.launcherx",
+      "displayName": "Google TV Home",
+      "origin": "GoogleTvGms",
+      "generation": "Chromecast with Google TV 4K (sabrina)",
+      "role": "Google TV launcher",
+      "activeRoleProtection": true,
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "RealHardwareDump",
+      "observedOn": ["Chromecast with Google TV GA01919-US"],
+      "evidenceSourceIds": ["uad-chromecast-100"],
+      "notes": "Reinforces Google TV core Keep. A more-specific overlay must not weaken launcher protection."
+    },
+    {
+      "packageName": "com.google.android.tungsten.setupwraith",
+      "displayName": "Google TV SetupWraith",
+      "origin": "GoogleTvGms",
+      "generation": "Chromecast with Google TV 4K (sabrina)",
+      "role": "Setup and provisioning",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "RealHardwareDump",
+      "observedOn": ["Chromecast with Google TV GA01919-US"],
+      "evidenceSourceIds": ["uad-chromecast-100"]
+    },
+    {
+      "packageName": "com.google.android.apps.tv.netoscope",
+      "displayName": "Chromecast network diagnostics",
+      "origin": "Oem",
+      "generation": "Chromecast with Google TV 4K (sabrina)",
+      "role": "Network diagnostics",
+      "risk": "Caution",
+      "recommendedAction": "Disable",
+      "confidence": "Medium",
+      "sourceConfidence": "RealHardwareDump",
+      "observedOn": ["Chromecast with Google TV GA01919-US"],
+      "evidenceSourceIds": ["uad-chromecast-100"],
+      "reversibleMethod": "cmd package install-existing",
+      "featureImpacts": [
+        {
+          "area": "Diagnostics",
+          "description": "Built-in network troubleshooting screens may no longer be available."
+        }
+      ],
+      "notes": "Reviewed Chromecast-only Medium/Aggressive candidate. Not a Streamer recommendation. Physical verification pending."
+    }
+  ]
+}
+,
+{
+  "baseline": {
+    "id": "google-tv-streamer-kirkwood-4k",
+    "name": "Google TV Streamer 4K — kirkwood overlay",
+    "origin": "Oem",
+    "generation": "Google TV Streamer 4K (kirkwood)",
+    "deviceFamily": "Google TV Streamer 4K",
+    "sourceIds": [
+      "google-kirkwood-vendor-dump",
+      "google-streamer-launcher-report"
+    ]
+  },
+  "packages": [
+    {
+      "packageName": "com.google.android.apps.tv.launcherx",
+      "displayName": "Google TV Home",
+      "origin": "GoogleTvGms",
+      "generation": "Google TV Streamer 4K (kirkwood)",
+      "role": "Google TV launcher",
+      "activeRoleProtection": true,
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["Google TV Streamer (kirkwood)"],
+      "evidenceSourceIds": ["google-kirkwood-vendor-dump", "google-streamer-launcher-report"],
+      "featureImpacts": [
+        {
+          "area": "Launcher",
+          "description": "Google TV home navigation can fail.",
+          "isKnownDependency": true
+        }
+      ],
+      "notes": "Keep-only Streamer overlay. Physical verification pending. No Disable candidates without a Streamer package dump."
+    },
+    {
+      "packageName": "com.google.android.tungsten.setupwraith",
+      "displayName": "Google TV SetupWraith",
+      "origin": "GoogleTvGms",
+      "generation": "Google TV Streamer 4K (kirkwood)",
+      "role": "Setup and provisioning",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["Google TV Streamer (kirkwood)"],
+      "evidenceSourceIds": ["google-kirkwood-vendor-dump", "google-streamer-launcher-report"]
+    },
+    {
+      "packageName": "com.google.android.katniss",
+      "displayName": "Google TV voice/search",
+      "origin": "GoogleTvGms",
+      "generation": "Google TV Streamer 4K (kirkwood)",
+      "role": "Voice and Assistant",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["Google TV Streamer (kirkwood)"],
+      "evidenceSourceIds": ["google-streamer-launcher-report"],
+      "featureImpacts": [
+        {
+          "area": "Voice and Assistant",
+          "description": "Google Assistant or voice search on the Streamer may fail."
+        }
+      ]
+    },
+    {
+      "packageName": "com.google.android.tv.remote.service",
+      "displayName": "Android TV remote service",
+      "origin": "GoogleTvGms",
+      "generation": "Google TV Streamer 4K (kirkwood)",
+      "role": "Remote and input",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["Google TV Streamer (kirkwood)"],
+      "evidenceSourceIds": ["google-kirkwood-vendor-dump"]
+    },
+    {
+      "packageName": "com.google.android.chromecast.chromecastservice",
+      "displayName": "Chromecast platform service",
+      "origin": "Oem",
+      "generation": "Google TV Streamer 4K (kirkwood)",
+      "role": "Casting",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "Medium",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["Google TV Streamer (kirkwood)"],
+      "evidenceSourceIds": ["google-kirkwood-vendor-dump"],
+      "featureImpacts": [
+        {
+          "area": "Casting",
+          "description": "Casting can fail if this service is present and removed.",
+          "isKnownDependency": true
+        }
+      ],
+      "notes": "Keep if inventory shows the package. Presence on kirkwood is not hardware-verified. Physical verification pending."
+    },
+    {
+      "packageName": "com.google.android.apps.mediashell",
+      "displayName": "Android Media Shell",
+      "origin": "GoogleTvGms",
+      "generation": "Google TV Streamer 4K (kirkwood)",
+      "role": "Cast/media shell",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "Medium",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["Google TV Streamer (kirkwood)"],
+      "evidenceSourceIds": ["google-kirkwood-vendor-dump", "android-tv-manager-atv16-emulator"],
+      "notes": "Physical verification pending."
+    }
+  ]
+}
+,
+{
+  "baseline": {
+    "id": "onn-google-tv-4k-box-yoc",
+    "name": "onn. Google TV 4K Box — YOC overlay",
+    "origin": "Oem",
+    "generation": "onn. Google TV 4K Box 2023 (YOC)",
+    "deviceFamily": "onn. Google TV 4K Box",
+    "sourceIds": [
+      "onn-yoc-ota-fingerprint",
+      "lineageos-dopinder-identity",
+      "lineageos-jarvis-onn-4k-pro"
+    ]
+  },
+  "packages": [
+    {
+      "packageName": "com.google.android.apps.tv.launcherx",
+      "displayName": "Google TV Home",
+      "origin": "GoogleTvGms",
+      "generation": "onn. Google TV 4K Box 2023 (YOC)",
+      "role": "Google TV launcher",
+      "activeRoleProtection": true,
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["onn. Google TV 4K Box (YOC)"],
+      "evidenceSourceIds": ["onn-yoc-ota-fingerprint"],
+      "notes": "Google TV core Keep on YOC. Walmart/onn OEM packages stay Unknown until a physical dump. Physical verification pending."
+    },
+    {
+      "packageName": "com.google.android.tungsten.setupwraith",
+      "displayName": "Google TV SetupWraith",
+      "origin": "GoogleTvGms",
+      "generation": "onn. Google TV 4K Box 2023 (YOC)",
+      "role": "Setup and provisioning",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["onn. Google TV 4K Box (YOC)"],
+      "evidenceSourceIds": ["onn-yoc-ota-fingerprint"]
+    },
+    {
+      "packageName": "com.google.android.katniss",
+      "displayName": "Google TV voice/search",
+      "origin": "GoogleTvGms",
+      "generation": "onn. Google TV 4K Box 2023 (YOC)",
+      "role": "Voice and Assistant",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["onn. Google TV 4K Box (YOC)"],
+      "evidenceSourceIds": ["onn-yoc-ota-fingerprint"]
+    },
+    {
+      "packageName": "com.google.android.tv.remote.service",
+      "displayName": "Android TV remote service",
+      "origin": "GoogleTvGms",
+      "generation": "onn. Google TV 4K Box 2023 (YOC)",
+      "role": "Remote and input",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["onn. Google TV 4K Box (YOC)"],
+      "evidenceSourceIds": ["onn-yoc-ota-fingerprint"]
+    },
+    {
+      "packageName": "com.google.android.gms",
+      "displayName": "Google Play services",
+      "origin": "GoogleTvGms",
+      "generation": "onn. Google TV 4K Box 2023 (YOC)",
+      "role": "Google services framework runtime",
+      "risk": "Critical",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["onn. Google TV 4K Box (YOC)"],
+      "evidenceSourceIds": ["onn-yoc-ota-fingerprint", "android-tv-manager-atv16-emulator"]
+    },
+    {
+      "packageName": "com.android.vending",
+      "displayName": "Google Play Store",
+      "origin": "GoogleTvGms",
+      "generation": "onn. Google TV 4K Box 2023 (YOC)",
+      "role": "App store and package delivery",
+      "risk": "HighRisk",
+      "recommendedAction": "Keep",
+      "confidence": "High",
+      "sourceConfidence": "GenericManufacturerEvidence",
+      "observedOn": ["onn. Google TV 4K Box (YOC)"],
+      "evidenceSourceIds": ["onn-yoc-ota-fingerprint", "android-tv-manager-atv16-emulator"],
+      "notes": "No Walmart/onn OEM Disable recommendations without a reviewed YOC package dump."
     }
   ]
 }

@@ -339,5 +339,50 @@
     "sourceConfidence": "OfficialAosp",
     "retrievedUtc": "2026-08-30",
     "attribution": "Android Open Source Project"
+  },
+  {
+    "id": "lineageos-sabrina-identity",
+    "title": "LineageOS device identity for Chromecast with Google TV (4K) sabrina",
+    "url": "https://wiki.lineageos.org/devices/sabrina/",
+    "sourceType": "community-hardware-research",
+    "sourceConfidence": "RealHardwareDump",
+    "retrievedUtc": "2026-09-16",
+    "attribution": "LineageOS Wiki (PRODUCT_DEVICE=sabrina, PRODUCT_SYSTEM_NAME=sabrina_prod_stable in lineage_sabrina.mk)"
+  },
+  {
+    "id": "google-kirkwood-vendor-dump",
+    "title": "Google TV Streamer (kirkwood) vendor build.prop dump UTT3.240625.001.K5",
+    "url": "https://dumps.tadiphone.dev/dumps/google/kirkwood/-/blob/kirkwood-user-14-UTT3.240625.001.K5-12147201-release-keys/vendor/build.prop",
+    "sourceType": "community-package-dump",
+    "sourceConfidence": "RealHardwareDump",
+    "retrievedUtc": "2026-09-16",
+    "attribution": "Android Dumps (dumps.tadiphone.dev) kirkwood-user 14 UTT3.240625.001.K5"
+  },
+  {
+    "id": "onn-yoc-ota-fingerprint",
+    "title": "onn. Google TV 4K Box (YOC) OTA fingerprint onn/onn_4k_gtv/YOC",
+    "url": "https://xdaforums.com/t/walmart-onn-google-tv.4586587/",
+    "sourceType": "community-hardware-research",
+    "sourceConfidence": "RealHardwareDump",
+    "retrievedUtc": "2026-09-16",
+    "attribution": "XDA Forums OTA metadata: onn/onn_4k_gtv/YOC:12/SGZ2.230609.049.A1/11261715:user/release-keys"
+  },
+  {
+    "id": "lineageos-dopinder-identity",
+    "title": "LineageOS identity for 2021 onn. TV Box 4K (dopinder), excluded from the 2023 YOC profile",
+    "url": "https://wiki.lineageos.org/devices/dopinder/",
+    "sourceType": "community-hardware-research",
+    "sourceConfidence": "RealHardwareDump",
+    "retrievedUtc": "2026-09-16",
+    "attribution": "LineageOS Wiki (PRODUCT_DEVICE=dopinder, PRODUCT_MODEL=sti6140d360)"
+  },
+  {
+    "id": "lineageos-jarvis-onn-4k-pro",
+    "title": "LineageOS extraction source for onn. 4K Pro (jarvis/SNA), excluded from the YOC 4K Box profile",
+    "url": "https://github.com/LineageOS/android_device_amlogic_ne-common/commit/b25bc38d52cb5cd7a40ba13eebea86930475935c",
+    "sourceType": "community-hardware-research",
+    "sourceConfidence": "RealHardwareDump",
+    "retrievedUtc": "2026-09-16",
+    "attribution": "LineageOS android_device_amlogic_ne-common (onn/jarvis/SNA)"
   }
 ]

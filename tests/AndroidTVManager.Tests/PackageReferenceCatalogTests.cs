@@ -144,7 +144,145 @@ public sealed class PackageReferenceCatalogTests
     }
 
     [Fact]
-    public void Reference_profiles_are_listable_for_the_debloat_ui()
+    public async Task Streamer_activates_kirkwood_overlay_and_google_tv_core_without_sabrina()
+    {
+        var device = HardwareDevice(
+            manufacturer: "Google",
+            brand: "google",
+            model: "Google TV Streamer",
+            product: "kirkwood",
+            deviceName: "kirkwood",
+            board: "kirkwood",
+            fingerprint: "google/kirkwood/kirkwood:14/UTT3.240625.001.K5/12147201:user/release-keys",
+            androidVersion: "14");
+        var analysis = await _catalog.AnalyzeAsync(device, [
+            Package("com.google.android.apps.tv.launcherx"),
+            Package("com.google.android.gms"),
+            Package("com.google.android.apps.tv.netoscope")
+        ]);
+
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "google-tv-chromecast-ga01919");
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "google-tv-streamer-kirkwood-4k");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "google-tv-chromecast-sabrina-4k");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "onn-google-tv-4k-box-yoc");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "nvidia-shield-tv-reviewed");
+
+        var launcher = analysis.Packages.Single(package =>
+            package.PackageName == "com.google.android.apps.tv.launcherx");
+        launcher.Matches.Should().Contain(match => match.BaselineId == "google-tv-chromecast-ga01919"
+            && match.RecommendedAction == "Keep");
+        launcher.Matches.Should().Contain(match => match.BaselineId == "google-tv-streamer-kirkwood-4k"
+            && match.RecommendedAction == "Keep");
+        launcher.Matches.Should().OnlyContain(match => match.RecommendedAction != "Disable");
+
+        analysis.Packages.Single(package => package.PackageName == "com.google.android.gms")
+            .Matches.Should().Contain(match => match.RecommendedAction == "Keep"
+                && match.Risk == PackageRiskLevel.Critical);
+        analysis.Packages.Single(package => package.PackageName == "com.google.android.apps.tv.netoscope")
+            .Matches.Should().NotContain(match => match.BaselineId == "google-tv-chromecast-sabrina-4k");
+    }
+
+    [Fact]
+    public async Task Chromecast_4k_activates_sabrina_overlay_without_streamer_or_onn()
+    {
+        var device = HardwareDevice(
+            manufacturer: "Google",
+            brand: "google",
+            model: "Chromecast",
+            product: "sabrina_prod_stable",
+            deviceName: "sabrina",
+            fingerprint: "google/sabrina_prod_stable/sabrina:12/STTE.240615.007/12033466:user/release-keys",
+            androidVersion: "12");
+        var analysis = await _catalog.AnalyzeAsync(device, [
+            Package("com.google.android.chromecast.chromecastservice"),
+            Package("com.google.android.apps.tv.netoscope"),
+            Package("com.google.android.apps.tv.launcherx")
+        ]);
+
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "google-tv-chromecast-ga01919");
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "google-tv-chromecast-sabrina-4k");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "google-tv-streamer-kirkwood-4k");
+
+        analysis.Packages.Single(package =>
+                package.PackageName == "com.google.android.chromecast.chromecastservice")
+            .Matches.Should().Contain(match => match.RecommendedAction == "Keep"
+                && match.Risk == PackageRiskLevel.Critical);
+        analysis.Packages.Single(package =>
+                package.PackageName == "com.google.android.apps.tv.netoscope")
+            .Matches.Should().Contain(match => match.BaselineId == "google-tv-chromecast-sabrina-4k"
+                && match.RecommendedAction == "Disable");
+    }
+
+    [Fact]
+    public async Task Onn_yoc_activates_box_overlay_and_google_tv_core()
+    {
+        var device = HardwareDevice(
+            manufacturer: "onn",
+            brand: "onn",
+            model: "onn. 4K Streaming Box",
+            product: "onn_4k_gtv",
+            deviceName: "YOC",
+            fingerprint: "onn/onn_4k_gtv/YOC:12/SGZ2.230609.049.A1/11261715:user/release-keys",
+            androidVersion: "12");
+        var analysis = await _catalog.AnalyzeAsync(device, [
+            Package("com.google.android.apps.tv.launcherx"),
+            Package("com.android.tv.settings"),
+            Package("com.walmart.onn.unknown")
+        ]);
+
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "google-tv-chromecast-ga01919");
+        analysis.Summary.ProfileMatches.Should().Contain(profile =>
+            profile.BaselineId == "onn-google-tv-4k-box-yoc");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "google-tv-chromecast-sabrina-4k");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "google-tv-streamer-kirkwood-4k");
+
+        analysis.Packages.Single(package => package.PackageName == "com.android.tv.settings")
+            .Matches.Should().Contain(match => match.RecommendedAction == "Keep"
+                && match.Risk == PackageRiskLevel.Critical);
+        analysis.Packages.Single(package => package.PackageName == "com.walmart.onn.unknown")
+            .Origin.Should().Be(PackageOrigin.Unknown);
+    }
+
+    [Fact]
+    public async Task Friendly_name_alone_does_not_activate_hardware_overlays()
+    {
+        var device = new AndroidDevice
+        {
+            Serial = "reference-device",
+            FriendlyName = "Google TV Streamer kirkwood sabrina YOC SHIELD",
+            ReportedName = "onn. Google TV 4K Box",
+            AndroidVersion = "14",
+            ApiLevel = 34
+        };
+
+        var analysis = await _catalog.AnalyzeAsync(device, [
+            Package("com.google.android.apps.tv.launcherx"),
+            Package("com.nvidia.stats")
+        ]);
+
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "google-tv-streamer-kirkwood-4k");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "google-tv-chromecast-sabrina-4k");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "onn-google-tv-4k-box-yoc");
+        analysis.Summary.ProfileMatches.Should().NotContain(profile =>
+            profile.BaselineId == "nvidia-shield-tv-reviewed");
+    }
+
+    [Fact]
+    public void Reference_profiles_include_the_new_hardware_overlays()
     {
         var profiles = _catalog.GetProfiles();
 
@@ -154,6 +292,10 @@ public sealed class PackageReferenceCatalogTests
         profiles.Should().Contain(profile =>
             profile.BaselineId == "google-atv-emulator-api36"
             && profile.Generation == "Android TV 16 emulator");
+        profiles.Should().Contain(profile => profile.BaselineId == "google-tv-streamer-kirkwood-4k");
+        profiles.Should().Contain(profile => profile.BaselineId == "google-tv-chromecast-sabrina-4k");
+        profiles.Should().Contain(profile => profile.BaselineId == "onn-google-tv-4k-box-yoc");
+        profiles.Should().Contain(profile => profile.BaselineId == "nvidia-shield-tv-reviewed");
     }
 
     [Fact]
@@ -196,6 +338,29 @@ public sealed class PackageReferenceCatalogTests
                 File.Delete(output);
         }
     }
+
+    private static AndroidDevice HardwareDevice(
+        string manufacturer,
+        string brand,
+        string model,
+        string product,
+        string deviceName,
+        string androidVersion,
+        string? board = null,
+        string? fingerprint = null)
+        => new()
+        {
+            Serial = "reference-device",
+            Manufacturer = manufacturer,
+            Brand = brand,
+            Model = model,
+            Product = product,
+            DeviceName = deviceName,
+            Board = board,
+            BuildFingerprint = fingerprint,
+            AndroidVersion = androidVersion,
+            ApiLevel = int.Parse(androidVersion) + 19
+        };
 
     private static AndroidDevice Device(
         string manufacturer,

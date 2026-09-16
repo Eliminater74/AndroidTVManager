@@ -127,6 +127,62 @@ public sealed class PackageAssessmentReferenceEnricherTests
         PackageAssessmentReferenceEnricher.IsSafetyLocked(enriched).Should().BeTrue();
     }
 
+    [Fact]
+    public void Conflicting_keep_and_disable_profile_matches_default_to_keep()
+    {
+        var assessment = Unknown("com.example.shared");
+        var reference = new PackageReferenceAnalysisItem(
+            "com.example.shared",
+            PackageOrigin.GoogleTvGms,
+            [
+                new PackageReferenceMatch(
+                    "google-tv-core",
+                    "Google TV core",
+                    PackageOrigin.GoogleTvGms,
+                    "Google TV",
+                    "Launcher dependency",
+                    PackageSourceConfidence.RealHardwareDump,
+                    PackageConfidence.High,
+                    ["Google TV"],
+                    ["uad-chromecast-100"],
+                    [],
+                    [],
+                    [],
+                    false,
+                    PackageRiskLevel.HighRisk,
+                    "Keep",
+                    null,
+                    null),
+                new PackageReferenceMatch(
+                    "model-overlay",
+                    "Model overlay",
+                    PackageOrigin.Oem,
+                    "Model",
+                    "Optional OEM component",
+                    PackageSourceConfidence.MultiSourceCommunityEvidence,
+                    PackageConfidence.Medium,
+                    ["Model"],
+                    ["overlay"],
+                    [],
+                    [],
+                    [],
+                    false,
+                    PackageRiskLevel.Caution,
+                    "Disable",
+                    null,
+                    null)
+            ],
+            ["Google TV", "Model"],
+            "Launcher dependency");
+
+        var enriched = PackageAssessmentReferenceEnricher.ApplyReferenceEvidence(assessment, reference);
+
+        enriched.RecommendedAction.Should().Be("Keep");
+        enriched.IsProtected.Should().BeTrue();
+        enriched.Reasons.Should().Contain(reason =>
+            reason.Contains("conflicting evidence", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static PackageAssessment Unknown(string packageName)
         => new(
             packageName,
