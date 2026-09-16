@@ -24,6 +24,16 @@ Beta 15 also introduces `IAdbDeviceSession` for the live list, TARGET selection,
 
 Physical-device certification remains open. Automated tests and WPF rendering are not a substitute for the [hardware acceptance checklist](#hardware-acceptance-checklist).
 
+## Follow-up status — 1.0.0-B19
+
+App Installer XAPK metadata and themed disabled buttons. Closed in code with device-independent tests; this does not complete hardware acceptance.
+
+| Item | Status |
+|---|---|
+| APKCombo-style XAPK base identification | **Closed in code.** `split_apks[].id == "base"` from `manifest.json` identifies the base APK even when it is not named `base.apk`. Missing or multiple base entries fail closed. |
+| Themed disabled Ghost/Accent buttons | **Closed in code.** `IsEnabled=False` uses `PanelRaisedBackground` and `TextDisabledBrush` instead of stock WPF white chrome. |
+| Physical APKCombo XAPK on Shield | **Pending.** Analyze `Real Car Racing Simulator_1.3.38_apkcombo.com.xapk` (or equivalent) and confirm Install uses `install-multiple` for all APK components. |
+
 ## Follow-up status — 1.0.0-B18
 
 Device-specific one-click Debloat profiles. Closed in code with device-independent tests; this does not complete hardware acceptance.
@@ -147,7 +157,7 @@ An existing substring comparison could mistake a similarly prefixed disabled pac
 
 Do not add another large subsystem to Beta 15. Smoke the hardening release on hardware, then continue in this order:
 
-1. **B19 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists. B18 shipped device-specific one-click Debloat; B17 shipped App Installer and the Google TV family overlays.
+1. **B20 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists. B19 is the XAPK metadata and disabled-button hotfix; B18 shipped device-specific one-click Debloat; B17 shipped App Installer and the Google TV family overlays.
 2. **Capability and user summary in the header.** Show facts such as `SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for `Secondary user`, `Automotive`, `Offline`, `Unauthorized`, and `Unknown capability`. Separate detected facts from saved labels.
 3. **Restore points and reversibility.** Tell the user whether an operation is Fully reversible, Partially reversible, or Not reversible, and capture package state, runtime roles, relevant settings, fingerprint, and ruleset before a batch mutation.
 4. **Feature-based cleanup choices.** Let users declare “I use Plex hosting / casting / voice / game streaming / accessibility,” then protect the corresponding dependencies even in Aggressive mode.

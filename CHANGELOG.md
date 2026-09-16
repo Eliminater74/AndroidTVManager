@@ -6,12 +6,22 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+Planned follow-up work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## [1.0.0-B19] - 2026-09-16
+
+Beta 19 is a hotfix so App Installer accepts APKCombo-style XAPK archives whose base APK is identified by manifest metadata instead of being named `base.apk`, and so disabled Ghost and Accent buttons keep themed colors.
+
 ### Fixed
 
 - Shared `GhostButtonStyle` and `AccentButtonStyle` now use themed control templates with an `IsEnabled=False` trigger, so disabled buttons such as App Installer **Analyze** and **Install** keep Dark / Pure Black / Light colors instead of stock WPF white chrome.
-- Fixed APKCombo-style XAPK archives whose base APK is identified by manifest metadata instead of being named `base.apk`.
+- APKCombo-style XAPK archives whose base APK is identified by `split_apks[].id == "base"` in `manifest.json` now prepare and install through `install-multiple` instead of failing with “could not identify a base APK.” Filename heuristics remain the fallback when that metadata is absent. Asset-pack APKs such as `UnityDataAssetPack.apk` stay in the install set; they are not treated as OBB files.
 
-Planned follow-up work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Release and validation
+
+- Updated app and installer metadata to 1.0.0-B19 (assembly/file version 1.0.0.19), release documentation, and download links. Package-rule revision remains the Beta 12 set plus the Beta 17 conservative overlays; this release does not add device families or rewrite the catalog.
+- Debug/Release builds and 332 device-independent tests cover the APKCombo-style XAPK fixture, missing/multiple manifest bases, `install-multiple` routing, and existing APK/APKS/APKM/XAPK plus OBB cases.
+- Physical Shield analysis of a real APKCombo XAPK, remaining B17/B18 hardware checks, and Streamer/Chromecast 4K/onn. 4K Box dumps are still required; hardware certification is not complete.
 
 ## [1.0.0-B18] - 2026-09-16
 

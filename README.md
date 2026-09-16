@@ -14,24 +14,24 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B18 — Beta 18
+### 1.0.0-B19 — Beta 19
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 18 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 19 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B18/AndroidTVManager-Setup.exe) — current Beta 18 installer link
-- `AndroidTVManager-1.0.0-B18-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B18-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B19/AndroidTVManager-Setup.exe) — current Beta 19 installer link
+- `AndroidTVManager-1.0.0-B19-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B19-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
 The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
-## New in Beta 18
+## New in Beta 19
 
-**Device-specific one-click Debloat** replaces Simple/Medium/Aggressive as the main cleanup workflow. The page shows the detected device profile, then Safe, Recommended, Deep, and Custom cards. Recommended is the primary action: live rescan, plan, safety validation, confirmation, verified execution, and Restore Last Cleanup. Create preview and package checkboxes remain under Custom. Unknown, Keep, Critical, and runtime-role packages are never auto-selected. Keep-heavy overlays such as Google TV Streamer 4K can correctly offer zero model-specific Recommended actions.
+**App Installer** now honors XAPK `manifest.json` `split_apks` metadata, so APKCombo-style archives whose base APK is named after the package (not `base.apk`) analyze and install through `install-multiple`. Disabled Ghost and Accent buttons keep Dark / Pure Black / Light colors instead of stock WPF white chrome.
 
-Beta 17 remains App Installer plus Shield parsers and conservative Google TV Streamer / Chromecast 4K / onn. 4K Box family overlays. Beta 16 remains the confirmation-dialog hotfix. Beta 15 remains the hardening and disconnect release. The MainWindow subscribe split is next as Beta 19.
+Beta 18 remains device-specific one-click Debloat. Beta 17 remains App Installer plus Shield parsers and conservative Google TV Streamer / Chromecast 4K / onn. 4K Box family overlays. Beta 16 remains the confirmation-dialog hotfix. Beta 15 remains the hardening and disconnect release. The MainWindow subscribe split is next as Beta 20.
 
 Beta 14 made a newly connected Shield or other network device selectable while an emulator stays attached. Beta 13 added **Recovery / Sideload** and **Device Status → Deep scan**. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) and [Deep device inspection](docs/DEEP-INSPECTION.md).
 
@@ -122,7 +122,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B18 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B19 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.
