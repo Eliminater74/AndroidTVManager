@@ -186,9 +186,9 @@ public sealed class DeploymentProfileService : IDeploymentProfileService
             {
                 DeploymentStepKind.InstallApk => await InstallStepAsync(profile, step, serial, cancellationToken),
                 DeploymentStepKind.DisablePackage => await _packageManager.DisableAsync(
-                    serial, RequirePackage(step), cancellationToken),
+                    serial, RequirePackage(step), cancellationToken, device.BuildFingerprint),
                 DeploymentStepKind.EnablePackage => await _packageManager.EnableAsync(
-                    serial, RequirePackage(step), cancellationToken),
+                    serial, RequirePackage(step), cancellationToken, device.BuildFingerprint),
                 DeploymentStepKind.RunScript => await RunScriptAsync(step, device, cancellationToken),
                 _ => throw new InvalidOperationException($"Unsupported deployment step: {step.Kind}.")
             };

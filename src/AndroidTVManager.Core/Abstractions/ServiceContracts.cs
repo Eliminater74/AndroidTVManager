@@ -271,15 +271,15 @@ public interface IPackageManager
 
     Task<AdbCommandResult> LaunchAsync(string serial, string packageName, CancellationToken cancellationToken = default);
     Task<AdbCommandResult> ForceStopAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> EnableAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> DisableAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> UninstallForUserAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> RestoreAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> FullUninstallAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> ClearDataAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> ClearCacheAsync(string serial, string packageName, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> GrantPermissionAsync(string serial, string packageName, string permission, CancellationToken cancellationToken = default);
-    Task<AdbCommandResult> RevokePermissionAsync(string serial, string packageName, string permission, CancellationToken cancellationToken = default);
+    Task<AdbCommandResult> EnableAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> DisableAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> UninstallForUserAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> RestoreAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> FullUninstallAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> ClearDataAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> ClearCacheAsync(string serial, string packageName, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> GrantPermissionAsync(string serial, string packageName, string permission, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
+    Task<AdbCommandResult> RevokePermissionAsync(string serial, string packageName, string permission, CancellationToken cancellationToken = default, string? expectedBuildFingerprint = null);
     Task<AdbCommandResult> OpenAppSettingsAsync(string serial, string packageName, CancellationToken cancellationToken = default);
     Task<AdbCommandResult> PullApkAsync(string serial, string remotePath, string localPath, CancellationToken cancellationToken = default);
 }

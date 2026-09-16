@@ -6,9 +6,9 @@ namespace AndroidTVManager.Infrastructure.Adb;
 public sealed class PackageManager : IPackageManager
 {
     private readonly IAdbProcessRunner _runner;
-    private readonly IPackageSafetyGate? _safetyGate;
+    private readonly IPackageSafetyGate _safetyGate;
 
-    public PackageManager(IAdbProcessRunner runner, IPackageSafetyGate? safetyGate = null)
+    public PackageManager(IAdbProcessRunner runner, IPackageSafetyGate safetyGate)
     {
         _runner = runner;
         _safetyGate = safetyGate;
@@ -40,50 +40,86 @@ public sealed class PackageManager : IPackageManager
         => _runner.RunForDeviceAsync(serial, ["shell", "am", "force-stop", packageName],
             TimeSpan.FromSeconds(30), cancellationToken);
 
-    public Task<AdbCommandResult> EnableAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.Enable,
+    public Task<AdbCommandResult> EnableAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.Enable, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", packageName],
                 TimeSpan.FromSeconds(30), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> DisableAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.Disable,
+    public Task<AdbCommandResult> DisableAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.Disable, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "disable-user", "--user", "0", packageName],
                 TimeSpan.FromSeconds(30), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> UninstallForUserAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.UninstallForUser,
+    public Task<AdbCommandResult> UninstallForUserAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.UninstallForUser, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", "--user", "0", packageName],
                 TimeSpan.FromSeconds(60), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> RestoreAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.Restore,
+    public Task<AdbCommandResult> RestoreAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.Restore, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", "--user", "0", packageName],
                 TimeSpan.FromSeconds(60), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> FullUninstallAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.FullUninstall,
+    public Task<AdbCommandResult> FullUninstallAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.FullUninstall, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", packageName],
                 TimeSpan.FromSeconds(60), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> ClearDataAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.ClearData,
+    public Task<AdbCommandResult> ClearDataAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.ClearData, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", packageName],
                 TimeSpan.FromMinutes(2), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> ClearCacheAsync(string serial, string packageName, CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.ClearCache,
+    public Task<AdbCommandResult> ClearCacheAsync(
+        string serial,
+        string packageName,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.ClearCache, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", "--cache-only", packageName],
                 TimeSpan.FromMinutes(2), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> GrantPermissionAsync(string serial, string packageName, string permission,
-        CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.GrantPermission,
+    public Task<AdbCommandResult> GrantPermissionAsync(
+        string serial,
+        string packageName,
+        string permission,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.GrantPermission, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "grant", packageName, permission],
                 TimeSpan.FromSeconds(30), cancellationToken), cancellationToken);
 
-    public Task<AdbCommandResult> RevokePermissionAsync(string serial, string packageName, string permission,
-        CancellationToken cancellationToken = default)
-        => MutateAsync(serial, packageName, PackageMutationKind.RevokePermission,
+    public Task<AdbCommandResult> RevokePermissionAsync(
+        string serial,
+        string packageName,
+        string permission,
+        CancellationToken cancellationToken = default,
+        string? expectedBuildFingerprint = null)
+        => MutateAsync(serial, packageName, PackageMutationKind.RevokePermission, expectedBuildFingerprint,
             () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "revoke", packageName, permission],
                 TimeSpan.FromSeconds(30), cancellationToken), cancellationToken);
 
@@ -100,11 +136,13 @@ public sealed class PackageManager : IPackageManager
         string serial,
         string packageName,
         PackageMutationKind kind,
+        string? expectedBuildFingerprint,
         Func<Task<AdbCommandResult>> operation,
         CancellationToken cancellationToken)
     {
-        if (_safetyGate is not null)
-            await _safetyGate.EnsureAllowedAsync(new PackageMutationRequest(serial, packageName, kind), cancellationToken);
+        await _safetyGate.EnsureAllowedAsync(
+            new PackageMutationRequest(serial, packageName, kind, expectedBuildFingerprint),
+            cancellationToken);
         return await operation();
     }
 

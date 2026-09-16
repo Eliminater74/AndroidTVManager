@@ -65,7 +65,7 @@ public sealed class ScriptExecutionService : IScriptExecutionService
                     false,
                     false,
                     null), cancellationToken);
-                var result = await ExecuteActionAsync(target.Serial, action, cancellationToken);
+                var result = await ExecuteActionAsync(target.Serial, action, target.BuildFingerprint, cancellationToken);
                 var reversible = result.IsSuccess && action.Reversible && previous is not null
                     && IsUndoSupported(action.Type);
                 var resulting = result.IsSuccess
@@ -198,33 +198,34 @@ public sealed class ScriptExecutionService : IScriptExecutionService
     private async Task<AdbCommandResult> ExecuteActionAsync(
         string serial,
         ScriptAction action,
+        string? expectedBuildFingerprint,
         CancellationToken cancellationToken)
     {
         var type = action.Type.ToLowerInvariant();
         return type switch
         {
-            "disablepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Disable,
+            "disablepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Disable, expectedBuildFingerprint,
                 () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "disable-user", "--user", "0", action.Package!], cancellationToken: cancellationToken),
                 cancellationToken),
-            "enablepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Enable,
+            "enablepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Enable, expectedBuildFingerprint,
                 () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", action.Package!], cancellationToken: cancellationToken),
                 cancellationToken),
-            "uninstalluser" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.UninstallForUser,
+            "uninstalluser" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.UninstallForUser, expectedBuildFingerprint,
                 () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", "--user", "0", action.Package!], cancellationToken: cancellationToken),
                 cancellationToken),
-            "restorepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Restore,
+            "restorepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Restore, expectedBuildFingerprint,
                 () => _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", "--user", "0", action.Package!], cancellationToken: cancellationToken),
                 cancellationToken),
-            "clear data" or "cleardata" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.ClearData,
+            "clear data" or "cleardata" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.ClearData, expectedBuildFingerprint,
                 () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", action.Package!], cancellationToken: cancellationToken),
                 cancellationToken),
             "launchpackage" => await _runner.RunForDeviceAsync(serial, ["shell", "monkey", "-p", action.Package!, "1"], cancellationToken: cancellationToken),
             "forcestop" => await _runner.RunForDeviceAsync(serial, ["shell", "am", "force-stop", action.Package!], cancellationToken: cancellationToken),
             "grantpermission" => _packages is not null
-                ? await _packages.GrantPermissionAsync(serial, action.Package!, action.Value!, cancellationToken)
+                ? await _packages.GrantPermissionAsync(serial, action.Package!, action.Value!, cancellationToken, expectedBuildFingerprint)
                 : await _runner.RunForDeviceAsync(serial, ["shell", "pm", "grant", action.Package!, action.Value!], cancellationToken: cancellationToken),
             "revokepermission" => _packages is not null
-                ? await _packages.RevokePermissionAsync(serial, action.Package!, action.Value!, cancellationToken)
+                ? await _packages.RevokePermissionAsync(serial, action.Package!, action.Value!, cancellationToken, expectedBuildFingerprint)
                 : await _runner.RunForDeviceAsync(serial, ["shell", "pm", "revoke", action.Package!, action.Value!], cancellationToken: cancellationToken),
             "setsetting" => await ExecuteSettingAsync(serial, action, cancellationToken),
             "installapk" => await _runner.RunForDeviceAsync(serial, ["install", action.Path!], TimeSpan.FromMinutes(5), cancellationToken),
@@ -241,6 +242,7 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         string serial,
         string packageName,
         PackageMutationKind kind,
+        string? expectedBuildFingerprint,
         Func<Task<AdbCommandResult>> fallback,
         CancellationToken cancellationToken)
     {
@@ -249,11 +251,11 @@ public sealed class ScriptExecutionService : IScriptExecutionService
 
         return kind switch
         {
-            PackageMutationKind.Disable => await _packages.DisableAsync(serial, packageName, cancellationToken),
-            PackageMutationKind.Enable => await _packages.EnableAsync(serial, packageName, cancellationToken),
-            PackageMutationKind.UninstallForUser => await _packages.UninstallForUserAsync(serial, packageName, cancellationToken),
-            PackageMutationKind.Restore => await _packages.RestoreAsync(serial, packageName, cancellationToken),
-            PackageMutationKind.ClearData => await _packages.ClearDataAsync(serial, packageName, cancellationToken),
+            PackageMutationKind.Disable => await _packages.DisableAsync(serial, packageName, cancellationToken, expectedBuildFingerprint),
+            PackageMutationKind.Enable => await _packages.EnableAsync(serial, packageName, cancellationToken, expectedBuildFingerprint),
+            PackageMutationKind.UninstallForUser => await _packages.UninstallForUserAsync(serial, packageName, cancellationToken, expectedBuildFingerprint),
+            PackageMutationKind.Restore => await _packages.RestoreAsync(serial, packageName, cancellationToken, expectedBuildFingerprint),
+            PackageMutationKind.ClearData => await _packages.ClearDataAsync(serial, packageName, cancellationToken, expectedBuildFingerprint),
             _ => await fallback()
         };
     }

@@ -1938,31 +1938,31 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
     }
 
     [RelayCommand]
-    private Task LaunchAsync() => RunActionAsync("Launch", (serial, package) => _packageManager.LaunchAsync(serial, package));
+    private Task LaunchAsync() => RunActionAsync("Launch", (serial, package, _) => _packageManager.LaunchAsync(serial, package));
 
     [RelayCommand]
-    private Task ForceStopAsync() => RunActionAsync("Force stop", (serial, package) => _packageManager.ForceStopAsync(serial, package));
+    private Task ForceStopAsync() => RunActionAsync("Force stop", (serial, package, _) => _packageManager.ForceStopAsync(serial, package));
 
     [RelayCommand]
-    private Task DisableAsync() => RunActionAsync("Disable", (serial, package) => _packageManager.DisableAsync(serial, package), true);
+    private Task DisableAsync() => RunActionAsync("Disable", (serial, package, fingerprint) => _packageManager.DisableAsync(serial, package, expectedBuildFingerprint: fingerprint), true);
 
     [RelayCommand]
-    private Task EnableAsync() => RunActionAsync("Enable", (serial, package) => _packageManager.EnableAsync(serial, package));
+    private Task EnableAsync() => RunActionAsync("Enable", (serial, package, fingerprint) => _packageManager.EnableAsync(serial, package, expectedBuildFingerprint: fingerprint));
 
     [RelayCommand]
-    private Task UninstallAsync() => RunActionAsync("Uninstall for user", (serial, package) => _packageManager.UninstallForUserAsync(serial, package), true);
+    private Task UninstallAsync() => RunActionAsync("Uninstall for user", (serial, package, fingerprint) => _packageManager.UninstallForUserAsync(serial, package, expectedBuildFingerprint: fingerprint), true);
 
     [RelayCommand]
-    private Task RestoreAsync() => RunActionAsync("Restore package", (serial, package) => _packageManager.RestoreAsync(serial, package));
+    private Task RestoreAsync() => RunActionAsync("Restore package", (serial, package, fingerprint) => _packageManager.RestoreAsync(serial, package, expectedBuildFingerprint: fingerprint));
 
     [RelayCommand]
-    private Task ClearDataAsync() => RunActionAsync("Clear data", (serial, package) => _packageManager.ClearDataAsync(serial, package), true);
+    private Task ClearDataAsync() => RunActionAsync("Clear data", (serial, package, fingerprint) => _packageManager.ClearDataAsync(serial, package, expectedBuildFingerprint: fingerprint), true);
 
     [RelayCommand]
-    private Task ClearCacheAsync() => RunActionAsync("Clear cache", (serial, package) => _packageManager.ClearCacheAsync(serial, package), true);
+    private Task ClearCacheAsync() => RunActionAsync("Clear cache", (serial, package, fingerprint) => _packageManager.ClearCacheAsync(serial, package, expectedBuildFingerprint: fingerprint), true);
 
     [RelayCommand]
-    private Task OpenAppSettingsAsync() => RunActionAsync("Open app settings", (serial, package) =>
+    private Task OpenAppSettingsAsync() => RunActionAsync("Open app settings", (serial, package, _) =>
         _packageManager.OpenAppSettingsAsync(serial, package));
 
     [RelayCommand]
@@ -2008,11 +2008,11 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 
     [RelayCommand]
     private Task GrantPermissionAsync() => RunPermissionActionAsync("Grant permission",
-        (serial, package, permission) => _packageManager.GrantPermissionAsync(serial, package, permission));
+        (serial, package, permission, fingerprint) => _packageManager.GrantPermissionAsync(serial, package, permission, expectedBuildFingerprint: fingerprint));
 
     [RelayCommand]
     private Task RevokePermissionAsync() => RunPermissionActionAsync("Revoke permission",
-        (serial, package, permission) => _packageManager.RevokePermissionAsync(serial, package, permission));
+        (serial, package, permission, fingerprint) => _packageManager.RevokePermissionAsync(serial, package, permission, expectedBuildFingerprint: fingerprint));
 
     [RelayCommand]
     private Task FullUninstallAsync()
@@ -2022,12 +2022,12 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
             Message = "Full uninstall is blocked for system packages. Use Disable or Uninstall for user 0.";
             return Task.CompletedTask;
         }
-        return RunActionAsync("Full uninstall", (serial, package) => _packageManager.FullUninstallAsync(serial, package), true);
+        return RunActionAsync("Full uninstall", (serial, package, fingerprint) => _packageManager.FullUninstallAsync(serial, package, expectedBuildFingerprint: fingerprint), true);
     }
 
     private async Task RunActionAsync(
         string action,
-        Func<string, string, Task<AdbCommandResult>> operation,
+        Func<string, string, string?, Task<AdbCommandResult>> operation,
         bool destructive = false)
     {
         if (SelectedPackage is null || string.IsNullOrWhiteSpace(TargetSerial))
@@ -2053,13 +2053,13 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
             return;
         }
         Message = $"{action} · {packageName}…";
-        var result = await operation(serial, packageName);
+        var result = await operation(serial, packageName, SelectedPackage.BuildFingerprint);
         Message = result.IsSuccess ? $"{action} completed." : result.StandardError.Trim();
     }
 
     private async Task RunPermissionActionAsync(
         string action,
-        Func<string, string, string, Task<AdbCommandResult>> operation)
+        Func<string, string, string, string?, Task<AdbCommandResult>> operation)
     {
         if (string.IsNullOrWhiteSpace(Permission))
         {
@@ -2080,7 +2080,7 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
             Message = "Operation canceled.";
             return;
         }
-        var result = await operation(serial, package, permission);
+        var result = await operation(serial, package, permission, SelectedPackage.BuildFingerprint);
         Message = result.IsSuccess ? $"{action} completed." : result.StandardError.Trim();
     }
 

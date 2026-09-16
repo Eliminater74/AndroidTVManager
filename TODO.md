@@ -61,6 +61,7 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [x] Compare recovery ZIP pre-device metadata with the live product before sideload, and do not treat missing evidence as compatible.
 - [x] Snapshot the SQLite database before schema migrations and keep the two newest pre-migration copies.
 - [x] Flush logs and stop the device tracker on a deterministic shutdown path; unknown UI exceptions terminate after they are logged.
+- [x] Require `IPackageSafetyGate` on `PackageManager` and pass the prepared build fingerprint through package mutations.
 - [ ] Add Xiaomi, Yandex, Fire TV, and additional per-model reference baselines.
 - [ ] Add a richer backup history browser and validation for more backup artifact types.
 - [ ] Improve package icon extraction for more APK/resource formats.

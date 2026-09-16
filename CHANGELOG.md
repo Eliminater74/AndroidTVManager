@@ -16,14 +16,14 @@ The project follows a beta-first release cycle while real Android TV hardware va
 - Restore confirmation copy now states that APK copy does not restore app data, accounts, or settings.
 - Delete downloaded update installers when the checksum is missing, mismatched, or the payload exceeds 200 MB, and do not leave those files in Temp.
 - Sideload refuses a ZIP that declares `pre-device` / updater-script product names when the live `ro.product.device` is missing or does not match. Missing device metadata is reported as unverified, not compatible.
-- Copy the SQLite file to a `.pre-migrate.bak` before applying schema upgrades, keep the two newest copies, run `PRAGMA integrity_check`, and fail closed if the database is unreadable.
+- Copy the SQLite file to a `.pre-migrate.bak` before applying schema upgrades, keep the two newest copies, delete their `-wal`/`-shm` sidecars when pruning, run `PRAGMA integrity_check`, and fail closed if the database is unreadable.
 - Shut down through a coordinator that stops the device tracker, recovers open sessions, and flushes the file logger. Unknown UI exceptions now close the app after they are logged.
 - Network and Wireless Debugging targets can be disconnected from the header TARGET picker and the Devices list. USB devices stay attached, saved devices remain saved, and the global target falls back to another connected device.
 
 ### Added
 
 - Shared `ISensitiveDataRedactor` for logs, script journals, diagnostic bundles, and ADB argument lists, including IPv6 and local user-path redaction.
-- Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works.
+- Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works. `PackageManager` now requires the gate, and Applications/Scripts/Deployment pass the prepared build fingerprint so drift is checked on the mutation itself.
 - Backup manifests now catalog expected package and APK-file counts so restore can compare the on-disk set against what the backup claimed.
 - Recovery ZIP inspection parses `META-INF/com/android/metadata` and updater-script product checks so sideload can fail closed on incompatible or unverifiable device identity.
 
