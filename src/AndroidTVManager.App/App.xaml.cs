@@ -14,6 +14,7 @@ public partial class App : System.Windows.Application
     private ServiceProvider? _services;
     private Mutex? _instanceMutex;
     private bool _ownsInstanceMutex;
+    private bool _fatalExit;
 
     public App()
     {
@@ -42,6 +43,7 @@ public partial class App : System.Windows.Application
             var services = new ServiceCollection();
             services.AddAndroidTVManagerInfrastructure();
             services.AddSingleton<IConfirmationService, WpfConfirmationService>();
+            services.AddSingleton<ApplicationShutdownCoordinator>();
             services.AddSingleton<MainWindowViewModel>();
             services.AddSingleton<MainWindow>();
             _services = services.BuildServiceProvider();
@@ -71,12 +73,8 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            if (_services?.GetService<AndroidTVManager.Core.Abstractions.IAdbDeviceTracker>() is { } tracker)
-            {
-                await tracker.StopAsync();
-                if (_services.GetService<AndroidTVManager.Core.Abstractions.IConnectionHistoryRepository>() is { } history)
-                    await history.RecoverOpenSessionsAsync();
-            }
+            if (_services?.GetService<ApplicationShutdownCoordinator>() is { } shutdown)
+                await shutdown.ShutdownAsync();
         }
         catch (Exception exception)
         {
@@ -84,6 +82,14 @@ public partial class App : System.Windows.Application
         }
         finally
         {
+            try
+            {
+                if (_services?.GetService<ILogViewerService>() is { } logs)
+                    await logs.FlushAsync();
+            }
+            catch
+            {
+            }
             _services?.Dispose();
             if (_ownsInstanceMutex)
                 _instanceMutex?.ReleaseMutex();
@@ -95,12 +101,16 @@ public partial class App : System.Windows.Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         _services?.GetService<IAppLogger>()?.Error("Application", "Unhandled UI exception.", e.Exception);
+        e.Handled = true;
+        if (_fatalExit)
+            return;
+        _fatalExit = true;
         System.Windows.MessageBox.Show(
-            $"Android TV Manager encountered an unexpected error.\n\n{e.Exception.Message}",
+            $"Android TV Manager encountered an unexpected error and will close.\n\n{e.Exception.Message}",
             "Unexpected error",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
-        e.Handled = true;
+        Shutdown(-1);
     }
 
     private static void BringExistingWindowToFront()

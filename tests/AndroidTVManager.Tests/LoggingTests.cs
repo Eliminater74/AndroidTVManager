@@ -45,6 +45,26 @@ public sealed class LoggingTests
         }
     }
 
+    [Fact]
+    public async Task Flush_writes_queued_entries_before_returning()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "AndroidTVManagerTests", Guid.NewGuid().ToString("N"));
+        var paths = new TestPaths(root);
+        try
+        {
+            using var logger = new FileLogger(paths);
+            logger.Information("Test", "must be on disk");
+            await logger.FlushAsync();
+
+            (await logger.ReadCurrentAsync()).Should().ContainSingle(line => line.Contains("must be on disk"));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
     private sealed class TestPaths(string root) : ILocalAppDataPaths
     {
         public string Root { get; } = root;

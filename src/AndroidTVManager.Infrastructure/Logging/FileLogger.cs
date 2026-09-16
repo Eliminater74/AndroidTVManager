@@ -11,7 +11,10 @@ public sealed class FileLogger : IAppLogger, ILogViewerService, IDisposable
     private readonly SemaphoreSlim _fileGate = new(1, 1);
     private readonly Task _writerTask;
     private long _fileGeneration;
+    private long _flushRequested;
+    private long _flushCompleted;
     private bool _disposed;
+    private const string FlushSentinel = "\u001eFLUSH";
 
     public FileLogger(ILocalAppDataPaths paths)
     {
@@ -48,6 +51,23 @@ public sealed class FileLogger : IAppLogger, ILogViewerService, IDisposable
         _fileGate.Dispose();
     }
 
+    public async Task FlushAsync(CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+            return;
+        var target = Interlocked.Increment(ref _flushRequested);
+        if (!_messages.Writer.TryWrite(FlushSentinel))
+            return;
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (Volatile.Read(ref _flushCompleted) < target)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (DateTime.UtcNow >= deadline)
+                return;
+            await Task.Delay(15, cancellationToken);
+        }
+    }
+
     private void Write(string level, string source, string message)
     {
         if (_disposed)
@@ -73,6 +93,13 @@ public sealed class FileLogger : IAppLogger, ILogViewerService, IDisposable
         {
             await foreach (var message in _messages.Reader.ReadAllAsync(cancellationToken))
             {
+                if (message == FlushSentinel)
+                {
+                    if (writer is not null)
+                        await writer.FlushAsync(cancellationToken);
+                    Interlocked.Increment(ref _flushCompleted);
+                    continue;
+                }
                 var date = DateOnly.FromDateTime(DateTime.Now);
                 await _fileGate.WaitAsync(cancellationToken);
                 try

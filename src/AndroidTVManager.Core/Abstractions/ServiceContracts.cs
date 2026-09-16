@@ -677,4 +677,5 @@ public interface ILogViewerService
     string CurrentLogPath { get; }
     Task<IReadOnlyList<string>> ReadCurrentAsync(CancellationToken cancellationToken = default);
     Task ClearAsync(CancellationToken cancellationToken = default);
+    Task FlushAsync(CancellationToken cancellationToken = default);
 }

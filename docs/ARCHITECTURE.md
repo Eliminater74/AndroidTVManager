@@ -44,4 +44,4 @@ All mutable files use LocalAppData: `Data`, `Logs`, `Tools\PlatformTools`, `Scri
 
 ## Tray behavior
 
-The WPF application uses a hosted WinForms `NotifyIcon` for a small dependency footprint. It can minimize or close to the tray, restores on double-click, exposes Open, Settings, Restart ADB Server, and Exit, and disposes the icon during real shutdown. A named mutex prevents accidental duplicate instances.
+The WPF application uses a hosted WinForms `NotifyIcon` for a small dependency footprint. It can minimize or close to the tray, restores on double-click, exposes Open, Settings, Restart ADB Server, and Exit, and disposes the icon during real shutdown. A named mutex prevents accidental duplicate instances. `ApplicationShutdownCoordinator` stops the ADB device tracker, recovers open connection sessions, and flushes the file logger before the service provider is disposed. Unhandled UI exceptions are logged and then terminate the process.
