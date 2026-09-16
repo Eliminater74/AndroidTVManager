@@ -46,15 +46,18 @@ public static class AdbInspectionParsers
     public static MemoryInfo ParseMemory(string output)
     {
         var values = ParseMemoryValues(output);
+        var swapTotal = Bytes(values, "SwapTotal");
+        var swapFree = Bytes(values, "SwapFree");
         return new(
             Bytes(values, "MemTotal"),
             Bytes(values, "MemAvailable"),
             Bytes(values, "MemFree"),
             Bytes(values, "Cached"),
-            Bytes(values, "SwapTotal"),
-            values.TryGetValue("SwapTotal", out var swapTotal) && values.TryGetValue("SwapFree", out var swapFree)
-                ? Math.Max(0, ParseBytes(swapTotal) - ParseBytes(swapFree))
-                : Bytes(values, "SwapFree"),
+            swapTotal,
+            swapFree,
+            swapTotal is not null && swapFree is not null
+                ? Math.Max(0, swapTotal.Value - swapFree.Value)
+                : null,
             Bytes(values, "Zram"));
     }
 

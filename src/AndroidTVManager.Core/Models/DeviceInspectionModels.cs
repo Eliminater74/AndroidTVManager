@@ -86,6 +86,7 @@ public sealed record MemoryInfo(
     long? CachedBytes,
     long? SwapTotalBytes,
     long? SwapFreeBytes,
+    long? SwapUsedBytes,
     long? ZramTotalBytes);
 
 public sealed record GraphicsInfo(

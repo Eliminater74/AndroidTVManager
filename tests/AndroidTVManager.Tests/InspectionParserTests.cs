@@ -38,6 +38,30 @@ public sealed class InspectionParserTests
         memory.TotalBytes.Should().Be(2048000 * 1024L);
         memory.AvailableBytes.Should().Be(768000 * 1024L);
         memory.SwapFreeBytes.Should().Be(64000 * 1024L);
+        memory.SwapUsedBytes.Should().Be(64000 * 1024L);
+    }
+
+    [Fact]
+    public void Shield_meminfo_keeps_swap_free_and_swap_used_separate()
+    {
+        var memory = AdbInspectionParsers.ParseMemory("""
+            MemTotal:        3016424 kB
+            MemAvailable:     722468 kB
+            MemFree:           31296 kB
+            Cached:           717952 kB
+            SwapTotal:        524284 kB
+            SwapFree:            324 kB
+            """);
+
+        memory.TotalBytes.Should().Be(3016424 * 1024L);
+        memory.AvailableBytes.Should().Be(722468 * 1024L);
+        memory.FreeBytes.Should().Be(31296 * 1024L);
+        memory.CachedBytes.Should().Be(717952 * 1024L);
+        memory.SwapTotalBytes.Should().Be(524284 * 1024L);
+        memory.SwapFreeBytes.Should().Be(324 * 1024L);
+        memory.SwapUsedBytes.Should().Be((524284 - 324) * 1024L);
+        memory.SwapFreeBytes.Should().NotBe(memory.SwapUsedBytes);
+        memory.SwapUsedBytes.Should().Be(536_535_040);
     }
 
     [Fact]
