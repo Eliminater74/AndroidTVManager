@@ -24,6 +24,17 @@ Beta 15 also introduces `IAdbDeviceSession` for the live list, TARGET selection,
 
 Physical-device certification remains open. Automated tests and WPF rendering are not a substitute for the [hardware acceptance checklist](#hardware-acceptance-checklist).
 
+## Follow-up status — 1.0.0-B18
+
+Device-specific one-click Debloat profiles. Closed in code with device-independent tests; this does not complete hardware acceptance.
+
+| Item | Status |
+|---|---|
+| Safe / Recommended / Deep / Custom main workflow | **Closed in code.** Recommended is one-click: live rescan, plan, safety validation, confirmation, verified execution, Restore Last Cleanup. Custom keeps Create preview and package checkboxes. |
+| Automatic selection safety | **Closed in code.** Unknown, Keep, Critical, and runtime-role packages are never auto-selected. Fingerprint or package-state drift aborts before mutation. |
+| Device-family profile labels | **Closed in code.** Shield `darcy`, Streamer `kirkwood`, Chromecast `sabrina`, onn. `YOC`, generic emulator, and unmatched hardware use existing catalog evidence. Keep-heavy overlays may offer zero Recommended actions. |
+| Physical Shield Recommended + restore | **Pending.** Automated tests are not a substitute for running Recommended Cleanup on a real darcy Shield and confirming restore. |
+
 ## Follow-up status — 1.0.0-B17
 
 Parser and Debloat correctness from a real Shield (`darcy`) dump. These items are closed in code with fixtures; they do not complete hardware acceptance.
@@ -136,7 +147,7 @@ An existing substring comparison could mistake a similarly prefixed disabled pac
 
 Do not add another large subsystem to Beta 15. Smoke the hardening release on hardware, then continue in this order:
 
-1. **B18 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists. B16 was the confirmation-dialog hotfix; B17 shipped App Installer and the Google TV family overlays.
+1. **B19 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists. B18 shipped device-specific one-click Debloat; B17 shipped App Installer and the Google TV family overlays.
 2. **Capability and user summary in the header.** Show facts such as `SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for `Secondary user`, `Automotive`, `Offline`, `Unauthorized`, and `Unknown capability`. Separate detected facts from saved labels.
 3. **Restore points and reversibility.** Tell the user whether an operation is Fully reversible, Partially reversible, or Not reversible, and capture package state, runtime roles, relevant settings, fingerprint, and ruleset before a batch mutation.
 4. **Feature-based cleanup choices.** Let users declare “I use Plex hosting / casting / voice / game streaming / accessibility,” then protect the corresponding dependencies even in Aggressive mode.

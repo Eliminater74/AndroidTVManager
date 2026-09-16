@@ -6,6 +6,12 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## [1.0.0-B18] - 2026-09-16
+
+Beta 18 ships device-specific one-click Debloat profiles. Safe, Recommended, and Deep run from reviewed device/reference knowledge; Custom keeps the package-by-package checklist.
+
 ### Added
 
 - Device-specific one-click Debloat profiles. The main Debloat page now detects the connected target, matches reviewed device/reference profiles, and offers Safe, Recommended, Deep, and Custom cleanup. Recommended is the primary one-click action: live rescan, plan, safety validation, confirmation, verified execution, then Restore Last Cleanup. Create preview and package checkboxes remain on Custom. Unknown, Keep, Critical, and runtime-role packages stay out of automatic profiles. Model-specific Recommended lists exist only where catalog evidence already supports them (for example Shield `darcy`); Streamer/kirkwood, generic emulator, and unmatched hardware can correctly show zero reviewed actions.
@@ -14,7 +20,11 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 - Debloat reference-profile diagnostics moved under collapsed Advanced details. Restore Last Cleanup is a first-class post-cleanup action instead of a small planning-toolbar control.
 
-Planned follow-up work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Release and validation
+
+- Updated app and installer metadata to 1.0.0-B18 (assembly/file version 1.0.0.18), release documentation, and download links. Package-rule revision remains the Beta 12 set plus the Beta 17 conservative overlays; this release does not add device families or rewrite the catalog.
+- Debug/Release builds and 323 device-independent tests cover profile availability, automatic selection, one-click execution lock/fingerprint abort, restore, and Debloat page UI states.
+- Physical Shield Recommended Cleanup plus restore, and Streamer/Chromecast 4K/onn. 4K Box dumps, are still required; hardware certification is not complete.
 
 ## [1.0.0-B17] - 2026-09-16
 

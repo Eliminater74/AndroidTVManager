@@ -14,28 +14,24 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B17 — Beta 17
+### 1.0.0-B18 — Beta 18
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 17 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 18 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B17/AndroidTVManager-Setup.exe) — current Beta 17 installer link
-- `AndroidTVManager-1.0.0-B17-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B17-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B18/AndroidTVManager-Setup.exe) — current Beta 18 installer link
+- `AndroidTVManager-1.0.0-B18-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B18-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
 The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
-## New in Beta 17
+## New in Beta 18
 
-**App Installer** replaces Install APK. Analyze, then sideload APK, split APK sets, APKS, APKM, and XAPK on the selected TARGET. Splits use `adb install-multiple`. XAPK OBB files copy only to `/sdcard/Android/obb/<package>/` after a successful APK install; `Android/data` is not pushed. Scoped-storage firmware may still block OBB copy, and that is reported as partial success. Recovery / Sideload remains the OTA ZIP workflow.
+**Device-specific one-click Debloat** replaces Simple/Medium/Aggressive as the main cleanup workflow. The page shows the detected device profile, then Safe, Recommended, Deep, and Custom cards. Recommended is the primary action: live rescan, plan, safety validation, confirmation, verified execution, and Restore Last Cleanup. Create preview and package checkboxes remain under Custom. Unknown, Keep, Critical, and runtime-role packages are never auto-selected. Keep-heavy overlays such as Google TV Streamer 4K can correctly offer zero model-specific Recommended actions.
 
-Device Status and Debloat now parse Shield meminfo, display modes, Vulkan features, and missing optional tools honestly, and match Shield TV by NVIDIA + `darcy`/`foster` rather than FriendlyName.
-
-Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box get hardware-family matching and conservative overlays. Physical dumps for those three devices are still pending.
-
-Beta 16 remains the confirmation-dialog hotfix. Beta 15 remains the hardening and disconnect release. The MainWindow subscribe split is next as Beta 18.
+Beta 17 remains App Installer plus Shield parsers and conservative Google TV Streamer / Chromecast 4K / onn. 4K Box family overlays. Beta 16 remains the confirmation-dialog hotfix. Beta 15 remains the hardening and disconnect release. The MainWindow subscribe split is next as Beta 19.
 
 Beta 14 made a newly connected Shield or other network device selectable while an emulator stays attached. Beta 13 added **Recovery / Sideload** and **Device Status → Deep scan**. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) and [Deep device inspection](docs/DEEP-INSPECTION.md).
 
@@ -126,7 +122,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B17 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B18 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.

@@ -2,9 +2,9 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Unreleased — device-specific one-click Debloat profiles
+## Beta 18 — current: device-specific one-click Debloat profiles
 
-Shipped in source on 1.0.0-B17; no version bump. Remaining items are physical confirmation.
+Shipped in 1.0.0-B18. Remaining items are physical confirmation.
 
 - [x] Replace Simple/Medium/Aggressive as the main Debloat workflow with Safe / Recommended / Deep / Custom profiles.
 - [x] Auto live rescan, plan, safety validation, confirmation, verified execution, and Restore Last Cleanup for one-click profiles.
@@ -14,7 +14,7 @@ Shipped in source on 1.0.0-B17; no version bump. Remaining items are physical co
 - [ ] Run Recommended Cleanup on a physical Shield (darcy) and confirm restore; do not treat automated tests as hardware certification.
 - [ ] Confirm Streamer/Chromecast/onn. one-click counts against physical package dumps when those dumps exist.
 
-## Beta 17 — current: App Installer, Shield parsers, and Google TV families
+## Beta 17 — App Installer, Shield parsers, and Google TV families
 
 Shipped in 1.0.0-B17. Remaining items are physical confirmation, not extra code.
 
@@ -51,7 +51,7 @@ Shipped in 1.0.0-B17. Remaining items are physical confirmation, not extra code.
 - [x] Chromecast-only diagnostics stay off the Streamer overlay; Streamer and YOC overlays are Keep-only until a physical dump.
 - [ ] Capture read-only diagnostic bundles on physical Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box.
 
-Physical smoke from Beta 15 still applies, plus installer upgrade from B16 → B17.
+Physical smoke from Beta 15 still applies, plus installer upgrade from B17 → B18.
 
 ## Beta 16 — confirmation dialog hotfix
 
@@ -84,21 +84,21 @@ Shipped. Smoke the exact flows on hardware, then start the shell split.
 - [ ] Test Android Wireless Debugging pairing on supported Android versions.
 - [ ] Exercise package inventory and one harmless disable/restore on a disposable device.
 - [ ] Confirm updater check, backup verification, and a normal application exit (tracker stop, session recovery, log flush).
-- [ ] Verify installer upgrade from B16 → B17 and uninstall.
+- [ ] Verify installer upgrade from B17 → B18 and uninstall.
 - [ ] Validate deep inspection on physical TV/Shield and ATOTO firmware; confirm failed probes remain clearly labeled.
 - [ ] Verify Device Status values against at least one Google TV and one manufacturer TV.
 - [ ] Validate the [recovery hardware checklist](docs/RECOVERY-SIDELOAD.md#hardware-acceptance) with the exact Pixel C ROM/recovery build.
 - [ ] Complete the [device support audit hardware acceptance checklist](docs/DEVICE-SUPPORT-AUDIT.md#hardware-acceptance-checklist).
 
-## Beta 18 — next: device session and shell
+## Beta 19 — next: device session and shell
 
-This is the next code project after Beta 17. Pages still receive `SelectedDevice` from `MainWindowViewModel`.
+This is the next code project after Beta 18. Pages still receive `SelectedDevice` from `MainWindowViewModel`.
 
 - [ ] Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - [ ] Let pages subscribe to the shared session instead of `MainWindowViewModel` pushing `SelectedDevice` into each page VM.
 - [ ] Add explicit device capabilities and user scope to the header after that context exists (`SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for secondary user, Automotive, offline, unauthorized, and unknown capability).
 
-## After B18 — safety, quality, and release
+## After B19 — safety, quality, and release
 
 - [ ] Add explicit Fully Reversible, Partially Reversible, and Not Reversible states to recommendation scoring.
 - [ ] Add device restore points that capture package state, runtime roles, relevant settings, fingerprint, and the ruleset version before mutations.
@@ -147,3 +147,4 @@ This is the next code project after Beta 17. Pages still receive `SelectedDevice
 - [x] Replace Install APK with App Installer for APK, split APK, APKS, APKM, and XAPK, including safe XAPK OBB copy (Beta 17).
 - [x] Correct Shield Device Status parsers, missing-tool states, Debloat darcy matching, and package readback (Beta 17).
 - [x] Identify Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box from hardware evidence with conservative overlays (Beta 17).
+- [x] Ship device-specific one-click Debloat profiles (Safe / Recommended / Deep / Custom) while keeping Custom package inspection (Beta 18).

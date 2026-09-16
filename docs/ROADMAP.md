@@ -1,22 +1,22 @@
 # Roadmap
 
-## Unreleased — device-specific one-click Debloat
+## Beta 18 — current: device-specific one-click Debloat
 
 - Debloat main workflow is Safe / Recommended / Deep / Custom. Recommended is one-click for reviewed device profiles; Custom keeps the package checklist. Physical Shield Recommended + restore confirmation is still open. Streamer/kirkwood and unmatched hardware may show zero reviewed actions.
 
-## Beta 17 — current: App Installer, Shield parsers, and Google TV families
+## Beta 17 — App Installer, Shield parsers, and Google TV families
 
 - App Installer sideloads APK, split APK, APKS, APKM, and XAPK after an analyze-before-install preview. Split sets use `install-multiple`. XAPK OBB copies only to `/sdcard/Android/obb/<package>/`. Physical Shield sideload and OBB copy remain open.
 - Shield Device Status parsers, honest missing-tool states, Debloat darcy matching, and package readback. Physical Device Status confirmation is still open.
 - Hardware-family matching and conservative package overlays for Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box. Physical verification of those three devices is pending.
 
-## Beta 18 — next: device session and shell
+## Beta 19 — next: device session and shell
 
 - Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - Pages subscribe to the shared session instead of the shell pushing `SelectedDevice` into each page VM.
 - Immediately after that context exists, add capability and user-scope header badges.
 
-## After B18
+## After B19
 
 - Restore points and Fully / Partially / Not reversible classifications before batch mutations.
 - Feature-aware debloat protection (Plex, casting, voice, game streaming, accessibility).
