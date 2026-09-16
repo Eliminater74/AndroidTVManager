@@ -73,6 +73,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string _adbVersion = "Checking managed Platform-Tools…";
     private bool _sessionsRecovered;
     private readonly SemaphoreSlim _deviceChangeLock = new(1, 1);
+    private string? _preferredTargetSerial;
+    private bool _suppressDevicePropagation;
 
     public MainWindowViewModel(
         IAdbToolsManager toolsManager,
@@ -215,7 +217,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private object CreatePage(NavigationEntry entry) => entry.Label switch
     {
         "Dashboard" => new DashboardPageViewModel(Devices, _deviceRepository),
-        "Devices" => new DevicesPageViewModel(Devices, _deviceRepository, _connectionService, _confirmation),
+        "Devices" => new DevicesPageViewModel(
+            Devices,
+            _deviceRepository,
+            _connectionService,
+            _confirmation,
+            _deviceTracker,
+            PreferTarget,
+            device => SelectedDevice = device),
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Display Diagnostics" => new DisplayDiagnosticsPageViewModel(
             _displayDiagnosticsService,
@@ -229,7 +238,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _configurationSnapshots,
             Devices,
             device => SelectedDevice = device),
-        "Connections" => new ConnectionsPageViewModel(_connectionService, _history, _deviceRepository),
+        "Connections" => new ConnectionsPageViewModel(
+            _connectionService,
+            _history,
+            _deviceRepository,
+            _deviceTracker,
+            PreferTarget),
         "Tweaks" => new TweaksPageViewModel(_tweaks, _confirmation),
         "Recovery / Sideload" => new RecoveryPageViewModel(_recovery, _confirmation),
         "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
@@ -313,40 +327,79 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             if (!SetProperty(ref _selectedDevice, value))
                 return;
-            if (_pages.TryGetValue("Tweaks", out var tweaksPage) && tweaksPage is TweaksPageViewModel tweaks)
-                tweaks.SelectedDevice = value;
-            if (_pages.TryGetValue("Configuration Explorer", out var page)
-                && page is ConfigurationPageViewModel configuration)
-                configuration.SelectedDevice = value;
-            if (_pages.TryGetValue("Backup / Restore", out var backupPage)
-                && backupPage is BackupPageViewModel backup)
-                backup.SelectedDevice = value;
-            if (_pages.TryGetValue("Display Diagnostics", out var displayPage)
-                && displayPage is DisplayDiagnosticsPageViewModel display)
-                display.SelectedDevice = value;
-            if (_pages.TryGetValue("ADB Transport Doctor", out var transportPage)
-                && transportPage is TransportDoctorPageViewModel transport)
-                transport.SelectedDevice = value;
-            if (_pages.TryGetValue("Deployment Profiles", out var profilesPage)
-                && profilesPage is DeploymentProfilesPageViewModel profiles)
-                profiles.SelectedDevice = value;
-            if (_pages.TryGetValue("Remote", out var remotePage)
-                && remotePage is RemotePageViewModel remote)
-                remote.SelectedDevice = value;
-            if (_pages.TryGetValue("Device Logcat", out var logcatPage)
-                && logcatPage is DeviceLogcatPageViewModel logcat)
-                logcat.SelectedDevice = value;
-            if (_pages.TryGetValue("Diagnostic Bundles", out var bundlePage)
-                && bundlePage is DiagnosticBundlePageViewModel bundle)
-                bundle.SelectedDevice = value;
-            if (_pages.TryGetValue("Advanced Diagnostics", out var advancedPage)
-                && advancedPage is AdvancedDiagnosticsPageViewModel advanced)
-                advanced.SelectedDevice = value;
-            if (_pages.TryGetValue("Device Comparison", out var comparisonPage)
-                && comparisonPage is DeviceComparisonPageViewModel comparison
-                && comparison.LeftDevice is null)
-                comparison.LeftDevice = value;
+            if (!_suppressDevicePropagation)
+                PropagateSelectedDevice(value);
         }
+    }
+
+    [RelayCommand]
+    private void SelectDevice(AndroidDevice? device)
+    {
+        if (device is null)
+            return;
+        PreferTarget(device.Serial);
+    }
+
+    private void PreferTarget(string serialOrEndpoint)
+    {
+        if (string.IsNullOrWhiteSpace(serialOrEndpoint))
+            return;
+        _preferredTargetSerial = serialOrEndpoint.Trim();
+        if (DeviceSelection.Find(Devices, _preferredTargetSerial) is { } device)
+            SelectedDevice = device;
+    }
+
+    private void PropagateSelectedDevice(AndroidDevice? value)
+    {
+        if (_pages.TryGetValue("Devices", out var devicesPage) && devicesPage is DevicesPageViewModel devices)
+            devices.SelectedDevice = value;
+        if (_pages.TryGetValue("Device Status", out var statusPage) && statusPage is DeviceStatusPageViewModel status)
+            status.SelectedDevice = value;
+        if (_pages.TryGetValue("Tweaks", out var tweaksPage) && tweaksPage is TweaksPageViewModel tweaks)
+            tweaks.SelectedDevice = value;
+        if (_pages.TryGetValue("Configuration Explorer", out var page)
+            && page is ConfigurationPageViewModel configuration)
+            configuration.SelectedDevice = value;
+        if (_pages.TryGetValue("Backup / Restore", out var backupPage)
+            && backupPage is BackupPageViewModel backup)
+            backup.SelectedDevice = value;
+        if (_pages.TryGetValue("Display Diagnostics", out var displayPage)
+            && displayPage is DisplayDiagnosticsPageViewModel display)
+            display.SelectedDevice = value;
+        if (_pages.TryGetValue("ADB Transport Doctor", out var transportPage)
+            && transportPage is TransportDoctorPageViewModel transport)
+            transport.SelectedDevice = value;
+        if (_pages.TryGetValue("Deployment Profiles", out var profilesPage)
+            && profilesPage is DeploymentProfilesPageViewModel profiles)
+            profiles.SelectedDevice = value;
+        if (_pages.TryGetValue("Remote", out var remotePage)
+            && remotePage is RemotePageViewModel remote)
+            remote.SelectedDevice = value;
+        if (_pages.TryGetValue("Device Logcat", out var logcatPage)
+            && logcatPage is DeviceLogcatPageViewModel logcat)
+            logcat.SelectedDevice = value;
+        if (_pages.TryGetValue("Diagnostic Bundles", out var bundlePage)
+            && bundlePage is DiagnosticBundlePageViewModel bundle)
+            bundle.SelectedDevice = value;
+        if (_pages.TryGetValue("Advanced Diagnostics", out var advancedPage)
+            && advancedPage is AdvancedDiagnosticsPageViewModel advanced)
+            advanced.SelectedDevice = value;
+        if (_pages.TryGetValue("Debloat", out var debloatPage) && debloatPage is DebloatPageViewModel debloat)
+            debloat.SelectedDevice = value;
+        if (_pages.TryGetValue("Tools", out var toolsPage) && toolsPage is ToolsPageViewModel tools)
+            tools.SelectedDevice = value;
+        if (_pages.TryGetValue("Scripts", out var scriptsPage) && scriptsPage is ScriptsPageViewModel scripts)
+            scripts.SelectedDevice = value;
+        if (_pages.TryGetValue("Applications", out var applicationsPage)
+            && applicationsPage is ApplicationsPageViewModel applications)
+            applications.TargetSerial = value?.Serial ?? string.Empty;
+        if (_pages.TryGetValue("Install APK", out var installPage)
+            && installPage is InstallApkPageViewModel install)
+            install.TargetSerial = value?.Serial ?? string.Empty;
+        if (_pages.TryGetValue("Device Comparison", out var comparisonPage)
+            && comparisonPage is DeviceComparisonPageViewModel comparison
+            && comparison.LeftDevice is null)
+            comparison.LeftDevice = value;
     }
 
     public int ConnectedDeviceCount => Devices.Count(device => device.State == DeviceState.Device);
@@ -470,14 +523,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
             }).ToArray();
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                Devices.Clear();
-                foreach (var device in enrichedDevices)
-                    Devices.Add(device);
+                var previousSerial = SelectedDevice?.Serial;
+                var preferredSerial = _preferredTargetSerial;
+                _suppressDevicePropagation = true;
+                try
+                {
+                    Devices.Clear();
+                    foreach (var device in enrichedDevices)
+                        Devices.Add(device);
+                    SelectedDevice = DeviceSelection.Resolve(Devices, previousSerial, preferredSerial);
+                    if (preferredSerial is not null
+                        && SelectedDevice is not null
+                        && DeviceSelection.Matches(SelectedDevice, preferredSerial))
+                        _preferredTargetSerial = null;
+                }
+                finally
+                {
+                    _suppressDevicePropagation = false;
+                }
+                PropagateSelectedDevice(SelectedDevice);
                 OnPropertyChanged(nameof(ConnectedDeviceCount));
-                if (SelectedDevice is not null)
-                    SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
-                else
-                    SelectedDevice = Devices.FirstOrDefault(device => device.State == DeviceState.Device);
             });
 
             foreach (var device in enrichedDevices)
@@ -560,9 +625,8 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
         InstallationPolicy = policyProvider.GetPolicy(null).ManualInstallGuidance;
         Devices.CollectionChanged += (_, _) =>
         {
-            if ((SelectedDevice is null || !Devices.Any(device => device.Serial == SelectedDevice.Serial))
-                && Devices.FirstOrDefault(device => device.State == DeviceState.Device) is { } device)
-                SelectedDevice = device;
+            if (SelectedDevice is not null)
+                SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
         };
     }
 
@@ -968,17 +1032,26 @@ public sealed partial class DevicesPageViewModel : ObservableObject
     private readonly IDeviceRepository _repository;
     private readonly IAdbConnectionService _connectionService;
     private readonly IConfirmationService _confirmation;
+    private readonly IAdbDeviceTracker _deviceTracker;
+    private readonly Action<string> _preferTarget;
+    private readonly Action<AndroidDevice?> _selectTarget;
 
     public DevicesPageViewModel(
         ObservableCollection<AndroidDevice> devices,
         IDeviceRepository repository,
         IAdbConnectionService connectionService,
-        IConfirmationService confirmation)
+        IConfirmationService confirmation,
+        IAdbDeviceTracker deviceTracker,
+        Action<string> preferTarget,
+        Action<AndroidDevice?> selectTarget)
     {
         Devices = devices;
         _repository = repository;
         _connectionService = connectionService;
         _confirmation = confirmation;
+        _deviceTracker = deviceTracker;
+        _preferTarget = preferTarget;
+        _selectTarget = selectTarget;
         _ = LoadSavedAsync();
     }
 
@@ -1008,6 +1081,9 @@ public sealed partial class DevicesPageViewModel : ObservableObject
 
     [ObservableProperty]
     private string _saveMessage = "Select a live device to save it for later.";
+
+    partial void OnSelectedDeviceChanged(AndroidDevice? value)
+        => _selectTarget(value);
 
     partial void OnSelectedSavedDeviceChanged(SavedDevice? value)
     {
@@ -1069,6 +1145,8 @@ public sealed partial class DevicesPageViewModel : ObservableObject
             IsFavorite = false
         });
         SaveMessage = $"{name} connected and saved.";
+        await _deviceTracker.RefreshAsync();
+        _preferTarget(endpoint);
         await LoadSavedAsync();
     }
 
@@ -1098,6 +1176,10 @@ public sealed partial class DevicesPageViewModel : ObservableObject
         SaveMessage = $"Reconnecting to {endpoint}…";
         var result = await _connectionService.ConnectAsync(endpoint);
         SaveMessage = result.IsSuccess ? $"{device.FriendlyName} connected." : result.StandardError.Trim();
+        if (!result.IsSuccess)
+            return;
+        await _deviceTracker.RefreshAsync();
+        _preferTarget(endpoint);
     }
 
     [RelayCommand]
@@ -1227,15 +1309,21 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
     private readonly IAdbConnectionService _connectionService;
     private readonly IConnectionHistoryRepository _history;
     private readonly IDeviceRepository _deviceRepository;
+    private readonly IAdbDeviceTracker _deviceTracker;
+    private readonly Action<string> _preferTarget;
 
     public ConnectionsPageViewModel(
         IAdbConnectionService connectionService,
         IConnectionHistoryRepository history,
-        IDeviceRepository deviceRepository) : base("Connections")
+        IDeviceRepository deviceRepository,
+        IAdbDeviceTracker deviceTracker,
+        Action<string> preferTarget) : base("Connections")
     {
         _connectionService = connectionService;
         _history = history;
         _deviceRepository = deviceRepository;
+        _deviceTracker = deviceTracker;
+        _preferTarget = preferTarget;
         Host = string.Empty;
         Port = "5555";
         PairingPort = string.Empty;
@@ -1279,6 +1367,10 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
         Message = result.IsSuccess
             ? $"Connected: {result.StandardOutput.Trim()}"
             : $"Connection failed: {result.StandardError.Trim()}";
+        if (!result.IsSuccess)
+            return;
+        await _deviceTracker.RefreshAsync();
+        _preferTarget(endpoint);
     }
 
     [RelayCommand]
@@ -1347,6 +1439,8 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
             PreferredConnectionType = ConnectionType.WirelessDebugging
         });
         Message = $"{name} paired, connected, and saved.";
+        await _deviceTracker.RefreshAsync();
+        _preferTarget(debugEndpoint);
     }
 
     [RelayCommand]
@@ -1478,14 +1572,9 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
         Devices = devices;
         Devices.CollectionChanged += (_, _) =>
         {
-            var targetChanged = false;
-            if ((string.IsNullOrWhiteSpace(TargetSerial) || !Devices.Any(device => device.Serial == TargetSerial))
-                && Devices.FirstOrDefault(device => device.State == DeviceState.Device) is { } device)
-            {
-                TargetSerial = device.Serial;
-                targetChanged = true;
-            }
-            if (targetChanged || (!string.IsNullOrWhiteSpace(TargetSerial) && Packages.Count == 0))
+            if (!string.IsNullOrWhiteSpace(TargetSerial)
+                && Devices.Any(device => device.Serial == TargetSerial)
+                && Packages.Count == 0)
                 _ = RefreshAsync();
         };
     }
@@ -1585,6 +1674,11 @@ public sealed partial class ApplicationsPageViewModel : PageViewModel
 
     partial void OnSearchChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
     partial void OnSelectedFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
+    partial void OnTargetSerialChanged(string value)
+    {
+        if (Devices.Any(device => string.Equals(device.Serial, value, StringComparison.OrdinalIgnoreCase)))
+            _ = RefreshAsync();
+    }
 
     partial void OnSelectedPackageChanged(PackageInventoryEntry? value)
     {

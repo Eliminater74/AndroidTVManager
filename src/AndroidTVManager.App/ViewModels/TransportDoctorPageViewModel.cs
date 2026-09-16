@@ -20,8 +20,8 @@ public sealed partial class TransportDoctorPageViewModel : PageViewModel
         SelectedDevice = devices.FirstOrDefault(device => device.State == DeviceState.Device);
         devices.CollectionChanged += (_, _) =>
         {
-            if (SelectedDevice is null)
-                SelectedDevice = devices.FirstOrDefault(device => device.State == DeviceState.Device);
+            if (SelectedDevice is not null)
+                SelectedDevice = devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
         };
     }
 

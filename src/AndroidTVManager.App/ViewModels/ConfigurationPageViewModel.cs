@@ -28,8 +28,8 @@ public sealed partial class ConfigurationPageViewModel : PageViewModel
         TargetChanged = targetChanged;
         Devices.CollectionChanged += (_, _) =>
         {
-            if (SelectedDevice is null)
-                SelectedDevice = Devices.FirstOrDefault(device => device.State == DeviceState.Device);
+            if (SelectedDevice is not null)
+                SelectedDevice = Devices.FirstOrDefault(device => device.Serial == SelectedDevice.Serial);
         };
     }
 

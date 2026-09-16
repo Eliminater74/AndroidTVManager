@@ -407,7 +407,7 @@ public sealed partial class DeploymentProfilesPageViewModel : PageViewModel
     private async Task LoadAsync()
     {
         await LoadProfilesAsync();
-        SelectedDevice = Devices.FirstOrDefault(device => device.State == DeviceState.Device);
+        SelectedDevice ??= Devices.FirstOrDefault(device => device.State == DeviceState.Device);
     }
 
     private async Task LoadProfilesAsync(long? selectId = null)

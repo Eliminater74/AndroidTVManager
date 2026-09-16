@@ -25,8 +25,8 @@
         </DataTemplate>
         <DataTemplate x:Key="DeviceSelectorTemplate">
             <StackPanel>
-                <TextBlock Text="{Binding FriendlyName}" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding Serial}" Foreground="{StaticResource TextSecondary}" FontSize="11"/>
+                <TextBlock Text="{Binding DisplayLabel}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding DisplaySubtitle}" Foreground="{StaticResource TextSecondary}" FontSize="11"/>
             </StackPanel>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DeploymentProfilesPageViewModel}">
@@ -146,7 +146,13 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
-                                                Padding="14" Margin="0,0,0,8">
+                                                Padding="14" Margin="0,0,0,8" Cursor="Hand"
+                                                ToolTip="Click to make this the active TARGET for the rest of the app.">
+                                            <Border.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick"
+                                                              Command="{Binding DataContext.SelectDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                              CommandParameter="{Binding}"/>
+                                            </Border.InputBindings>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
@@ -156,8 +162,8 @@
                                                     <TextBlock Text="▣" FontSize="22" Foreground="{StaticResource CyanAccent}"
                                                                VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                     <StackPanel>
-                                                        <TextBlock Text="{Binding Model}" FontSize="16" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding Serial}" Foreground="{StaticResource TextSecondary}"
+                                                        <TextBlock Text="{Binding DisplayLabel}" FontSize="16" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding DisplaySubtitle}" Foreground="{StaticResource TextSecondary}"
                                                                    Margin="0,3,0,0"/>
                                                     </StackPanel>
                                                 </StackPanel>
@@ -1613,8 +1619,8 @@
                     <TextBlock Text="DEVICES" FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource CyanAccent}"/>
                     <TextBlock Text="Your devices" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                    <TextBlock Text="Live state from the ADB tracker. Offline and unauthorized devices remain visible."
-                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
+                    <TextBlock Text="Live state from the ADB tracker. Click a connected device to make it the active TARGET for Device Status, Applications, and other pages. Offline and unauthorized devices remain visible."
+                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
                 <Border Grid.Row="1" Background="{StaticResource PanelBackground}"
                         BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
@@ -1670,19 +1676,37 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Model}" FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding DisplayLabel}" FontSize="17" FontWeight="SemiBold"/>
                                             <TextBlock Text="{Binding ReportedName, StringFormat=Device name: {0}}"
                                                        Foreground="{StaticResource TextSecondary}" FontSize="11"/>
                                             <TextBlock Text="{Binding MacAddress, StringFormat=MAC: {0}}"
                                                        Foreground="{StaticResource TextSecondary}" FontSize="11"/>
-                                            <TextBlock Text="{Binding Serial}" Foreground="{StaticResource TextSecondary}"
+                                            <TextBlock Text="{Binding DisplaySubtitle}" Foreground="{StaticResource TextSecondary}"
                                                        Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right">
                                             <TextBlock Text="{Binding State}" Foreground="{StaticResource GreenAccent}"
                                                        FontWeight="Bold" HorizontalAlignment="Right"/>
                                             <TextBlock Text="{Binding ConnectionType}" Foreground="{StaticResource TextSecondary}"
-                                                       Margin="0,4,0,0"/>
+                                                       Margin="0,4,0,0" HorizontalAlignment="Right"/>
+                                            <TextBlock Text="ACTIVE TARGET" Foreground="{StaticResource CyanAccent}"
+                                                       FontSize="10" FontWeight="Bold" Margin="0,8,0,0"
+                                                       HorizontalAlignment="Right">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <Button Content="Use as target" Style="{StaticResource AccentButtonStyle}"
+                                                    Margin="0,8,0,0" HorizontalAlignment="Right"
+                                                    Command="{Binding DataContext.SelectDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -2611,7 +2635,8 @@
                         <TextBlock Text="TARGET" Foreground="{StaticResource TextSecondary}" FontSize="10"
                                    FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                  ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="185" Margin="0,0,10,0"/>
+                                  ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="260" Margin="0,0,10,0"
+                                  ToolTip="Switch the active ADB target used by Device Status, Applications, and other pages."/>
                         <Button Content="↻  Refresh" Style="{StaticResource GhostButtonStyle}"
                                 Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
                     </StackPanel>
