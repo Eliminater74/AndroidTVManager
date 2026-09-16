@@ -4,6 +4,7 @@ using System.Text.Json;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Core.Privacy;
 using AndroidTVManager.Core.Scripts;
 
 namespace AndroidTVManager.Infrastructure.Scripts;
@@ -12,11 +13,19 @@ public sealed class ScriptExecutionService : IScriptExecutionService
 {
     private readonly IAdbProcessRunner _runner;
     private readonly IScriptExecutionStore _store;
+    private readonly ISensitiveDataRedactor _redactor;
+    private readonly IPackageManager? _packages;
 
-    public ScriptExecutionService(IAdbProcessRunner runner, IScriptExecutionStore store)
+    public ScriptExecutionService(
+        IAdbProcessRunner runner,
+        IScriptExecutionStore store,
+        ISensitiveDataRedactor? redactor = null,
+        IPackageManager? packages = null)
     {
         _runner = runner;
         _store = store;
+        _redactor = redactor ?? new SensitiveDataRedactor();
+        _packages = packages;
     }
 
     public async Task<ScriptExecutionResult> ExecuteAsync(
@@ -186,7 +195,7 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         return null;
     }
 
-    private Task<AdbCommandResult> ExecuteActionAsync(
+    private async Task<AdbCommandResult> ExecuteActionAsync(
         string serial,
         ScriptAction action,
         CancellationToken cancellationToken)
@@ -194,24 +203,58 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         var type = action.Type.ToLowerInvariant();
         return type switch
         {
-            "disablepackage" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "disable-user", "--user", "0", action.Package!], cancellationToken: cancellationToken),
-            "enablepackage" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", action.Package!], cancellationToken: cancellationToken),
-            "uninstalluser" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", "--user", "0", action.Package!], cancellationToken: cancellationToken),
-            "restorepackage" => _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", "--user", "0", action.Package!], cancellationToken: cancellationToken),
-            "clear data" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", action.Package!], cancellationToken: cancellationToken),
-            "cleardata" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", action.Package!], cancellationToken: cancellationToken),
-            "launchpackage" => _runner.RunForDeviceAsync(serial, ["shell", "monkey", "-p", action.Package!, "1"], cancellationToken: cancellationToken),
-            "forcestop" => _runner.RunForDeviceAsync(serial, ["shell", "am", "force-stop", action.Package!], cancellationToken: cancellationToken),
-            "grantpermission" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "grant", action.Package!, action.Value!], cancellationToken: cancellationToken),
-            "revokepermission" => _runner.RunForDeviceAsync(serial, ["shell", "pm", "revoke", action.Package!, action.Value!], cancellationToken: cancellationToken),
-            "setsetting" => ExecuteSettingAsync(serial, action, cancellationToken),
-            "installapk" => _runner.RunForDeviceAsync(serial, ["install", action.Path!], TimeSpan.FromMinutes(5), cancellationToken),
-            "pushfile" => _runner.RunForDeviceAsync(serial, ["push", action.Path!, action.Value!], TimeSpan.FromMinutes(5), cancellationToken),
-            "pullfile" => _runner.RunForDeviceAsync(serial, ["pull", action.Path!, action.Value!], TimeSpan.FromMinutes(5), cancellationToken),
-            "deletefile" => _runner.RunForDeviceAsync(serial, ["shell", "rm", action.Path!], cancellationToken: cancellationToken),
-            "reboot" => _runner.RunForDeviceAsync(serial, string.IsNullOrWhiteSpace(action.Value) ? ["reboot"] : ["reboot", action.Value], cancellationToken: cancellationToken),
-            "shell" => _runner.RunForDeviceAsync(serial, ["shell", action.Value ?? string.Empty], TimeSpan.FromMinutes(5), cancellationToken),
-            _ => Task.FromResult(new AdbCommandResult("adb.exe", [], 2, string.Empty, $"Unsupported script action: {action.Type}", TimeSpan.Zero))
+            "disablepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Disable,
+                () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "disable-user", "--user", "0", action.Package!], cancellationToken: cancellationToken),
+                cancellationToken),
+            "enablepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Enable,
+                () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "enable", "--user", "0", action.Package!], cancellationToken: cancellationToken),
+                cancellationToken),
+            "uninstalluser" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.UninstallForUser,
+                () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "uninstall", "--user", "0", action.Package!], cancellationToken: cancellationToken),
+                cancellationToken),
+            "restorepackage" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.Restore,
+                () => _runner.RunForDeviceAsync(serial, ["shell", "cmd", "package", "install-existing", "--user", "0", action.Package!], cancellationToken: cancellationToken),
+                cancellationToken),
+            "clear data" or "cleardata" => await MutatePackageAsync(serial, action.Package!, PackageMutationKind.ClearData,
+                () => _runner.RunForDeviceAsync(serial, ["shell", "pm", "clear", action.Package!], cancellationToken: cancellationToken),
+                cancellationToken),
+            "launchpackage" => await _runner.RunForDeviceAsync(serial, ["shell", "monkey", "-p", action.Package!, "1"], cancellationToken: cancellationToken),
+            "forcestop" => await _runner.RunForDeviceAsync(serial, ["shell", "am", "force-stop", action.Package!], cancellationToken: cancellationToken),
+            "grantpermission" => _packages is not null
+                ? await _packages.GrantPermissionAsync(serial, action.Package!, action.Value!, cancellationToken)
+                : await _runner.RunForDeviceAsync(serial, ["shell", "pm", "grant", action.Package!, action.Value!], cancellationToken: cancellationToken),
+            "revokepermission" => _packages is not null
+                ? await _packages.RevokePermissionAsync(serial, action.Package!, action.Value!, cancellationToken)
+                : await _runner.RunForDeviceAsync(serial, ["shell", "pm", "revoke", action.Package!, action.Value!], cancellationToken: cancellationToken),
+            "setsetting" => await ExecuteSettingAsync(serial, action, cancellationToken),
+            "installapk" => await _runner.RunForDeviceAsync(serial, ["install", action.Path!], TimeSpan.FromMinutes(5), cancellationToken),
+            "pushfile" => await _runner.RunForDeviceAsync(serial, ["push", action.Path!, action.Value!], TimeSpan.FromMinutes(5), cancellationToken),
+            "pullfile" => await _runner.RunForDeviceAsync(serial, ["pull", action.Path!, action.Value!], TimeSpan.FromMinutes(5), cancellationToken),
+            "deletefile" => await _runner.RunForDeviceAsync(serial, ["shell", "rm", action.Path!], cancellationToken: cancellationToken),
+            "reboot" => await _runner.RunForDeviceAsync(serial, string.IsNullOrWhiteSpace(action.Value) ? ["reboot"] : ["reboot", action.Value], cancellationToken: cancellationToken),
+            "shell" => await _runner.RunForDeviceAsync(serial, ["shell", action.Value ?? string.Empty], TimeSpan.FromMinutes(5), cancellationToken),
+            _ => new AdbCommandResult("adb.exe", [], 2, string.Empty, $"Unsupported script action: {action.Type}", TimeSpan.Zero)
+        };
+    }
+
+    private async Task<AdbCommandResult> MutatePackageAsync(
+        string serial,
+        string packageName,
+        PackageMutationKind kind,
+        Func<Task<AdbCommandResult>> fallback,
+        CancellationToken cancellationToken)
+    {
+        if (_packages is null)
+            return await fallback();
+
+        return kind switch
+        {
+            PackageMutationKind.Disable => await _packages.DisableAsync(serial, packageName, cancellationToken),
+            PackageMutationKind.Enable => await _packages.EnableAsync(serial, packageName, cancellationToken),
+            PackageMutationKind.UninstallForUser => await _packages.UninstallForUserAsync(serial, packageName, cancellationToken),
+            PackageMutationKind.Restore => await _packages.RestoreAsync(serial, packageName, cancellationToken),
+            PackageMutationKind.ClearData => await _packages.ClearDataAsync(serial, packageName, cancellationToken),
+            _ => await fallback()
         };
     }
 
@@ -307,6 +350,6 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         return action.Package ?? action.Path ?? action.Value;
     }
 
-    private static string RedactOutput(string stdout, string stderr)
-        => $"{stdout}\n{stderr}".Replace("\r", string.Empty).Trim();
+    private string RedactOutput(string stdout, string stderr)
+        => _redactor.Redact($"{stdout}\n{stderr}".Replace("\r", string.Empty).Trim());
 }

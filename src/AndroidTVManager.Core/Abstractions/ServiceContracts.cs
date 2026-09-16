@@ -242,12 +242,24 @@ public interface IDeploymentProfileService
 {
     DeploymentCompatibility CheckCompatibility(
         DeploymentProfile profile,
-        AndroidDevice device);
+        AndroidDevice device,
+        DeviceInspectionResult? inspection = null);
 
     Task<DeploymentProfileDeploymentResult> DeployAsync(
         DeploymentProfile profile,
         AndroidDevice device,
         IProgress<DeploymentProfileStepResult>? progress = null,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IPackageSafetyGate
+{
+    Task<PackageMutationDecision> EvaluateAsync(
+        PackageMutationRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task EnsureAllowedAsync(
+        PackageMutationRequest request,
         CancellationToken cancellationToken = default);
 }
 

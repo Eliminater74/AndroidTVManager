@@ -9,6 +9,7 @@ using AndroidTVManager.Core.Models;
 using AndroidTVManager.Infrastructure.Packages;
 using AndroidTVManager.Infrastructure.Storage;
 using AndroidTVManager.Infrastructure.Updates;
+using AndroidTVManager.Core.Privacy;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AndroidTVManager.Infrastructure;
@@ -43,6 +44,8 @@ public static class DependencyInjection
         services.AddSingleton<IPackageReferenceCatalog, PackageReferenceCatalog>();
         services.AddSingleton<IReferencePackageDumpService, ReferencePackageDumpService>();
         services.AddSingleton<IAdbCommandService, AdbCommandService>();
+        services.AddSingleton<ISensitiveDataRedactor, SensitiveDataRedactor>();
+        services.AddSingleton<IPackageSafetyGate, PackageSafetyGate>();
         services.AddSingleton<IPackageClassifier, PackageClassifier>();
         services.AddSingleton<IDebloatPlanner, DebloatPlanner>();
         services.AddSingleton<IDebloatExecutionService, DebloatExecutionService>();
