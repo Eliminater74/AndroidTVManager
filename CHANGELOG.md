@@ -6,6 +6,10 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+### Fixed
+
+- Confirmation dialogs keep a fixed width, cap the message pane to the work area, and show a vertical scrollbar so long release notes no longer hide Cancel and Continue.
+
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [1.0.0-B15] - 2026-09-16
