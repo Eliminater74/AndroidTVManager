@@ -6,10 +6,11 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
-Shield Device Status/Debloat correctness plus Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box family profiles. No version bump.
+App Installer sideload support for APK, split APK, APKS, APKM, and XAPK, plus the earlier Shield inspection/Debloat and Google TV family-profile work. No version bump.
 
 ### Added
 
+- App Installer replaces the Install APK page. Analyze then install APK, split APK sets, APKS, APKM, and XAPK on the selected TARGET. Split sets use `adb install-multiple`. XAPK OBB files are copied only to `/sdcard/Android/obb/<package>/` after a successful APK install. APKS archives with multiple device-targeted standalone variants fail closed unless exactly one ABI matches. This is ADB package installation while Android is running; Recovery / Sideload remains the OTA ZIP workflow.
 - Device-family matching for Google TV Streamer 4K (`kirkwood` / `GRS6B`), Chromecast with Google TV 4K (`sabrina` / `sabrina_prod_stable`), and onn. Google TV 4K Box (`YOC` / `onn_4k_gtv` / `DV6105Z`). Matching uses manufacturer, brand, model, product, device, board, and fingerprint. FriendlyName cannot activate a hardware profile.
 - Conservative model overlays on top of AOSP TV and Google TV core. Chromecast-only packages stay on the sabrina overlay. Streamer and onn. YOC overlays are Keep-only until a physical package dump. Overlapping Keep and Disable evidence stays Keep.
 
@@ -24,7 +25,7 @@ Shield Device Status/Debloat correctness plus Google TV Streamer 4K, Chromecast 
 
 ### Release and validation
 
-- Device-independent fixtures cover Shield meminfo, dumpsys display, Vulkan features, stock `uid=2000` shell, Debloat darcy matching, and Streamer/Chromecast 4K/onn. YOC family overlays. Debug/Release builds and 279 tests pass. Physical Device Status/Debloat confirmation on the live Shield, Streamer, Chromecast 4K, and onn. 4K Box is still required; hardware certification is not complete.
+- Device-independent fixtures cover Shield meminfo, dumpsys display, Vulkan features, stock `uid=2000` shell, Debloat darcy matching, Streamer/Chromecast 4K/onn. YOC family overlays, and App Installer prepare/install/OBB/archive-safety cases. Debug/Release builds and 300 tests pass. Physical Device Status/Debloat confirmation and Shield-first App Installer sideload (including a real XAPK with OBB) are still required; hardware certification is not complete.
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 

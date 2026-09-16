@@ -2,6 +2,20 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Unreleased — App Installer
+
+Turn the old Install APK page into a real sideload installer. Do not treat this as hardware certification.
+
+- [x] Rename the page to App Installer and route browse/analyze/install through `IBulkApkService`.
+- [x] Support APK, split APK sets, APKS, APKM, and XAPK, including folder selection of splits.
+- [x] Install split sets with `install-multiple`; fail before install when a split set has no base APK.
+- [x] Fail closed on APKS archives with multiple unmatched standalone variants.
+- [x] Copy XAPK OBB files only to `/sdcard/Android/obb/<package>/` after a successful APK install; ignore `Android/data` and other unknown payloads.
+- [x] Report partial success when the APK installs but OBB copy fails; do not auto-uninstall.
+- [x] Keep archive extraction limits (2 GB APKS, 8 GB XAPK/APKM), traversal/symlink/duplicate rejection, and temp cleanup on success/failure/cancel.
+- [x] Verify known package identity after ADB success; keep Recovery / Sideload separate.
+- [ ] Sideload a normal APK, a split set, and an XAPK with OBB on the physical Shield; confirm scoped-storage OBB copy honestly if the firmware blocks `Android/obb`.
+
 ## Unreleased — Shield inspection and Debloat correctness
 
 Code-side, fixture-backed fixes on top of 1.0.0-B16. Do not treat this as hardware certification.

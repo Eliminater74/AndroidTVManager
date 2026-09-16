@@ -8,7 +8,7 @@
 [![Stars](https://img.shields.io/github/stars/Eliminater74/AndroidTVManager?style=flat&label=stars)](https://github.com/Eliminater74/AndroidTVManager/stargazers)
 [![License](https://img.shields.io/github/license/Eliminater74/AndroidTVManager)](LICENSE)
 
-Android TV Manager is a Windows-first Android TV / Google TV device management toolbox. It provides a native WPF interface for ADB device discovery, saved devices, device intelligence, package management, cautious debloating, APK installation, scripts, configuration inspection, and connection history.
+Android TV Manager is a Windows-first Android TV / Google TV device management toolbox. It provides a native WPF interface for ADB device discovery, saved devices, device intelligence, package management, cautious debloating, App Installer sideload (APK, split APK, APKS, APKM, and XAPK), scripts, configuration inspection, and connection history.
 
 This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database, userdata, and compatibility features are intentionally out of scope.
 
@@ -50,7 +50,7 @@ Beta 14 made a newly connected Shield or other network device selectable while a
 - ADB Remote, live device Logcat, redacted Diagnostic Bundles, codec/network inspection, and shared-storage tools
 - Disable-first debloat actions, captured serials, drift checks, transaction history, and restore
 - Backup / Restore page for device reports, configuration snapshots, APKs and split APKs, shared storage, legacy app-data attempts, and APK restore
-- APK installation through ADB with accurate package-manager errors
+- App Installer for APK, split APK, APKS, APKM, and XAPK sideload through ADB, with analyze-before-install preview and automated XAPK OBB copy to `/sdcard/Android/obb/<package>/`
 - ADB Command Center, scripts, screenshots, live application logs, and system-tray controls
 - Dark, Pure Black, and White themes
 
@@ -95,7 +95,7 @@ Device inspection is read-only and reports `Unknown` when Android does not expos
 
 Debloat always creates a preview, captures one target serial, rechecks package state before execution, prefers disabling for User 0, and protects critical, active-role, reference-protected TV core, and Unknown packages from automatic selection. Restore uses the transaction journal.
 
-APK installation uses ADB and is separate from Android's manual unverified-developer installation policy. Android TV Manager never bypasses verification, waiting periods, device administration, or package-manager policy.
+App Installer uses ADB package installation (`install` / `install-multiple`) while Android is running. It is separate from Recovery / Sideload, which is for recovery/OTA ZIP workflows. Android TV Manager never bypasses verification, waiting periods, device administration, package-manager policy, or signing mismatches. XAPK additional data is limited to package-specific OBB paths; `Android/data` payloads are not pushed. Some Android TV firmware may block writes to `Android/obb`; that is reported as partial success, not a full install.
 
 ## Runtime data
 
