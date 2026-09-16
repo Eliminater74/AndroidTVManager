@@ -886,19 +886,10 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             PlanItems.Clear();
             await _settingsLoaded;
             Plan = await _planner.CreatePlanAsync(target.Serial, SelectedPreset, target);
-            PlanItems.Clear();
-            foreach (var item in Plan.Items)
-            {
-                var itemViewModel = new DebloatPlanItemViewModel(item);
-                itemViewModel.PropertyChanged += (_, args) =>
-                {
-                    if (args.PropertyName == nameof(DebloatPlanItemViewModel.IsSelected))
-                        OnPropertyChanged(nameof(SelectedCount));
-                };
-                PlanItems.Add(itemViewModel);
-            }
-            OnPropertyChanged(nameof(SelectedCount));
-            Status = $"{SelectedCount} package(s) pre-selected; review or change the checks before execution.";
+            ApplyPlan(Plan);
+            Status = SelectedCount == 0 && SelectedPreset == DebloatPreset.Simple
+                ? "Simple selected 0 packages. Keep and Critical stay locked; this can be correct on a stock Shield. Use Medium or Aggressive for catalog-reviewed candidates."
+                : $"{SelectedCount} package(s) pre-selected; review or change the checks before execution.";
             if (ShowPackageIcons)
                 StartIconLoading(Plan);
         }
@@ -1001,7 +992,8 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             };
             var result = await _execution.ExecuteAsync(executionPlan);
             _lastExecutionId = result.ExecutionId;
-            Status = $"Debloat {result.Status.ToLowerInvariant()}: {result.SuccessfulActions} succeeded, {result.FailedActions} failed.";
+            var summary = $"Debloat {result.Status.ToLowerInvariant()}: {result.SuccessfulActions} succeeded, {result.FailedActions} failed.";
+            await RefreshPlanAfterMutationAsync(summary);
         }
         catch (Exception exception)
         {
@@ -1020,12 +1012,51 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         try
         {
             var result = await _execution.RestoreAsync(executionId, SelectedDevice.Serial);
-            Status = $"Restore {result.Status.ToLowerInvariant()}: {result.RestoredActions} restored, {result.FailedActions} failed.";
+            var summary = $"Restore {result.Status.ToLowerInvariant()}: {result.RestoredActions} restored, {result.FailedActions} failed.";
+            await RefreshPlanAfterMutationAsync(summary);
         }
         catch (Exception exception)
         {
             Status = $"Restore failed: {exception.Message}";
         }
+    }
+
+    private async Task RefreshPlanAfterMutationAsync(string summary)
+    {
+        if (SelectedDevice is null)
+        {
+            Status = summary;
+            return;
+        }
+
+        try
+        {
+            Plan = await _planner.CreatePlanAsync(SelectedDevice.Serial, SelectedPreset, SelectedDevice);
+            ApplyPlan(Plan);
+            Status = $"{summary} Preview refreshed: {SelectedCount} package(s) selected.";
+            if (ShowPackageIcons)
+                StartIconLoading(Plan);
+        }
+        catch (Exception exception)
+        {
+            Status = $"{summary} Preview refresh failed: {exception.Message}";
+        }
+    }
+
+    private void ApplyPlan(DebloatPlan plan)
+    {
+        PlanItems.Clear();
+        foreach (var item in plan.Items)
+        {
+            var itemViewModel = new DebloatPlanItemViewModel(item);
+            itemViewModel.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(DebloatPlanItemViewModel.IsSelected))
+                    OnPropertyChanged(nameof(SelectedCount));
+            };
+            PlanItems.Add(itemViewModel);
+        }
+        OnPropertyChanged(nameof(SelectedCount));
     }
 }
 
