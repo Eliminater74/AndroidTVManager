@@ -24,6 +24,7 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 - Shared `ISensitiveDataRedactor` for logs, script journals, diagnostic bundles, and ADB argument lists, including IPv6 and local user-path redaction.
 - Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works. `PackageManager` now requires the gate, and Applications/Scripts/Deployment pass the prepared build fingerprint so drift is checked on the mutation itself.
+- Shared `IAdbDeviceSession` owns the live ADB list, TARGET selection, preferred-endpoint sticky selection, and Network/Wireless disconnect. The header TARGET command and the Devices page both run that workflow so disconnect logging, preferred-target clearing, and tracker refresh stay in one place.
 - Backup manifests now catalog expected package and APK-file counts so restore can compare the on-disk set against what the backup claimed.
 - Recovery ZIP inspection parses `META-INF/com/android/metadata` and updater-script product checks so sideload can fail closed on incompatible or unverifiable device identity.
 

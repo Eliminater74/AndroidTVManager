@@ -109,6 +109,12 @@ public sealed record AdbCommandResult(
     public string CommandText => $"{FileName} {string.Join(" ", Arguments)}";
 }
 
+public sealed record DeviceDisconnectResult(
+    bool Attempted,
+    bool Succeeded,
+    string Message,
+    string? Endpoint);
+
 public sealed record ConnectionSession(
     long Id,
     long DeviceId,

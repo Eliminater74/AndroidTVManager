@@ -14,7 +14,7 @@ The shell is a single WPF window with a left navigation rail and a status bar. P
 
 ## Device tracker
 
-`IAdbDeviceTracker` owns a long-lived `adb track-devices -l` process. It parses streamed snapshots, deduplicates unchanged state, backs off after unexpected exits, and publishes device changes. Metadata enrichment is cached and performed asynchronously.
+`IAdbDeviceTracker` owns a long-lived `adb track-devices -l` process. It parses streamed snapshots, deduplicates unchanged state, backs off after unexpected exits, and publishes device changes. Metadata enrichment is cached and performed asynchronously. `IAdbDeviceSession` is the session for the live list, TARGET selection, sticky preferred endpoint, and Network/Wireless Debugging disconnect (`validate → disconnect → refresh → report`). `MainWindowViewModel` still forwards the selected device to pages.
 
 ## Platform-Tools
 

@@ -20,6 +20,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly IReadOnlyDictionary<string, object> _pages;
     private readonly IAdbToolsManager _toolsManager;
+    private readonly IAdbDeviceSession _deviceSession;
     private readonly IAdbDeviceTracker _deviceTracker;
     private readonly IConnectionHistoryRepository _history;
     private readonly IAdbConnectionService _connectionService;
@@ -68,16 +69,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IAppLogger _logger;
     private object _currentPage;
     private NavigationEntry _selectedNavigation;
-    private AndroidDevice? _selectedDevice;
     private string _adbStatus = "ADB · Checking";
     private string _adbVersion = "Checking managed Platform-Tools…";
     private bool _sessionsRecovered;
     private readonly SemaphoreSlim _deviceChangeLock = new(1, 1);
-    private string? _preferredTargetSerial;
     private bool _suppressDevicePropagation;
 
     public MainWindowViewModel(
         IAdbToolsManager toolsManager,
+        IAdbDeviceSession deviceSession,
         IAdbDeviceTracker deviceTracker,
         IConnectionHistoryRepository history,
         IAdbConnectionService connectionService,
@@ -126,6 +126,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IAppLogger logger)
     {
         _toolsManager = toolsManager;
+        _deviceSession = deviceSession;
         _deviceTracker = deviceTracker;
         _history = history;
         _connectionService = connectionService;
@@ -200,10 +201,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("About", "?")
         };
 
-        Devices = [];
         _pages = Navigation.ToDictionary(item => item.Label, item => (object)CreatePage(item));
         _selectedNavigation = Navigation[0];
         _currentPage = _pages[_selectedNavigation.Label];
+        _deviceSession.Changed += OnDeviceSessionChanged;
         _deviceTracker.DevicesChanged += OnDevicesChanged;
     }
 
@@ -212,19 +213,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
         => Navigation.Where(item => item.Label != "Settings");
     public IEnumerable<NavigationEntry> SecondaryNavigation
         => Navigation.Where(item => item.Label == "Settings");
-    public ObservableCollection<AndroidDevice> Devices { get; }
+    public ObservableCollection<AndroidDevice> Devices => _deviceSession.Devices;
 
     private object CreatePage(NavigationEntry entry) => entry.Label switch
     {
         "Dashboard" => new DashboardPageViewModel(Devices, _deviceRepository),
         "Devices" => new DevicesPageViewModel(
-            Devices,
+            _deviceSession,
             _deviceRepository,
             _connectionService,
             _confirmation,
-            _deviceTracker,
-            PreferTarget,
-            device => SelectedDevice = device),
+            _deviceTracker),
         "Device Status" => new DeviceStatusPageViewModel(_inspectionService, _verificationPolicy, Devices),
         "Display Diagnostics" => new DisplayDiagnosticsPageViewModel(
             _displayDiagnosticsService,
@@ -322,15 +321,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public AndroidDevice? SelectedDevice
     {
-        get => _selectedDevice;
-        set
-        {
-            if (!SetProperty(ref _selectedDevice, value))
-                return;
-            if (!_suppressDevicePropagation)
-                PropagateSelectedDevice(value);
-            DisconnectDeviceCommand.NotifyCanExecuteChanged();
-        }
+        get => _deviceSession.SelectedDevice;
+        set => _deviceSession.Select(value);
     }
 
     [RelayCommand(CanExecute = nameof(CanDisconnectDevice))]
@@ -340,34 +332,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (device is null || !device.CanDisconnect)
             return;
 
-        var endpoint = device.DisconnectEndpoint;
-        if (string.IsNullOrWhiteSpace(endpoint))
-            return;
-        if (_preferredTargetSerial is not null && DeviceSelection.Matches(device, _preferredTargetSerial))
-            _preferredTargetSerial = null;
-
-        var result = await _connectionService.DisconnectAsync(endpoint);
+        var result = await _deviceSession.DisconnectAsync(device);
         if (_pages.TryGetValue("Devices", out var devicesPage) && devicesPage is DevicesPageViewModel devices)
-        {
-            devices.SaveMessage = result.IsSuccess
-                ? $"{device.DisplayLabel} disconnected. Saved devices were left in the list."
-                : $"Disconnect failed: {FirstLine(result.StandardError, result.StandardOutput, "ADB did not disconnect the device.")}";
-        }
-        if (!result.IsSuccess)
-        {
-            _logger.Warning("Devices", $"Disconnect {endpoint} failed: {result.StandardError}");
-            return;
-        }
-        _logger.Information("Devices", $"Disconnected {endpoint}.");
-        await _deviceTracker.RefreshAsync();
+            devices.SaveMessage = result.Message;
     }
 
     private bool CanDisconnectDevice(AndroidDevice? device)
-        => (device ?? SelectedDevice)?.CanDisconnect == true;
-
-    private static string FirstLine(string? error, string? output, string fallback)
-        => (error ?? output)?.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim()
-            ?? fallback;
+        => _deviceSession.CanDisconnect(device);
 
     [RelayCommand]
     private void SelectDevice(AndroidDevice? device)
@@ -378,12 +349,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private void PreferTarget(string serialOrEndpoint)
+        => _deviceSession.Prefer(serialOrEndpoint);
+
+    private void OnDeviceSessionChanged(object? sender, EventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(serialOrEndpoint))
-            return;
-        _preferredTargetSerial = serialOrEndpoint.Trim();
-        if (DeviceSelection.Find(Devices, _preferredTargetSerial) is { } device)
-            SelectedDevice = device;
+        OnPropertyChanged(nameof(SelectedDevice));
+        OnPropertyChanged(nameof(ConnectedDeviceCount));
+        DisconnectDeviceCommand.NotifyCanExecuteChanged();
+        if (!_suppressDevicePropagation)
+            PropagateSelectedDevice(_deviceSession.SelectedDevice);
     }
 
     private void PropagateSelectedDevice(AndroidDevice? value)
@@ -560,19 +534,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             }).ToArray();
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                var previousSerial = SelectedDevice?.Serial;
-                var preferredSerial = _preferredTargetSerial;
                 _suppressDevicePropagation = true;
                 try
                 {
-                    Devices.Clear();
-                    foreach (var device in enrichedDevices)
-                        Devices.Add(device);
-                    SelectedDevice = DeviceSelection.Resolve(Devices, previousSerial, preferredSerial);
-                    if (preferredSerial is not null
-                        && SelectedDevice is not null
-                        && DeviceSelection.Matches(SelectedDevice, preferredSerial))
-                        _preferredTargetSerial = null;
+                    _deviceSession.ReplaceLiveDevices(enrichedDevices);
                 }
                 finally
                 {
@@ -1066,29 +1031,25 @@ public sealed partial class DebloatPageViewModel : PageViewModel
 
 public sealed partial class DevicesPageViewModel : ObservableObject
 {
+    private readonly IAdbDeviceSession _deviceSession;
     private readonly IDeviceRepository _repository;
     private readonly IAdbConnectionService _connectionService;
     private readonly IConfirmationService _confirmation;
     private readonly IAdbDeviceTracker _deviceTracker;
-    private readonly Action<string> _preferTarget;
-    private readonly Action<AndroidDevice?> _selectTarget;
 
     public DevicesPageViewModel(
-        ObservableCollection<AndroidDevice> devices,
+        IAdbDeviceSession deviceSession,
         IDeviceRepository repository,
         IAdbConnectionService connectionService,
         IConfirmationService confirmation,
-        IAdbDeviceTracker deviceTracker,
-        Action<string> preferTarget,
-        Action<AndroidDevice?> selectTarget)
+        IAdbDeviceTracker deviceTracker)
     {
-        Devices = devices;
+        _deviceSession = deviceSession;
+        Devices = deviceSession.Devices;
         _repository = repository;
         _connectionService = connectionService;
         _confirmation = confirmation;
         _deviceTracker = deviceTracker;
-        _preferTarget = preferTarget;
-        _selectTarget = selectTarget;
         _ = LoadSavedAsync();
     }
 
@@ -1121,7 +1082,7 @@ public sealed partial class DevicesPageViewModel : ObservableObject
 
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
-        _selectTarget(value);
+        _deviceSession.Select(value);
         DisconnectCommand.NotifyCanExecuteChanged();
     }
 
@@ -1186,7 +1147,7 @@ public sealed partial class DevicesPageViewModel : ObservableObject
         });
         SaveMessage = $"{name} connected and saved.";
         await _deviceTracker.RefreshAsync();
-        _preferTarget(endpoint);
+        _deviceSession.Prefer(endpoint);
         await LoadSavedAsync();
     }
 
@@ -1194,25 +1155,16 @@ public sealed partial class DevicesPageViewModel : ObservableObject
     private async Task DisconnectAsync(AndroidDevice? device)
     {
         device ??= SelectedDevice;
-        if (device is null || !device.CanDisconnect)
+        if (device is null || !_deviceSession.CanDisconnect(device))
             return;
 
         SaveMessage = $"Disconnecting {device.DisconnectEndpoint}…";
-        var result = await _connectionService.DisconnectAsync(device.DisconnectEndpoint);
-        if (!result.IsSuccess)
-        {
-            SaveMessage = string.IsNullOrWhiteSpace(result.StandardError)
-                ? "Disconnect failed."
-                : result.StandardError.Trim();
-            return;
-        }
-
-        SaveMessage = $"{device.DisplayLabel} disconnected. Saved devices were left in the list.";
-        await _deviceTracker.RefreshAsync();
+        var result = await _deviceSession.DisconnectAsync(device);
+        SaveMessage = result.Message;
     }
 
     private bool CanDisconnectDevice(AndroidDevice? device)
-        => (device ?? SelectedDevice)?.CanDisconnect == true;
+        => _deviceSession.CanDisconnect(device);
 
     [RelayCommand]
     private async Task LoadSavedAsync()
@@ -1243,7 +1195,7 @@ public sealed partial class DevicesPageViewModel : ObservableObject
         if (!result.IsSuccess)
             return;
         await _deviceTracker.RefreshAsync();
-        _preferTarget(endpoint);
+        _deviceSession.Prefer(endpoint);
     }
 
     [RelayCommand]

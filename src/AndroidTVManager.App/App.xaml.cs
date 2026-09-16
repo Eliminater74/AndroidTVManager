@@ -5,6 +5,7 @@ using AndroidTVManager.App.ViewModels;
 using AndroidTVManager.App.Services;
 using AndroidTVManager.Infrastructure;
 using AndroidTVManager.Core.Abstractions;
+using AndroidTVManager.Core.Adb;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AndroidTVManager.App;
@@ -42,6 +43,7 @@ public partial class App : System.Windows.Application
 
             var services = new ServiceCollection();
             services.AddAndroidTVManagerInfrastructure();
+            services.AddSingleton<IAdbDeviceSession, AdbDeviceSession>();
             services.AddSingleton<IConfirmationService, WpfConfirmationService>();
             services.AddSingleton<ApplicationShutdownCoordinator>();
             services.AddSingleton<MainWindowViewModel>();

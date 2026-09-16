@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AndroidTVManager.Core.Models;
 using AndroidTVManager.Core.Scripts;
 
@@ -168,6 +169,24 @@ public interface IAdbConnectionService
     Task<AdbCommandResult> PairAsync(
         string endpoint,
         string pairingCode,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IAdbDeviceSession
+{
+    ObservableCollection<AndroidDevice> Devices { get; }
+    AndroidDevice? SelectedDevice { get; }
+    string? SelectedSerial { get; }
+    string? PreferredTarget { get; }
+    int Generation { get; }
+    event EventHandler? Changed;
+
+    void Prefer(string serialOrEndpoint);
+    void Select(AndroidDevice? device);
+    void ReplaceLiveDevices(IReadOnlyList<AndroidDevice> devices);
+    bool CanDisconnect(AndroidDevice? device = null);
+    Task<DeviceDisconnectResult> DisconnectAsync(
+        AndroidDevice? device = null,
         CancellationToken cancellationToken = default);
 }
 

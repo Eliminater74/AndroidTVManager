@@ -1,8 +1,9 @@
-using System.Collections.ObjectModel;
 using AndroidTVManager.App.Services;
 using AndroidTVManager.App.ViewModels;
 using AndroidTVManager.Core.Abstractions;
+using AndroidTVManager.Core.Adb;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Tests.TestDoubles;
 using FluentAssertions;
 
 namespace AndroidTVManager.Tests;
@@ -14,16 +15,8 @@ public sealed class DevicesPageViewModelTests
     {
         var connection = new FakeConnection();
         var tracker = new FakeTracker();
-        string? preferred = null;
-        AndroidDevice? selected = null;
-        var vm = new DevicesPageViewModel(
-            [],
-            new FakeSavedDevices(),
-            connection,
-            new FakeConfirmation(),
-            tracker,
-            value => preferred = value,
-            value => selected = value);
+        var context = new AdbDeviceSession(connection, tracker, new FakeAppLogger());
+        var vm = CreateViewModel(context, connection, tracker);
 
         vm.Host = "192.168.1.65";
         vm.Port = "5555";
@@ -33,9 +26,9 @@ public sealed class DevicesPageViewModelTests
 
         connection.ConnectedEndpoint.Should().Be("192.168.1.65:5555");
         tracker.RefreshCount.Should().Be(1);
-        preferred.Should().Be("192.168.1.65:5555");
+        context.PreferredTarget.Should().Be("192.168.1.65:5555");
         vm.SaveMessage.Should().Contain("connected and saved");
-        selected.Should().BeNull();
+        context.SelectedDevice.Should().BeNull();
     }
 
     [Fact]
@@ -64,14 +57,9 @@ public sealed class DevicesPageViewModelTests
             State = DeviceState.Device,
             ConnectionType = ConnectionType.Network
         };
-        var vm = new DevicesPageViewModel(
-            new ObservableCollection<AndroidDevice> { shield },
-            saved,
-            connection,
-            new FakeConfirmation(),
-            tracker,
-            _ => { },
-            _ => { });
+        var context = new AdbDeviceSession(connection, tracker, new FakeAppLogger());
+        context.ReplaceLiveDevices([shield]);
+        var vm = CreateViewModel(context, connection, tracker, saved);
 
         await vm.DisconnectCommand.ExecuteAsync(shield);
 
@@ -79,6 +67,7 @@ public sealed class DevicesPageViewModelTests
         tracker.RefreshCount.Should().Be(1);
         saved.Items.Should().ContainSingle(device => device.FriendlyName == "Living Room Shield");
         vm.SaveMessage.Should().Contain("disconnected");
+        vm.SaveMessage.Should().Contain("Saved devices were left in the list.");
     }
 
     [Fact]
@@ -92,14 +81,9 @@ public sealed class DevicesPageViewModelTests
             State = DeviceState.Device,
             ConnectionType = ConnectionType.Usb
         };
-        var vm = new DevicesPageViewModel(
-            new ObservableCollection<AndroidDevice> { emulator },
-            new FakeSavedDevices(),
-            connection,
-            new FakeConfirmation(),
-            new FakeTracker(),
-            _ => { },
-            _ => { });
+        var context = new AdbDeviceSession(connection, new FakeTracker(), new FakeAppLogger());
+        context.ReplaceLiveDevices([emulator]);
+        var vm = CreateViewModel(context, connection, new FakeTracker());
 
         vm.DisconnectCommand.CanExecute(emulator).Should().BeFalse();
         await vm.DisconnectCommand.ExecuteAsync(emulator);
@@ -110,7 +94,6 @@ public sealed class DevicesPageViewModelTests
     [Fact]
     public void Selecting_a_live_device_raises_the_global_target()
     {
-        AndroidDevice? selected = null;
         var shield = new AndroidDevice
         {
             Serial = "192.168.1.65:5555",
@@ -119,19 +102,26 @@ public sealed class DevicesPageViewModelTests
             State = DeviceState.Device,
             ConnectionType = ConnectionType.Network
         };
-        var vm = new DevicesPageViewModel(
-            new ObservableCollection<AndroidDevice> { shield },
-            new FakeSavedDevices(),
-            new FakeConnection(),
-            new FakeConfirmation(),
-            new FakeTracker(),
-            _ => { },
-            value => selected = value);
+        var context = new AdbDeviceSession(new FakeConnection(), new FakeTracker(), new FakeAppLogger());
+        context.ReplaceLiveDevices([shield]);
+        var vm = CreateViewModel(context, new FakeConnection(), new FakeTracker());
 
         vm.SelectedDevice = shield;
 
-        selected.Should().BeSameAs(shield);
+        context.SelectedDevice.Should().BeSameAs(shield);
     }
+
+    private static DevicesPageViewModel CreateViewModel(
+        IAdbDeviceSession context,
+        FakeConnection connection,
+        FakeTracker tracker,
+        FakeSavedDevices? saved = null)
+        => new(
+            context,
+            saved ?? new FakeSavedDevices(),
+            connection,
+            new FakeConfirmation(),
+            tracker);
 
     private sealed class FakeConnection : IAdbConnectionService
     {
