@@ -59,6 +59,13 @@ public sealed class AndroidDevice
         }
     }
 
+    public bool CanDisconnect
+        => State == DeviceState.Device
+           && ConnectionType is ConnectionType.Network or ConnectionType.WirelessDebugging;
+
+    public string DisconnectEndpoint
+        => string.IsNullOrWhiteSpace(Endpoint) ? Serial : Endpoint;
+
     private static string? FirstNonEmpty(params string?[] values)
         => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 }

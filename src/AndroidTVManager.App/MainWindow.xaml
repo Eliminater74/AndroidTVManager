@@ -1707,6 +1707,22 @@
                                                     Margin="0,8,0,0" HorizontalAlignment="Right"
                                                     Command="{Binding DataContext.SelectDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
+                                            <Button Content="Disconnect"
+                                                    Margin="0,8,0,0" HorizontalAlignment="Right"
+                                                    Command="{Binding DataContext.DisconnectCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Disconnect this Network or Wireless Debugging session. USB devices stay attached. Saved devices remain in the list.">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource DangerButtonStyle}">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CanDisconnect}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -2637,6 +2653,21 @@
                         <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
                                   ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="260" Margin="0,0,10,0"
                                   ToolTip="Switch the active ADB target used by Device Status, Applications, and other pages."/>
+                        <Button Content="Disconnect" Command="{Binding DisconnectDeviceCommand}"
+                                CommandParameter="{Binding SelectedDevice}"
+                                Margin="0,0,10,0" VerticalAlignment="Center"
+                                ToolTip="Disconnect the selected Network or Wireless Debugging session. USB devices stay attached.">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource DangerButtonStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedDevice.CanDisconnect}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Content="↻  Refresh" Style="{StaticResource GhostButtonStyle}"
                                 Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
                     </StackPanel>

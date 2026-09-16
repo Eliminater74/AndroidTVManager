@@ -39,6 +39,75 @@ public sealed class DevicesPageViewModelTests
     }
 
     [Fact]
+    public async Task Disconnects_network_devices_and_leaves_saved_devices_in_place()
+    {
+        var connection = new FakeConnection();
+        var tracker = new FakeTracker();
+        var saved = new FakeSavedDevices
+        {
+            Items =
+            {
+                new SavedDevice
+                {
+                    Id = 1,
+                    FriendlyName = "Living Room Shield",
+                    LastKnownSerial = "192.168.1.65:5555",
+                    LastKnownEndpoint = "192.168.1.65:5555"
+                }
+            }
+        };
+        var shield = new AndroidDevice
+        {
+            Serial = "192.168.1.65:5555",
+            Endpoint = "192.168.1.65:5555",
+            Model = "SHIELD Android TV",
+            State = DeviceState.Device,
+            ConnectionType = ConnectionType.Network
+        };
+        var vm = new DevicesPageViewModel(
+            new ObservableCollection<AndroidDevice> { shield },
+            saved,
+            connection,
+            new FakeConfirmation(),
+            tracker,
+            _ => { },
+            _ => { });
+
+        await vm.DisconnectCommand.ExecuteAsync(shield);
+
+        connection.DisconnectedEndpoint.Should().Be("192.168.1.65:5555");
+        tracker.RefreshCount.Should().Be(1);
+        saved.Items.Should().ContainSingle(device => device.FriendlyName == "Living Room Shield");
+        vm.SaveMessage.Should().Contain("disconnected");
+    }
+
+    [Fact]
+    public async Task Usb_devices_are_not_disconnected()
+    {
+        var connection = new FakeConnection();
+        var emulator = new AndroidDevice
+        {
+            Serial = "emulator-5554",
+            Model = "sdk gphone",
+            State = DeviceState.Device,
+            ConnectionType = ConnectionType.Usb
+        };
+        var vm = new DevicesPageViewModel(
+            new ObservableCollection<AndroidDevice> { emulator },
+            new FakeSavedDevices(),
+            connection,
+            new FakeConfirmation(),
+            new FakeTracker(),
+            _ => { },
+            _ => { });
+
+        vm.DisconnectCommand.CanExecute(emulator).Should().BeFalse();
+        await vm.DisconnectCommand.ExecuteAsync(emulator);
+
+        connection.DisconnectedEndpoint.Should().BeNull();
+    }
+
+    [Fact]
     public void Selecting_a_live_device_raises_the_global_target()
     {
         AndroidDevice? selected = null;
@@ -67,6 +136,7 @@ public sealed class DevicesPageViewModelTests
     private sealed class FakeConnection : IAdbConnectionService
     {
         public string? ConnectedEndpoint { get; private set; }
+        public string? DisconnectedEndpoint { get; private set; }
 
         public Task<AdbCommandResult> ConnectAsync(string endpoint, CancellationToken cancellationToken = default)
         {
@@ -76,7 +146,10 @@ public sealed class DevicesPageViewModelTests
         }
 
         public Task<AdbCommandResult> DisconnectAsync(string endpoint, CancellationToken cancellationToken = default)
-            => Task.FromResult(new AdbCommandResult("adb.exe", ["disconnect", endpoint], 0, "", "", TimeSpan.Zero));
+        {
+            DisconnectedEndpoint = endpoint;
+            return Task.FromResult(new AdbCommandResult("adb.exe", ["disconnect", endpoint], 0, "", "", TimeSpan.Zero));
+        }
 
         public Task<AdbCommandResult> PairAsync(string endpoint, string pairingCode, CancellationToken cancellationToken = default)
             => Task.FromResult(new AdbCommandResult("adb.exe", ["pair", endpoint], 0, "", "", TimeSpan.Zero));

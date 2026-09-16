@@ -329,8 +329,45 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 return;
             if (!_suppressDevicePropagation)
                 PropagateSelectedDevice(value);
+            DisconnectDeviceCommand.NotifyCanExecuteChanged();
         }
     }
+
+    [RelayCommand(CanExecute = nameof(CanDisconnectDevice))]
+    private async Task DisconnectDeviceAsync(AndroidDevice? device)
+    {
+        device ??= SelectedDevice;
+        if (device is null || !device.CanDisconnect)
+            return;
+
+        var endpoint = device.DisconnectEndpoint;
+        if (string.IsNullOrWhiteSpace(endpoint))
+            return;
+        if (_preferredTargetSerial is not null && DeviceSelection.Matches(device, _preferredTargetSerial))
+            _preferredTargetSerial = null;
+
+        var result = await _connectionService.DisconnectAsync(endpoint);
+        if (_pages.TryGetValue("Devices", out var devicesPage) && devicesPage is DevicesPageViewModel devices)
+        {
+            devices.SaveMessage = result.IsSuccess
+                ? $"{device.DisplayLabel} disconnected. Saved devices were left in the list."
+                : $"Disconnect failed: {FirstLine(result.StandardError, result.StandardOutput, "ADB did not disconnect the device.")}";
+        }
+        if (!result.IsSuccess)
+        {
+            _logger.Warning("Devices", $"Disconnect {endpoint} failed: {result.StandardError}");
+            return;
+        }
+        _logger.Information("Devices", $"Disconnected {endpoint}.");
+        await _deviceTracker.RefreshAsync();
+    }
+
+    private bool CanDisconnectDevice(AndroidDevice? device)
+        => (device ?? SelectedDevice)?.CanDisconnect == true;
+
+    private static string FirstLine(string? error, string? output, string fallback)
+        => (error ?? output)?.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim()
+            ?? fallback;
 
     [RelayCommand]
     private void SelectDevice(AndroidDevice? device)
@@ -1083,7 +1120,10 @@ public sealed partial class DevicesPageViewModel : ObservableObject
     private string _saveMessage = "Select a live device to save it for later.";
 
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
-        => _selectTarget(value);
+    {
+        _selectTarget(value);
+        DisconnectCommand.NotifyCanExecuteChanged();
+    }
 
     partial void OnSelectedSavedDeviceChanged(SavedDevice? value)
     {
@@ -1149,6 +1189,30 @@ public sealed partial class DevicesPageViewModel : ObservableObject
         _preferTarget(endpoint);
         await LoadSavedAsync();
     }
+
+    [RelayCommand(CanExecute = nameof(CanDisconnectDevice))]
+    private async Task DisconnectAsync(AndroidDevice? device)
+    {
+        device ??= SelectedDevice;
+        if (device is null || !device.CanDisconnect)
+            return;
+
+        SaveMessage = $"Disconnecting {device.DisconnectEndpoint}…";
+        var result = await _connectionService.DisconnectAsync(device.DisconnectEndpoint);
+        if (!result.IsSuccess)
+        {
+            SaveMessage = string.IsNullOrWhiteSpace(result.StandardError)
+                ? "Disconnect failed."
+                : result.StandardError.Trim();
+            return;
+        }
+
+        SaveMessage = $"{device.DisplayLabel} disconnected. Saved devices were left in the list.";
+        await _deviceTracker.RefreshAsync();
+    }
+
+    private bool CanDisconnectDevice(AndroidDevice? device)
+        => (device ?? SelectedDevice)?.CanDisconnect == true;
 
     [RelayCommand]
     private async Task LoadSavedAsync()

@@ -26,6 +26,7 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Complete the [device support audit hardware acceptance checklist](docs/DEVICE-SUPPORT-AUDIT.md#hardware-acceptance-checklist).
 - [x] Share live package safety checks across Applications, Scripts and Deployment Profiles.
 - [ ] Add explicit device capabilities and user scope to the header.
+- [x] Disconnect Network and Wireless Debugging devices from the TARGET header and Devices list without removing saved devices.
 - [ ] Add touch/gesture remote support for tablets and compatible head units.
 
 ## Beta 9 hotfix
