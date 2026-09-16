@@ -70,7 +70,7 @@ Reference baseline analysis sits beneath debloat decisions. It compares an inven
 
 ## Shield, tablets and vehicle displays
 
-Debloat includes a dedicated NVIDIA Shield TV profile with cautious telemetry recommendations and protected platform/accessory services. The **Tweaks** page provides verified animation timing controls with journal-based undo, plus guidance for Shield picture, audio and performance settings.
+Debloat includes a dedicated NVIDIA Shield TV profile with cautious telemetry recommendations and protected platform/accessory services. Recognized Google TV Streamer 4K, Chromecast with Google TV 4K, and onn. Google TV 4K Box families use conservative overlays. The Debloat page offers one-click Safe / Recommended / Deep profiles plus Custom inspection. The **Tweaks** page provides verified animation timing controls with journal-based undo, plus guidance for Shield picture, audio and performance settings.
 
 Android tablets and standalone Android head units can use the existing USB/network/Wireless Debugging connections when their firmware exposes ADB. Android Auto/CarPlay projection screens are not standalone ADB targets. Guided debloat supports foreground User 0 and blocks Android Automotive; vehicle-specific package management has not been validated.
 
@@ -97,7 +97,7 @@ The portable ZIP can be extracted to any user-writable folder and run without in
 
 Device inspection is read-only and reports `Unknown` when Android does not expose reliable evidence. It does not run `adb root`, `su -c`, unlock commands, fastboot checks, or bootloader changes during passive inspection.
 
-Debloat always creates a preview, captures one target serial, rechecks package state before execution, prefers disabling for User 0, and protects critical, active-role, reference-protected TV core, and Unknown packages from automatic selection. Restore uses the transaction journal.
+Debloat uses device-specific one-click cleanup profiles (Safe, Recommended, Deep) from reviewed catalog and live runtime protections. Custom keeps the package-by-package preview. One-click actions recapture the target serial, recheck package state and fingerprint, prefer disabling for User 0, and protect critical, active-role, reference-protected TV core, and Unknown packages from automatic selection. Restore uses the existing transaction journal. Not every recognized device has a rich Recommended list; Keep-heavy overlays such as Google TV Streamer 4K can correctly offer zero model-specific actions.
 
 App Installer uses ADB package installation (`install` / `install-multiple`) while Android is running. It is separate from Recovery / Sideload, which is for recovery/OTA ZIP workflows. Android TV Manager never bypasses verification, waiting periods, device administration, package-manager policy, or signing mismatches. XAPK additional data is limited to package-specific OBB paths; `Android/data` payloads are not pushed. Some Android TV firmware may block writes to `Android/obb`; that is reported as partial success, not a full install.
 

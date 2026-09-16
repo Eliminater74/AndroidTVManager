@@ -2,6 +2,18 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Unreleased — device-specific one-click Debloat profiles
+
+Shipped in source on 1.0.0-B17; no version bump. Remaining items are physical confirmation.
+
+- [x] Replace Simple/Medium/Aggressive as the main Debloat workflow with Safe / Recommended / Deep / Custom profiles.
+- [x] Auto live rescan, plan, safety validation, confirmation, verified execution, and Restore Last Cleanup for one-click profiles.
+- [x] Keep the package-by-package preview/checklist under Custom.
+- [x] Collapse reference-profile diagnostics under Advanced details.
+- [x] Device-family labels for Shield `darcy`, Streamer `kirkwood`, Chromecast `sabrina`, onn. `YOC`, generic emulator, and unmatched hardware without inventing candidates.
+- [ ] Run Recommended Cleanup on a physical Shield (darcy) and confirm restore; do not treat automated tests as hardware certification.
+- [ ] Confirm Streamer/Chromecast/onn. one-click counts against physical package dumps when those dumps exist.
+
 ## Beta 17 — current: App Installer, Shield parsers, and Google TV families
 
 Shipped in 1.0.0-B17. Remaining items are physical confirmation, not extra code.

@@ -1,5 +1,9 @@
 # Roadmap
 
+## Unreleased — device-specific one-click Debloat
+
+- Debloat main workflow is Safe / Recommended / Deep / Custom. Recommended is one-click for reviewed device profiles; Custom keeps the package checklist. Physical Shield Recommended + restore confirmation is still open. Streamer/kirkwood and unmatched hardware may show zero reviewed actions.
+
 ## Beta 17 — current: App Installer, Shield parsers, and Google TV families
 
 - App Installer sideloads APK, split APK, APKS, APKM, and XAPK after an analyze-before-install preview. Split sets use `install-multiple`. XAPK OBB copies only to `/sdcard/Android/obb/<package>/`. Physical Shield sideload and OBB copy remain open.
@@ -81,7 +85,7 @@ See [Device support audit](DEVICE-SUPPORT-AUDIT.md) for evidence, limitations an
 - Source-attributed debloat knowledge for Chromecast, Shield, Sony, TCL, Cultraview/Zeasn, Homatics/SEI, TiVo, Xiaomi, Yandex, Fire TV, and ONN research
 - Research-only recognition for Skyworth/Coocaa, Sharp, JVC, Element, Insignia, and Toshiba families pending package-level verification
 - Layered Reference Baseline Catalog with AOSP TV generations, Chromecast Google TV, SoC/SEI, and TCL references
-- Debloat previews use selected-device identity, loaded/matched reference-profile visibility, source evidence, breakage notes, and current runtime-role checks before execution
+- Debloat previews use selected-device identity, loaded/matched reference-profile visibility, source evidence, breakage notes, and current runtime-role checks before execution. One-click Safe / Recommended / Deep profiles orchestrate that planner; Custom remains the detailed package list.
 - Android TV 16 emulator profile coverage for AOSP/Google TV core packages and reversible optional-package recommendations
 - Android TV core settings/provider/framework packages and all Keep-side recommendations are locked across previews, execution, and direct package actions
 - Read-only reference package dump export for device contributors

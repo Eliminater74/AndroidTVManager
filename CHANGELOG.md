@@ -6,7 +6,15 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
-Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Added
+
+- Device-specific one-click Debloat profiles. The main Debloat page now detects the connected target, matches reviewed device/reference profiles, and offers Safe, Recommended, Deep, and Custom cleanup. Recommended is the primary one-click action: live rescan, plan, safety validation, confirmation, verified execution, then Restore Last Cleanup. Create preview and package checkboxes remain on Custom. Unknown, Keep, Critical, and runtime-role packages stay out of automatic profiles. Model-specific Recommended lists exist only where catalog evidence already supports them (for example Shield `darcy`); Streamer/kirkwood, generic emulator, and unmatched hardware can correctly show zero reviewed actions.
+
+### Changed
+
+- Debloat reference-profile diagnostics moved under collapsed Advanced details. Restore Last Cleanup is a first-class post-cleanup action instead of a small planning-toolbar control.
+
+Planned follow-up work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [1.0.0-B17] - 2026-09-16
 
