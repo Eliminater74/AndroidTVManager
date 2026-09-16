@@ -56,6 +56,7 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Add device restore points that capture package state, runtime roles, relevant settings, and the ruleset version before mutations.
 - [x] Add package-data backup warnings so package-state restoration is not presented as application-data restoration.
 - [x] Verify APK restore against the expected SHA-256 set and package catalog, and install nothing when files are missing, extra, or mismatched.
+- [x] Delete unverified updater downloads and reject installers larger than the configured size cap.
 - [ ] Add Xiaomi, Yandex, Fire TV, and additional per-model reference baselines.
 - [ ] Add a richer backup history browser and validation for more backup artifact types.
 - [ ] Improve package icon extraction for more APK/resource formats.

@@ -11,15 +11,33 @@ namespace AndroidTVManager.Infrastructure.Updates;
 
 public sealed class UpdateService : IUpdateService
 {
+    public const long MaximumInstallerBytes = 200L * 1024 * 1024;
     private const string Repository = "Eliminater74/AndroidTVManager";
-    private static readonly HttpClient HttpClient = CreateHttpClient();
+    private readonly HttpClient _http;
     private readonly ILocalAppDataPaths _paths;
     private readonly IAppLogger _logger;
+    private readonly long _maximumInstallerBytes;
 
     public UpdateService(ILocalAppDataPaths paths, IAppLogger logger)
+        : this(paths, logger, CreateHttpClient())
+    {
+    }
+
+    public UpdateService(ILocalAppDataPaths paths, IAppLogger logger, HttpClient httpClient)
+        : this(paths, logger, httpClient, MaximumInstallerBytes)
+    {
+    }
+
+    public UpdateService(
+        ILocalAppDataPaths paths,
+        IAppLogger logger,
+        HttpClient httpClient,
+        long maximumInstallerBytes)
     {
         _paths = paths;
         _logger = logger;
+        _http = httpClient;
+        _maximumInstallerBytes = maximumInstallerBytes;
     }
 
     public async Task<UpdateCheckResult> CheckAsync(
@@ -29,7 +47,7 @@ public sealed class UpdateService : IUpdateService
         var checkedUtc = DateTimeOffset.UtcNow;
         try
         {
-            var releases = await HttpClient.GetFromJsonAsync<List<GitHubRelease>>(
+            var releases = await _http.GetFromJsonAsync<List<GitHubRelease>>(
                 $"https://api.github.com/repos/{Repository}/releases?per_page=30",
                 cancellationToken) ?? [];
             var candidate = releases
@@ -62,22 +80,24 @@ public sealed class UpdateService : IUpdateService
             return new(false, "The release did not provide a valid installer asset.");
 
         _paths.EnsureCreated();
+        Directory.CreateDirectory(_paths.TempPath);
         var installerPath = Path.Combine(_paths.TempPath, $"AndroidTVManager-update-{release.Version}-{Guid.NewGuid():N}.exe");
+        var keepInstaller = false;
         try
         {
             await DownloadAsync(release.InstallerUrl, installerPath, cancellationToken);
             var expectedHash = release.InstallerSha256;
             if (string.IsNullOrWhiteSpace(expectedHash) && !string.IsNullOrWhiteSpace(release.ChecksumsUrl))
             {
-                var checksums = await HttpClient.GetStringAsync(release.ChecksumsUrl, cancellationToken);
+                var checksums = await _http.GetStringAsync(release.ChecksumsUrl, cancellationToken);
                 expectedHash = FindChecksum(checksums, installerName);
             }
             if (string.IsNullOrWhiteSpace(expectedHash))
-                return new(false, "The installer has no verifiable SHA-256 checksum.", installerPath);
+                return new(false, "The installer has no verifiable SHA-256 checksum.");
 
             var actualHash = await HashAsync(installerPath, cancellationToken);
             if (!string.Equals(NormalizeHash(expectedHash), actualHash, StringComparison.OrdinalIgnoreCase))
-                return new(false, "The downloaded installer checksum did not match the release checksum.", installerPath);
+                return new(false, "The downloaded installer checksum did not match the release checksum.");
 
             var process = Process.Start(new ProcessStartInfo
             {
@@ -86,13 +106,19 @@ public sealed class UpdateService : IUpdateService
                 WorkingDirectory = Path.GetDirectoryName(installerPath) ?? _paths.TempPath
             });
             if (process is null)
-                return new(false, "The verified installer could not be started.", installerPath);
+                return new(false, "The verified installer could not be started.");
+            keepInstaller = true;
             return new(true, "The verified installer was started. Android TV Manager will now close.", installerPath);
         }
         catch (Exception exception) when (exception is HttpRequestException or IOException or CryptographicException)
         {
             _logger.Warning("Updates", $"Update installation failed: {exception.Message}");
-            return new(false, $"Update failed: {exception.Message}", installerPath);
+            return new(false, $"Update failed: {exception.Message}");
+        }
+        finally
+        {
+            if (!keepInstaller)
+                TryDelete(installerPath);
         }
     }
 
@@ -119,16 +145,21 @@ public sealed class UpdateService : IUpdateService
             : null;
     }
 
-    private static async Task DownloadAsync(
+    private async Task DownloadAsync(
         string url,
         string destination,
         CancellationToken cancellationToken)
     {
-        using var response = await HttpClient.GetAsync(
+        using var response = await _http.GetAsync(
             url,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
         response.EnsureSuccessStatusCode();
+        if (response.Content.Headers.ContentLength is { } announced
+            && announced > _maximumInstallerBytes)
+            throw new IOException(
+                $"The installer is {announced} bytes, which exceeds the {_maximumInstallerBytes} byte limit.");
+
         await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
         await using var target = new FileStream(
             destination,
@@ -137,7 +168,34 @@ public sealed class UpdateService : IUpdateService
             FileShare.None,
             64 * 1024,
             useAsync: true);
-        await source.CopyToAsync(target, cancellationToken);
+        var buffer = new byte[64 * 1024];
+        long total = 0;
+        while (true)
+        {
+            var read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
+            if (read == 0)
+                break;
+            total += read;
+            if (total > _maximumInstallerBytes)
+                throw new IOException(
+                    $"The installer exceeded the {_maximumInstallerBytes} byte limit while downloading.");
+            await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     private static async Task<string> HashAsync(string path, CancellationToken cancellationToken)

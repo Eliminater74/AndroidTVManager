@@ -14,6 +14,7 @@ The project follows a beta-first release cycle while real Android TV hardware va
 - Block deployment when a profile's mandatory ABI or Android TV/Google TV requirements cannot be verified. Unknown required evidence is no longer treated as a bypassable warning.
 - Block APK restore unless every `apks/` file listed in `SHA256SUMS.txt` is present with a matching hash and no extra files exist. Failed verification reports zero restored and zero failed packages, and nothing is installed.
 - Restore confirmation copy now states that APK copy does not restore app data, accounts, or settings.
+- Delete downloaded update installers when the checksum is missing, mismatched, or the payload exceeds 200 MB, and do not leave those files in Temp.
 
 ### Added
 

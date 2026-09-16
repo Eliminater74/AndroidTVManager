@@ -28,6 +28,8 @@ SQLite is stored in `%LOCALAPPDATA%\AndroidTVManager\Data`. Migrations are expli
 
 APK restore verifies the expected `apks/` set in `SHA256SUMS.txt` against the files on disk, including missing, extra, and hash-mismatched files. Verification failure installs nothing and reports zero restored packages. The operation copies APK files only; it does not restore app data.
 
+In-app updates download the GitHub `-Setup.exe` into LocalAppData Temp, require a SHA-256 from the release digest or `SHA256SUMS.txt`, reject payloads over 200 MB, and delete the file unless the verified installer is actually started.
+
 ## History and transactions
 
 Device arrival and connection transitions create historical records without writing duplicate unchanged events. Script executions are transaction records. Actions retain previous state, requested state, result, and undo status so undo can reverse only the changes made by that execution.
