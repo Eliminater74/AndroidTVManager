@@ -22,7 +22,7 @@ The tools manager stores official Google Platform-Tools under LocalAppData, down
 
 ## Database
 
-SQLite is stored in `%LOCALAPPDATA%\AndroidTVManager\Data`. Migrations are explicit and transactional, foreign keys are enabled, and WAL mode is used for normal operation. Devices, sessions, connection events, pairing history, settings, scripts, executions, actions, and snapshots are represented in the schema. Repositories keep SQL out of view models.
+SQLite is stored in `%LOCALAPPDATA%\AndroidTVManager\Data`. Migrations are explicit and transactional, foreign keys are enabled, and WAL mode is used for normal operation. Before a schema upgrade the current file is copied to a `.pre-migrate.bak` (two newest retained) and `PRAGMA integrity_check` must return `ok`. Devices, sessions, connection events, pairing history, settings, scripts, executions, actions, and snapshots are represented in the schema. Repositories keep SQL out of view models.
 
 ## Backups
 

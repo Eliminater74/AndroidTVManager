@@ -16,6 +16,7 @@ The project follows a beta-first release cycle while real Android TV hardware va
 - Restore confirmation copy now states that APK copy does not restore app data, accounts, or settings.
 - Delete downloaded update installers when the checksum is missing, mismatched, or the payload exceeds 200 MB, and do not leave those files in Temp.
 - Sideload refuses a ZIP that declares `pre-device` / updater-script product names when the live `ro.product.device` is missing or does not match. Missing device metadata is reported as unverified, not compatible.
+- Copy the SQLite file to a `.pre-migrate.bak` before applying schema upgrades, keep the two newest copies, run `PRAGMA integrity_check`, and fail closed if the database is unreadable.
 
 ### Added
 

@@ -44,6 +44,81 @@ public sealed class DatabaseTests
     }
 
     [Fact]
+    public async Task Copies_a_pre_migration_backup_and_keeps_only_two()
+    {
+        var paths = new TestPaths();
+        try
+        {
+            paths.EnsureCreated();
+            var directory = Path.GetDirectoryName(paths.DatabasePath)!;
+            for (var i = 0; i < 3; i++)
+            {
+                var stale = Path.Combine(directory, $"old-{i}.pre-migrate.bak");
+                await File.WriteAllTextAsync(stale, "stale");
+                File.SetLastWriteTimeUtc(stale, DateTime.UtcNow.AddMinutes(-10 + i));
+            }
+
+            await using (var connection = new SqliteConnection($"Data Source={paths.DatabasePath}"))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    CREATE TABLE SchemaVersions (Version INTEGER NOT NULL, AppliedUtc TEXT NOT NULL);
+                    CREATE TABLE Devices (Id INTEGER PRIMARY KEY AUTOINCREMENT, FriendlyName TEXT NOT NULL);
+                    CREATE TABLE ConnectionSessions (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        DeviceId INTEGER NOT NULL,
+                        Serial TEXT NOT NULL,
+                        ConnectionType INTEGER NOT NULL,
+                        StartedUtc TEXT NOT NULL,
+                        FinalState INTEGER NOT NULL DEFAULT 0
+                    );
+                    INSERT INTO SchemaVersions (Version, AppliedUtc) VALUES (1, '2020-01-01T00:00:00.0000000+00:00');
+                    """;
+                await command.ExecuteNonQueryAsync();
+            }
+            SqliteConnection.ClearAllPools();
+
+            var database = new SqliteDatabase(paths);
+            await database.InitializeAsync();
+
+            var backups = Directory.EnumerateFiles(directory, SqliteDatabase.PreMigrationBackupPattern).ToArray();
+            backups.Should().HaveCount(SqliteDatabase.RetainedPreMigrationBackups);
+            backups.Should().Contain(path => Path.GetFileName(path).StartsWith("androidtvmanager-v1-", StringComparison.Ordinal));
+            database.SchemaVersion.Should().Be(5);
+            await using var migrated = await database.OpenAsync();
+            await using var check = migrated.CreateCommand();
+            check.CommandText = "SELECT MAX(Version) FROM SchemaVersions;";
+            Convert.ToInt32(await check.ExecuteScalarAsync()).Should().Be(5);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            Directory.Delete(paths.Root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Unreadable_database_fails_closed_before_migration()
+    {
+        var paths = new TestPaths();
+        try
+        {
+            paths.EnsureCreated();
+            await File.WriteAllTextAsync(paths.DatabasePath, "this is not a sqlite database");
+
+            await FluentActions.Awaiting(() => new SqliteDatabase(paths).InitializeAsync())
+                .Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("*database*");
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            Directory.Delete(paths.Root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Records_connection_session_and_history()
     {
         var paths = new TestPaths();
