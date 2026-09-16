@@ -24,7 +24,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IAdbDeviceTracker _deviceTracker;
     private readonly IConnectionHistoryRepository _history;
     private readonly IAdbConnectionService _connectionService;
-    private readonly IApkInstaller _apkInstaller;
     private readonly IPackageManager _packageManager;
     private readonly IDeviceToolsService _toolsService;
     private readonly IDeviceRepository _deviceRepository;
@@ -81,7 +80,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IAdbDeviceTracker deviceTracker,
         IConnectionHistoryRepository history,
         IAdbConnectionService connectionService,
-        IApkInstaller apkInstaller,
         IPackageManager packageManager,
         IDeviceToolsService toolsService,
         IDeviceRepository deviceRepository,
@@ -130,7 +128,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _deviceTracker = deviceTracker;
         _history = history;
         _connectionService = connectionService;
-        _apkInstaller = apkInstaller;
         _packageManager = packageManager;
         _toolsService = toolsService;
         _deviceRepository = deviceRepository;
@@ -182,7 +179,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new("ADB Transport Doctor", "⌁"),
             new("Configuration Explorer", "≋"),
             new("Connections", "↔"),
-            new("Install APK", "＋"),
+            new("App Installer", "＋"),
             new("Deployment Profiles", "▤"),
             new("Remote", "⌨"),
             new("Device Logcat", "≡"),
@@ -245,7 +242,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             PreferTarget),
         "Tweaks" => new TweaksPageViewModel(_tweaks, _confirmation),
         "Recovery / Sideload" => new RecoveryPageViewModel(_recovery, _confirmation),
-        "Install APK" => new InstallApkPageViewModel(_apkInstaller, _verificationPolicy),
+        "App Installer" => new InstallApkPageViewModel(_bulkApkService, _verificationPolicy),
         "Deployment Profiles" => new DeploymentProfilesPageViewModel(
             _deploymentProfiles,
             _profileStorage,
@@ -404,9 +401,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (_pages.TryGetValue("Applications", out var applicationsPage)
             && applicationsPage is ApplicationsPageViewModel applications)
             applications.TargetSerial = value?.Serial ?? string.Empty;
-        if (_pages.TryGetValue("Install APK", out var installPage)
+        if (_pages.TryGetValue("App Installer", out var installPage)
             && installPage is InstallApkPageViewModel install)
-            install.TargetSerial = value?.Serial ?? string.Empty;
+            install.SelectedDevice = value;
         if (_pages.TryGetValue("Device Comparison", out var comparisonPage)
             && comparisonPage is DeviceComparisonPageViewModel comparison
             && comparison.LeftDevice is null)
@@ -428,7 +425,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "ADB Transport Doctor" => "Measure ADB transport stability and capture failed probe evidence.",
         "Configuration Explorer" => "Read-only runtime properties, partition files, and configuration provenance.",
         "Connections" => "Connect over network or pair Android Wireless Debugging.",
-        "Install APK" => "Install applications on the selected device.",
+        "App Installer" => "Install APK, split APK, APKS, APKM, and XAPK packages on the selected device.",
         "Deployment Profiles" => "Repeatable APK, package, and script setup plans for connected devices.",
         "Remote" => "Send safe typed ADB remote-control commands to the selected device.",
         "Device Logcat" => "Stream, filter, save, and capture real device logcat output.",
@@ -1502,75 +1499,301 @@ public sealed partial class ConnectionsPageViewModel : PageViewModel
 
 public sealed partial class InstallApkPageViewModel : PageViewModel
 {
-    private readonly IApkInstaller _installer;
+    private readonly IBulkApkService _bulkApk;
     private readonly IDeveloperVerificationPolicyProvider _policyProvider;
+    private readonly List<string> _selectedPaths = [];
+    private BulkInstallPackageSet? _packageSet;
+    private CancellationTokenSource? _operation;
 
     public InstallApkPageViewModel(
-        IApkInstaller installer,
-        IDeveloperVerificationPolicyProvider policyProvider) : base("Install APK")
+        IBulkApkService bulkApk,
+        IDeveloperVerificationPolicyProvider policyProvider) : base("App Installer")
     {
-        _installer = installer;
+        _bulkApk = bulkApk;
         _policyProvider = policyProvider;
-        InstallationInfo = "ADB installation is independent from Android's manual unverified-developer flow.";
+        InstallationInfo = "App Installer uses ADB package installation while Android is running. Recovery / Sideload is a separate OTA workflow.";
     }
 
-    [ObservableProperty]
-    private string _targetSerial = string.Empty;
+    public ObservableCollection<ApkInstallGroup> Plan { get; } = [];
 
     [ObservableProperty]
-    private string _apkPath = string.Empty;
+    private AndroidDevice? _selectedDevice;
 
     [ObservableProperty]
-    private string _output = "Select an APK and enter the target device serial.";
+    private string _selectedPathsText = string.Empty;
+
+    [ObservableProperty]
+    private string _preview = "Browse for an APK, split set, APKS, APKM, or XAPK, then analyze it before installing.";
+
+    [ObservableProperty]
+    private string _output = "Select a target device and a package to analyze.";
+
+    [ObservableProperty]
+    private string _progressText = string.Empty;
 
     [ObservableProperty]
     private string _installationInfo;
 
+    [ObservableProperty]
+    private bool _isBusy;
+
+    public string TargetLabel
+        => SelectedDevice is { State: DeviceState.Device } device
+            ? $"{device.DisplayLabel} · {device.DisplaySubtitle}"
+            : "No authorized target is selected. Choose a connected device in TARGET before installing.";
+
+    public bool HasAuthorizedTarget
+        => SelectedDevice is { State: DeviceState.Device };
+
+    partial void OnSelectedDeviceChanged(AndroidDevice? value)
+        => NotifyState();
+
+    partial void OnIsBusyChanged(bool value)
+        => NotifyState();
+
     [RelayCommand]
-    private void BrowseApk()
+    private void BrowsePackage()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Filter = "Android packages (*.apk)|*.apk|All files (*.*)|*.*",
+            Filter = "Android packages (*.apk;*.apks;*.apkm;*.xapk)|*.apk;*.apks;*.apkm;*.xapk|APK (*.apk)|*.apk|APKS (*.apks)|*.apks|APKM (*.apkm)|*.apkm|XAPK (*.xapk)|*.xapk|All files (*.*)|*.*",
             Multiselect = true,
-            Title = "Select APK package(s)"
+            Title = "Select APK, split APKs, APKS, APKM, or XAPK"
         };
         if (dialog.ShowDialog() == true)
-            ApkPath = string.Join(Environment.NewLine, dialog.FileNames);
+            SetSelectedPaths(dialog.FileNames);
+    }
+
+    [RelayCommand]
+    private void BrowseFolder()
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "Select a folder containing APKs or split-package archives.",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = false
+        };
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            return;
+        SetSelectedPaths([dialog.SelectedPath]);
+    }
+
+    public void SetSelectedPaths(IReadOnlyList<string> paths)
+    {
+        ResetPlan();
+        _selectedPaths.Clear();
+        _selectedPaths.AddRange(paths.Where(path => !string.IsNullOrWhiteSpace(path)));
+        SelectedPathsText = string.Join(Environment.NewLine, _selectedPaths);
+        Output = _selectedPaths.Count == 0
+            ? "Select a package to analyze."
+            : $"{_selectedPaths.Count} path(s) selected. Analyze before installing.";
+        NotifyState();
     }
 
     [RelayCommand]
     private void ShowVerificationGuide()
     {
-        InstallationInfo = _policyProvider.GetPolicy(null).ManualInstallGuidance;
+        InstallationInfo = _policyProvider.GetPolicy(SelectedDevice).ManualInstallGuidance;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAnalyzeExecute))]
+    private async Task AnalyzeAsync()
+    {
+        if (_selectedPaths.Count == 0)
+        {
+            Output = "Select an APK, split set, APKS, APKM, XAPK, or folder first.";
+            return;
+        }
+
+        ResetPlan();
+        IsBusy = true;
+        ProgressText = "Preparing package…";
+        _operation = new CancellationTokenSource();
+        try
+        {
+            var progress = new Progress<string>(message => ProgressText = message);
+            _packageSet = await _bulkApk.PrepareAsync(_selectedPaths, progress: progress, cancellationToken: _operation.Token);
+            Plan.Clear();
+            foreach (var group in _packageSet.Groups)
+                Plan.Add(group);
+            Preview = BuildPreview(_packageSet);
+            Output = $"{Plan.Count} install group(s) ready. Review the plan, then install.";
+            ProgressText = "Analysis complete.";
+        }
+        catch (OperationCanceledException)
+        {
+            Output = "Analysis canceled. Temporary files were cleaned up.";
+            ProgressText = "Canceled.";
+        }
+        catch (Exception exception)
+        {
+            Output = exception.Message;
+            ProgressText = "Analysis failed.";
+        }
+        finally
+        {
+            _operation.Dispose();
+            _operation = null;
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanInstallExecute))]
     private async Task InstallAsync()
     {
-        if (string.IsNullOrWhiteSpace(TargetSerial) || string.IsNullOrWhiteSpace(ApkPath))
+        if (!HasAuthorizedTarget)
         {
-            Output = "Target serial and APK path are required.";
+            Output = "No authorized target is selected. Choose a connected device before installing.";
             return;
         }
-        var paths = ApkPath.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (paths.Any(path => !File.Exists(path)))
+        if (_packageSet is null)
         {
-            Output = "One or more selected APK files do not exist.";
+            Output = "Analyze the selected package before installing.";
             return;
         }
 
-        var results = new List<string>();
-        for (var index = 0; index < paths.Length; index++)
+        IsBusy = true;
+        ProgressText = "Installing…";
+        _operation = new CancellationTokenSource();
+        var serial = SelectedDevice!.Serial;
+        try
         {
-            Output = $"Installing {index + 1} of {paths.Length} · {Path.GetFileName(paths[index])}…";
-            var result = await _installer.InstallAsync(TargetSerial.Trim(), paths[index]);
-            results.Add(result.IsSuccess
-                ? $"✓ {Path.GetFileName(paths[index])}"
-                : $"✕ {Path.GetFileName(paths[index])}: {result.StandardError.Trim()}");
+            var progress = new Progress<BulkInstallProgress>(update =>
+                ProgressText = update.Stage ?? update.CurrentItem);
+            var result = await _bulkApk.InstallAsync(serial, _packageSet, progress, _operation.Token);
+            _packageSet = null;
+            Output = FormatResult(result);
+            ProgressText = result.WasCanceled ? "Canceled." : "Complete.";
         }
-        Output = string.Join(Environment.NewLine, results);
+        catch (OperationCanceledException)
+        {
+            Output = "Installation canceled. Temporary files were cleaned up. Device state may have changed.";
+            ProgressText = "Canceled.";
+            _packageSet = null;
+        }
+        catch (Exception exception)
+        {
+            Output = exception.Message;
+            ProgressText = "Install failed.";
+            _packageSet = null;
+        }
+        finally
+        {
+            _operation.Dispose();
+            _operation = null;
+            IsBusy = false;
+            NotifyState();
+        }
     }
+
+    [RelayCommand(CanExecute = nameof(CanCancelExecute))]
+    private void Cancel()
+        => _operation?.Cancel();
+
+    private bool CanAnalyzeExecute()
+        => !IsBusy && _selectedPaths.Count > 0;
+
+    private bool CanInstallExecute()
+        => !IsBusy && HasAuthorizedTarget && _packageSet is { Groups.Count: > 0 };
+
+    private bool CanCancelExecute()
+        => IsBusy;
+
+    private void ResetPlan()
+    {
+        if (_packageSet is not null)
+            _bulkApk.Cleanup(_packageSet);
+        _packageSet = null;
+        Plan.Clear();
+        Preview = "Browse for an APK, split set, APKS, APKM, or XAPK, then analyze it before installing.";
+    }
+
+    private void NotifyState()
+    {
+        OnPropertyChanged(nameof(TargetLabel));
+        OnPropertyChanged(nameof(HasAuthorizedTarget));
+        AnalyzeCommand.NotifyCanExecuteChanged();
+        InstallCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+    }
+
+    private string BuildPreview(BulkInstallPackageSet packageSet)
+    {
+        var lines = new List<string>
+        {
+            "Target:",
+            TargetLabel,
+            string.Empty
+        };
+        if (packageSet.Groups.Count > 1)
+        {
+            lines.Add("Independent apps:");
+            lines.Add(packageSet.Groups.Count.ToString());
+            lines.Add(string.Empty);
+        }
+
+        foreach (var group in packageSet.Groups)
+        {
+            lines.Add("Source:");
+            lines.Add(group.SourceName ?? group.DisplayName);
+            lines.Add(string.Empty);
+            lines.Add("Type:");
+            lines.Add(group.ContainerLabel);
+            lines.Add(string.Empty);
+            lines.Add("Package:");
+            lines.Add(string.IsNullOrWhiteSpace(group.PackageName) ? "Unknown" : group.PackageName);
+            lines.Add(string.Empty);
+            lines.Add("APK components:");
+            lines.Add(group.Artifacts.Count.ToString());
+            lines.Add(string.Empty);
+            lines.Add("Base:");
+            lines.Add(group.BaseApkName ?? "Unknown");
+            if (group.Splits.Count > 0)
+            {
+                lines.Add(string.Empty);
+                lines.Add("Splits:");
+                lines.AddRange(group.Splits);
+            }
+            lines.Add(string.Empty);
+            lines.Add("Size:");
+            lines.Add(FormatSize(group.TotalApkBytes));
+            if (group.Payloads.Count > 0)
+            {
+                lines.Add(string.Empty);
+                lines.Add("Additional data:");
+                lines.Add($"{group.Payloads.Count} OBB file(s) · {FormatSize(group.TotalAdditionalBytes)}");
+                lines.AddRange(group.Payloads.Select(payload => $"{payload.FileName} · {FormatSize(payload.SizeBytes)}"));
+            }
+            lines.Add(string.Empty);
+        }
+
+        return string.Join(Environment.NewLine, lines).Trim();
+    }
+
+    private static string FormatResult(BulkInstallResult result)
+    {
+        var lines = result.Items.Select(item =>
+        {
+            var prefix = item.Status switch
+            {
+                BulkInstallItemStatus.Succeeded => "✓",
+                BulkInstallItemStatus.PartialSuccess => "!",
+                BulkInstallItemStatus.Canceled => "■",
+                _ => "✕"
+            };
+            return $"{prefix} {item.Group.DisplayName}{Environment.NewLine}{item.Message ?? item.Status.ToString()}";
+        }).ToList();
+        if (!string.IsNullOrWhiteSpace(result.ReconciliationMessage))
+            lines.Add(result.ReconciliationMessage);
+        return string.Join(Environment.NewLine + Environment.NewLine, lines);
+    }
+
+    private static string FormatSize(long bytes)
+        => bytes >= 1024L * 1024 * 1024
+            ? $"{bytes / (1024d * 1024 * 1024):0.0} GB"
+            : bytes >= 1024 * 1024
+                ? $"{bytes / (1024d * 1024):0.0} MB"
+                : $"{Math.Max(bytes, 0)} bytes";
 }
 
 public sealed partial class ApplicationsPageViewModel : PageViewModel

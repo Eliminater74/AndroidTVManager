@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -126,8 +127,12 @@ public partial class MainWindow : Window
             return;
 
         var files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-        var apks = files.Where(path => string.Equals(Path.GetExtension(path), ".apk", StringComparison.OrdinalIgnoreCase));
-        installer.ApkPath = string.Join(Environment.NewLine, apks);
+        var supported = files.Where(path =>
+            Directory.Exists(path)
+            || Path.GetExtension(path).ToLowerInvariant() is ".apk" or ".apks" or ".apkm" or ".xapk")
+            .ToArray();
+        if (supported.Length > 0)
+            installer.SetSelectedPaths(supported);
     }
 
     [DllImport("dwmapi.dll")]

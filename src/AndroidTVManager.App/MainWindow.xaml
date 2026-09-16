@@ -113,9 +113,9 @@
                         <Button Content="⌁  Pair" Style="{StaticResource GhostButtonStyle}" Margin="3,0,4,0"
                                 Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="Connections"/>
-                        <Button Content="↓  Install APK" Style="{StaticResource GhostButtonStyle}" Margin="4,0,3,0"
+                        <Button Content="↓  App Installer" Style="{StaticResource GhostButtonStyle}" Margin="4,0,3,0"
                                 Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="Install APK"/>
+                                CommandParameter="App Installer"/>
                         <Button Content="▦  Applications" Style="{StaticResource GhostButtonStyle}" Margin="4,0,3,0"
                                 Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="Applications"/>
@@ -1914,54 +1914,84 @@
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:InstallApkPageViewModel}">
-            <Grid Margin="34,26,34,28">
-                <StackPanel>
-                    <TextBlock Text="INSTALL APK" FontSize="11" FontWeight="Bold"
-                               Foreground="{StaticResource CyanAccent}"/>
-                    <TextBlock Text="Install an app" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                    <TextBlock Text="Push a signed APK to the selected Android TV device with a safe, visible command."
-                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
-                    <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
-                            BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,28,0,0">
-                        <StackPanel>
-                            <TextBlock Text="INSTALLATION TARGET" FontSize="11" FontWeight="Bold"
-                                       Foreground="{StaticResource VioletAccent}"/>
-                            <TextBox Text="{Binding TargetSerial, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,10,0,18"/>
-                            <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,18">
-                                <StackPanel>
-                                    <TextBlock Text="APK INSTALLATION METHOD: ADB" FontWeight="Bold"
-                                               Foreground="{StaticResource GreenAccent}"/>
-                                    <TextBlock Text="{Binding InstallationInfo}" Foreground="{StaticResource TextSecondary}"
-                                               TextWrapping="Wrap" Margin="0,6,0,0"/>
-                                    <Button Content="Learn more" Style="{StaticResource GhostButtonStyle}"
-                                            HorizontalAlignment="Left" Command="{Binding ShowVerificationGuideCommand}"
-                                            Margin="0,10,0,0"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid Margin="34,26,34,28">
+                    <StackPanel>
+                        <TextBlock Text="APP INSTALLER" FontSize="11" FontWeight="Bold"
+                                   Foreground="{StaticResource CyanAccent}"/>
+                        <TextBlock Text="Install an app" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                        <TextBlock Text="Analyze and install APK, split APK, APKS, APKM, and XAPK packages on the selected Android TV device. Recovery / Sideload remains a separate OTA workflow."
+                                   Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        <Border Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                                BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,28,0,0">
+                            <StackPanel>
+                                <TextBlock Text="TARGET" FontSize="11" FontWeight="Bold"
+                                           Foreground="{StaticResource VioletAccent}"/>
+                                <TextBlock Text="{Binding TargetLabel}" Margin="0,10,0,18"
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
+                                <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,18">
+                                    <StackPanel>
+                                        <TextBlock Text="INSTALLATION METHOD: ADB PACKAGE INSTALL" FontWeight="Bold"
+                                                   Foreground="{StaticResource GreenAccent}"/>
+                                        <TextBlock Text="{Binding InstallationInfo}" Foreground="{StaticResource TextSecondary}"
+                                                   TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        <Button Content="Learn more" Style="{StaticResource GhostButtonStyle}"
+                                                HorizontalAlignment="Left" Command="{Binding ShowVerificationGuideCommand}"
+                                                Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="PACKAGE" FontSize="11" FontWeight="Bold"
+                                           Foreground="{StaticResource VioletAccent}"/>
+                                <Grid Margin="0,10,0,18">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding SelectedPathsText, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="36"
+                                             IsReadOnly="True" Margin="0,0,10,0"/>
+                                    <Button Grid.Column="1" Content="Browse…" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding BrowsePackageCommand}" Margin="0,0,8,0"/>
+                                    <Button Grid.Column="2" Content="Folder…" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding BrowseFolderCommand}"/>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                    <Button Content="Analyze" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding AnalyzeCommand}" Margin="0,0,8,0"/>
+                                    <Button Content="Install" Style="{StaticResource AccentButtonStyle}"
+                                            Command="{Binding InstallCommand}" Margin="0,0,8,0"/>
+                                    <Button Content="Cancel" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding CancelCommand}"/>
                                 </StackPanel>
-                            </Border>
-                            <TextBlock Text="APK FILE PATH" FontSize="11" FontWeight="Bold"
-                                       Foreground="{StaticResource VioletAccent}"/>
-                            <Grid Margin="0,10,0,18">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding ApkPath, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="36"
-                                         Margin="0,0,10,0"/>
-                                <Button Grid.Column="1" Content="Browse…" Style="{StaticResource GhostButtonStyle}"
-                                        Command="{Binding BrowseApkCommand}"/>
-                            </Grid>
-                            <Button Content="Install with reinstall" Style="{StaticResource AccentButtonStyle}"
-                                    HorizontalAlignment="Left" Command="{Binding InstallCommand}"/>
-                            <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="12" Margin="0,18,0,0">
-                                <TextBlock Text="{Binding Output}" Foreground="{StaticResource TextSecondary}"
-                                           TextWrapping="Wrap"/>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
+                                <TextBlock Text="INSTALL PLAN" FontSize="11" FontWeight="Bold"
+                                           Foreground="{StaticResource VioletAccent}"/>
+                                <TextBlock Text="{Binding Preview}" Foreground="{StaticResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,10,0,12" FontFamily="Consolas"/>
+                                <ItemsControl ItemsSource="{Binding Plan}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,0,0,6" TextWrapping="Wrap"
+                                                       Foreground="{StaticResource TextPrimary}">
+                                                <Run Text="✓ "/>
+                                                <Run Text="{Binding DisplayName, Mode=OneWay}"/>
+                                                <Run Text=" · "/>
+                                                <Run Text="{Binding ContainerLabel, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{Binding ProgressText}" Foreground="{StaticResource CyanAccent}"
+                                           Margin="0,12,0,0" TextWrapping="Wrap"/>
+                                <Border Background="{StaticResource ControlBackgroundBrush}" CornerRadius="7" Padding="12" Margin="0,18,0,0">
+                                    <TextBlock Text="{Binding Output}" Foreground="{StaticResource TextSecondary}"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ApplicationsPageViewModel}">
             <Grid Margin="34,26,34,28">
