@@ -120,15 +120,17 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
 
     private static bool IsApplicable(PackageReferenceBaseline baseline, AndroidDevice device)
     {
-        if (baseline.DeviceFamily == DeviceFamilies.NvidiaShieldTv && !DeviceFamilies.IsShieldTv(device))
+        if (!string.IsNullOrWhiteSpace(baseline.DeviceFamily)
+            && DeviceFamilies.IsKnownHardwareFamily(baseline.DeviceFamily)
+            && !DeviceFamilies.Matches(baseline.DeviceFamily, device))
             return false;
         if (!string.IsNullOrWhiteSpace(baseline.Manufacturer)
             && !string.Equals(baseline.Manufacturer, device.Manufacturer,
                 StringComparison.OrdinalIgnoreCase))
             return false;
         if (!string.IsNullOrWhiteSpace(baseline.DeviceFamily)
-            && baseline.DeviceFamily != DeviceFamilies.NvidiaShieldTv
-            && !ContainsDeviceValue(device, baseline.DeviceFamily)
+            && !DeviceFamilies.IsKnownHardwareFamily(baseline.DeviceFamily)
+            && !DeviceFamilies.HasHardwareToken(device, baseline.DeviceFamily)
             && !string.Equals(baseline.Manufacturer, device.Manufacturer,
                 StringComparison.OrdinalIgnoreCase))
             return false;
@@ -147,10 +149,6 @@ public sealed class PackageReferenceCatalog : IPackageReferenceCatalog
             return false;
         return true;
     }
-
-    private static bool ContainsDeviceValue(AndroidDevice device, string value)
-        => new[] { device.Model, device.FriendlyName, device.ReportedName, device.DeviceName }
-            .Any(candidate => candidate?.Contains(value, StringComparison.OrdinalIgnoreCase) == true);
 
     private static int? TryGetMajorVersion(string? version)
         => int.TryParse(version?.Split('.', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(),

@@ -7,7 +7,7 @@ namespace AndroidTVManager.Infrastructure.Packages;
 
 public sealed class PackageClassifier : IPackageClassifier
 {
-    public const string RulesetVersion = "vendor-tv-sourced-2026-09-07-v5";
+    public const string RulesetVersion = "vendor-tv-sourced-2026-09-16-v6";
     private readonly IReadOnlyList<PackageKnowledgeRule> _rules;
     private readonly IReadOnlyDictionary<string, PackageKnowledgeSource> _sources;
 
@@ -115,7 +115,7 @@ public sealed class PackageClassifier : IPackageClassifier
             && (string.IsNullOrWhiteSpace(rule.Manufacturer)
                 || string.Equals(rule.Manufacturer, device.Manufacturer, StringComparison.OrdinalIgnoreCase))
             && (rule.DeviceFamily is null
-                || (rule.DeviceFamily == DeviceFamilies.NvidiaShieldTv && DeviceFamilies.IsShieldTv(device)))
+                || DeviceFamilies.Matches(rule.DeviceFamily, device))
             && (string.IsNullOrWhiteSpace(rule.Product)
                 || string.Equals(rule.Product, device.Product, StringComparison.OrdinalIgnoreCase))
             && (string.IsNullOrWhiteSpace(rule.ModelContains)
@@ -143,6 +143,7 @@ public sealed class PackageClassifier : IPackageClassifier
     private static int Specificity(PackageKnowledgeRule rule)
         => (string.IsNullOrWhiteSpace(rule.PackagePrefix) ? 16 : 0)
            + (rule.Manufacturer is null ? 0 : 8)
+           + (rule.DeviceFamily is null ? 0 : 8)
            + (rule.Product is null ? 0 : 4)
            + (rule.ModelContains is null ? 0 : 2)
            + (rule.MinApi.HasValue || rule.MaxApi.HasValue ? 1 : 0);
