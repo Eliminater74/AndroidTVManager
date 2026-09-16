@@ -64,18 +64,24 @@ public sealed class AdbToolsManager : IAdbToolsManager
                 if (!File.Exists(stagedAdb))
                     throw new InvalidDataException("The downloaded archive did not contain adb.exe.");
 
-                var version = await ReadVersionAsync(stagedAdb, cancellationToken)
+                var stagedFastboot = Path.Combine(packageRoot, "fastboot.exe");
+                if (!File.Exists(stagedFastboot))
+                    throw new InvalidDataException("The downloaded archive did not contain fastboot.exe.");
+                _ = await ReadVersionAsync(stagedAdb, cancellationToken)
                     ?? throw new InvalidDataException("The downloaded ADB executable did not return a valid version.");
-                var previous = _paths.ToolsPath + ".previous";
-                if (Directory.Exists(previous))
-                    Directory.Delete(previous, recursive: true);
-                if (Directory.Exists(_paths.ToolsPath))
-                    Directory.Move(_paths.ToolsPath, previous);
-                Directory.Move(packageRoot, _paths.ToolsPath);
+
+                var version = await new PlatformToolsActivator().ActivateAsync(
+                    packageRoot,
+                    _paths.ToolsPath,
+                    async (activePath, token) =>
+                    {
+                        var activeAdb = Path.Combine(activePath, "adb.exe");
+                        return await ReadVersionAsync(activeAdb, token)
+                            ?? throw new InvalidDataException("The activated ADB executable did not return a valid version.");
+                    },
+                    cancellationToken);
                 if (Directory.Exists(staging))
                     Directory.Delete(staging, recursive: true);
-                if (Directory.Exists(previous))
-                    Directory.Delete(previous, recursive: true);
 
                 _installedVersion = version;
                 _logger.Information("PlatformTools", $"Activated ADB {version}.");
@@ -156,21 +162,9 @@ public sealed class AdbToolsManager : IAdbToolsManager
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            TryKill(process);
+            AdbProcessLifetime.TryKillClient(process);
             await process.WaitForExitAsync(CancellationToken.None);
             return null;
-        }
-    }
-
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
         }
     }
 
