@@ -37,6 +37,8 @@ public sealed class DebloatSelectionTests
 
         viewModel.ToModel().Selected.Should().BeTrue();
         viewModel.ToModel().SelectionBlockReason.Should().BeNull();
+        viewModel.WhySelected.Should().Contain("Selected by:");
+        viewModel.WhySelected.Should().Contain("Reason:");
     }
 
     [Fact]
