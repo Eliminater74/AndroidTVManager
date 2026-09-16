@@ -1,22 +1,17 @@
 # Roadmap
 
-## Beta 15 — current: safety hardening and disconnect
+## Beta 16 — current: confirmation dialog hotfix
 
-- Platform-Tools rollback, shared secret redaction, live package safety gate, and fail-closed deployment compatibility.
-- APK restore verifies the expected SHA-256 set; untrusted updater payloads are deleted; recovery ZIPs fail closed on product mismatch.
-- SQLite pre-migration snapshots, deterministic shutdown, and Network/Wireless Debugging disconnect from the TARGET header and Devices list.
-- `IAdbDeviceSession` owns the live list, TARGET, preferred endpoint, and disconnect workflow. Pages still receive the selected device from `MainWindowViewModel`.
-- Pending physical smoke: Shield connect/disconnect/reconnect beside an emulator, TARGET fallback, inventory, one harmless disable/restore, updater check, backup verification, clean exit, and B14 → B15 installer upgrade.
+- Confirmation dialogs are a fixed 560px wide with a work-area-capped, scrollable message pane so Cancel and Continue stay visible.
+- If Beta 15's in-app Install dialog hid Continue, download this installer from GitHub Releases.
 
-Do not add another large subsystem to this release.
-
-## Beta 16 — next: device session and shell
+## Beta 17 — next: device session and shell
 
 - Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - Pages subscribe to the shared session instead of the shell pushing `SelectedDevice` into each page VM.
 - Immediately after that context exists, add capability and user-scope header badges.
 
-## After B16
+## After B17
 
 - Restore points and Fully / Partially / Not reversible classifications before batch mutations.
 - Feature-aware debloat protection (Plex, casting, voice, game streaming, accessibility).
@@ -26,6 +21,14 @@ Do not add another large subsystem to this release.
 - Finish the physical hardware acceptance matrix before stable 1.0.
 
 See [Device support audit](DEVICE-SUPPORT-AUDIT.md) for closed B15 findings and remaining hardware limits.
+
+## Beta 15 — safety hardening and disconnect
+
+- Platform-Tools rollback, shared secret redaction, live package safety gate, and fail-closed deployment compatibility.
+- APK restore verifies the expected SHA-256 set; untrusted updater payloads are deleted; recovery ZIPs fail closed on product mismatch.
+- SQLite pre-migration snapshots, deterministic shutdown, and Network/Wireless Debugging disconnect from the TARGET header and Devices list.
+- `IAdbDeviceSession` owns the live list, TARGET, preferred endpoint, and disconnect workflow. Pages still receive the selected device from `MainWindowViewModel`.
+- Pending physical smoke: Shield connect/disconnect/reconnect beside an emulator, TARGET fallback, inventory, one harmless disable/restore, updater check, backup verification, clean exit, and B15 → B16 installer upgrade.
 
 ## Beta 14 — multi-device targeting
 

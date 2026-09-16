@@ -2,9 +2,15 @@
 
 This file tracks concrete work items. Larger product direction belongs in [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Beta 15 — current: hardening and disconnect
+## Beta 16 — current: confirmation dialog hotfix
 
-Shipped in this release. Do not add another large subsystem here. Smoke the exact flows on hardware, then start Beta 16.
+- [x] Keep confirmation dialogs at a fixed width with a work-area-capped message pane and vertical scrollbar so long release notes do not hide Cancel and Continue.
+
+Physical smoke from Beta 15 still applies, plus installer upgrade from B15 → B16.
+
+## Beta 15 — hardening and disconnect
+
+Shipped. Smoke the exact flows on hardware, then start the shell split.
 
 - [x] Restore previous Platform-Tools after a failed activation and verify the active tools directory.
 - [x] Kill timed-out ADB clients without tearing down the shared ADB server process tree.
@@ -27,21 +33,21 @@ Shipped in this release. Do not add another large subsystem here. Smoke the exac
 - [ ] Test Android Wireless Debugging pairing on supported Android versions.
 - [ ] Exercise package inventory and one harmless disable/restore on a disposable device.
 - [ ] Confirm updater check, backup verification, and a normal application exit (tracker stop, session recovery, log flush).
-- [ ] Verify installer upgrade from B14 → B15 and uninstall.
+- [ ] Verify installer upgrade from B15 → B16 and uninstall.
 - [ ] Validate deep inspection on physical TV/Shield and ATOTO firmware; confirm failed probes remain clearly labeled.
 - [ ] Verify Device Status values against at least one Google TV and one manufacturer TV.
 - [ ] Validate the [recovery hardware checklist](docs/RECOVERY-SIDELOAD.md#hardware-acceptance) with the exact Pixel C ROM/recovery build.
 - [ ] Complete the [device support audit hardware acceptance checklist](docs/DEVICE-SUPPORT-AUDIT.md#hardware-acceptance-checklist).
 
-## Beta 16 — device session and shell
+## Beta 17 — next: device session and shell
 
-This is the next code project after B15 is tagged and smoked.
+This is the next code project after the B16 hotfix.
 
 - [ ] Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
 - [ ] Let pages subscribe to the shared session instead of `MainWindowViewModel` pushing `SelectedDevice` into each page VM.
 - [ ] Add explicit device capabilities and user scope to the header after that context exists (`SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for secondary user, Automotive, offline, unauthorized, and unknown capability).
 
-## After B16 — safety, quality, and release
+## After B17 — safety, quality, and release
 
 - [ ] Add explicit Fully Reversible, Partially Reversible, and Not Reversible states to recommendation scoring.
 - [ ] Add device restore points that capture package state, runtime roles, relevant settings, fingerprint, and the ruleset version before mutations.

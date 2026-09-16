@@ -6,11 +6,21 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## [1.0.0-B16] - 2026-09-16
+
+Beta 16 is a hotfix so in-app updates can show the full release notes and still reach Continue.
+
 ### Fixed
 
-- Confirmation dialogs keep a fixed width, cap the message pane to the work area, and show a vertical scrollbar so long release notes no longer hide Cancel and Continue.
+- Confirmation dialogs keep a fixed 560px width, cap the message pane to the work area, and show a vertical scrollbar so long changelog text no longer hides Cancel and Continue.
 
-Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Release and validation
+
+- Updated app and installer metadata to 1.0.0-B16 (assembly/file version 1.0.0.16), release documentation, and download links. Package rules remain at the Beta 12 revision.
+- Debug/Release builds and 239 device-independent tests cover the confirmation viewport limits.
+- If Beta 15's in-app Install dialog blocked Continue, download this installer from GitHub Releases. Physical-device validation remains pending.
 
 ## [1.0.0-B15] - 2026-09-16
 
