@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using AndroidTVManager.App.Services;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Core.Recovery;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -124,7 +125,7 @@ public sealed partial class RecoveryPageViewModel(IRecoveryService recovery, ICo
     private async Task SendZipAsync(RecoveryTarget target, RecoveryFile zip, CancellationToken token)
     {
         if (!confirmation.Confirm("Sideload selected update",
-                $"Target: {target.Serial}\nPackage: {zip.FileName}\nSHA-256: {zip.Sha256}\n\nConfirm this package matches your device and build. The app may reboot Android to recovery, then wait for Apply Update → Apply from ADB. It will not wipe, unlock or reboot Android after installation."))
+                $"Target: {target.Serial}\nPackage: {zip.FileName}\nSHA-256: {zip.Sha256}\n{zip.ZipDeclaration?.Evidence ?? "The ZIP did not declare a target device."}\n\nConfirm this package matches your device and build. Compatibility is not assumed from the file name. The app may reboot Android to recovery, then wait for Apply Update → Apply from ADB. It will not wipe, unlock or reboot Android after installation."))
         { Status = "Sideload canceled before sending the package."; return; }
         ShowResult(await recovery.SideloadAsync(target, zip, Progress(), token));
     }
@@ -158,5 +159,12 @@ public sealed partial class RecoveryPageViewModel(IRecoveryService recovery, ICo
         });
     }
     private void ShowResult(RecoveryOperationResult result) { Status = result.Message; Output = result.Output; }
-    private static string Describe(RecoveryFile file) => $"{file.FileName} · {file.Length:N0} bytes\nSHA-256: {file.Sha256}";
+    private static string Describe(RecoveryFile file)
+    {
+        var summary = $"{file.FileName} · {file.Length:N0} bytes\nSHA-256: {file.Sha256}";
+        if (file.ZipDeclaration is null)
+            return summary;
+        var compatibility = RecoveryZipMetadataParser.Evaluate(file.ZipDeclaration, null);
+        return $"{summary}\n{file.ZipDeclaration.Evidence}\n{compatibility.Reasons[0]}";
+    }
 }

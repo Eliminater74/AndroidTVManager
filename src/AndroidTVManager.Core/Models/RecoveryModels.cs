@@ -1,3 +1,5 @@
+using AndroidTVManager.Core.Recovery;
+
 namespace AndroidTVManager.Core.Models;
 
 public enum RecoveryMode { Android, Recovery, Sideload, Fastboot, Unauthorized, Offline }
@@ -6,7 +8,13 @@ public sealed record RecoveryTarget(string Serial, RecoveryMode Mode)
 {
     public string DisplayName => $"{Serial} — {Mode}";
 }
-public sealed record RecoveryFile(string Path, string FileName, RecoveryFileKind Kind, long Length, string Sha256);
+public sealed record RecoveryFile(
+    string Path,
+    string FileName,
+    RecoveryFileKind Kind,
+    long Length,
+    string Sha256,
+    RecoveryZipDeclaration? ZipDeclaration = null);
 public sealed record RecoveryOperationResult(bool CommandSucceeded, string Message, string Output);
 
 public interface IFastbootProcessRunner

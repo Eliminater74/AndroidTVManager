@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Core.Recovery;
 
 namespace AndroidTVManager.Infrastructure.Adb;
 
@@ -42,15 +43,19 @@ public sealed class RecoveryService(IAdbProcessRunner adb, IFastbootProcessRunne
         if (kind == RecoveryFileKind.RecoveryImage && Encoding.ASCII.GetString(header) != "ANDROID!")
             throw new InvalidDataException("Pixel C recovery must use the Android boot-image format. This file was not recognized.");
         stream.Position = 0;
+        RecoveryZipDeclaration? declaration = null;
         if (kind == RecoveryFileKind.SideloadZip)
         {
             using var zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
             if (!zip.Entries.Any(entry => entry.FullName is "META-INF/com/google/android/update-binary" or "META-INF/com/android/metadata" or "payload.bin"))
                 throw new InvalidDataException("ZIP does not contain recognized Android update metadata or an installer. Select the ROM/add-on ZIP, not an APK or download page.");
+            declaration = RecoveryZipMetadataParser.Parse(
+                ReadZipEntry(zip, "META-INF/com/android/metadata"),
+                ReadZipEntry(zip, "META-INF/com/google/android/updater-script"));
         }
         stream.Position = 0;
         var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream, token).ConfigureAwait(false)).ToLowerInvariant();
-        return new(Path.GetFullPath(path), Path.GetFileName(path), kind, stream.Length, hash);
+        return new(Path.GetFullPath(path), Path.GetFileName(path), kind, stream.Length, hash, declaration);
     }
 
     private async Task<RecoveryTarget> RequireTargetAsync(string serial, CancellationToken token)
@@ -112,6 +117,8 @@ public sealed class RecoveryService(IAdbProcessRunner adb, IFastbootProcessRunne
             await using var locked = await Task.Run(() => Open(zip.Path), cancellationToken).ConfigureAwait(false);
             await VerifyFileAsync(locked, zip, cancellationToken);
             var current = await RequireTargetAsync(target.Serial, cancellationToken);
+            if (zip.ZipDeclaration?.DeclaredDevices.Count > 0)
+                EnsureZipCompatible(zip, await ReadProductAsync(target.Serial, cancellationToken));
             if (current.Mode == RecoveryMode.Android)
             {
                 progress?.Report("Rebooting the selected device to recovery…");
@@ -145,6 +152,42 @@ public sealed class RecoveryService(IAdbProcessRunner adb, IFastbootProcessRunne
                 Sanitize(transfer, zip.Path));
         }
         finally { _operation.Release(); }
+    }
+
+    private static void EnsureZipCompatible(RecoveryFile zip, string? liveDevice)
+    {
+        var declaration = zip.ZipDeclaration ?? RecoveryZipMetadataParser.Parse(null, null);
+        if (declaration.DeclaredDevices.Count == 0)
+            return;
+        var compatibility = RecoveryZipMetadataParser.Evaluate(declaration, liveDevice);
+        if (compatibility.State is RecoveryCompatibilityState.Incompatible
+            or RecoveryCompatibilityState.UnknownRequiredEvidence)
+            throw new InvalidOperationException(string.Join(" ", compatibility.Reasons) + " The ZIP was not sent.");
+    }
+
+    private async Task<string?> ReadProductAsync(string serial, CancellationToken token)
+    {
+        var result = await adb.RunForDeviceAsync(
+            serial,
+            ["shell", "getprop", "ro.product.device"],
+            ProbeTimeout,
+            token);
+        if (!result.IsSuccess)
+            return null;
+        var value = result.StandardOutput.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.Length > 0 && line != "null");
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    private static string? ReadZipEntry(ZipArchive zip, string name)
+    {
+        var entry = zip.Entries.FirstOrDefault(item =>
+            item.FullName.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (entry is null)
+            return null;
+        using var reader = new StreamReader(entry.Open(), Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: false);
+        return reader.ReadToEnd();
     }
 
     private async Task<string> ReadVariableAsync(string serial, string variable, CancellationToken token)

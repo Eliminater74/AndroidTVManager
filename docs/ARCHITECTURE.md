@@ -30,6 +30,10 @@ APK restore verifies the expected `apks/` set in `SHA256SUMS.txt` against the fi
 
 In-app updates download the GitHub `-Setup.exe` into LocalAppData Temp, require a SHA-256 from the release digest or `SHA256SUMS.txt`, reject payloads over 200 MB, and delete the file unless the verified installer is actually started.
 
+## Recovery sideload
+
+Sideload ZIP inspection reads `META-INF/com/android/metadata` (`pre-device`) and `updater-script` `ro.product.device` checks. Declared targets are compared to live `getprop ro.product.device` before the package is sent. A mismatch or unreadable live identity fails closed. A ZIP with no device declaration is Unknown, not Compatible.
+
 ## History and transactions
 
 Device arrival and connection transitions create historical records without writing duplicate unchanged events. Script executions are transaction records. Actions retain previous state, requested state, result, and undo status so undo can reverse only the changes made by that execution.

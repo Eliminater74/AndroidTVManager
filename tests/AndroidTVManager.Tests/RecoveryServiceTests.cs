@@ -150,17 +150,55 @@ public sealed class RecoveryServiceTests : IDisposable
         adb.DeviceCalls.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task Declared_zip_device_mismatch_never_sends_the_package()
+    {
+        var adb = new AdbFake { DeviceProduct = "foster" };
+        var service = new RecoveryService(adb, new FastbootFake());
+        var zip = await service.InspectFileAsync(Zip(metadata: "pre-device=dragon\n"), RecoveryFileKind.SideloadZip);
+        await FluentActions.Awaiting(() => service.SideloadAsync(new("chosen", RecoveryMode.Sideload), zip))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*does not match*");
+        adb.DeviceCalls.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Declared_zip_device_without_live_identity_never_sends_the_package()
+    {
+        var adb = new AdbFake { DeviceProduct = "" };
+        var service = new RecoveryService(adb, new FastbootFake());
+        var zip = await service.InspectFileAsync(Zip(metadata: "pre-device=dragon\n"), RecoveryFileKind.SideloadZip);
+        await FluentActions.Awaiting(() => service.SideloadAsync(new("chosen", RecoveryMode.Sideload), zip))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*could not be read*");
+        adb.DeviceCalls.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Matching_declared_zip_device_is_allowed_to_sideload()
+    {
+        var adb = new AdbFake { DeviceProduct = "dragon" };
+        var service = new RecoveryService(adb, new FastbootFake());
+        var zip = await service.InspectFileAsync(Zip(metadata: "pre-device=dragon\n"), RecoveryFileKind.SideloadZip);
+        var result = await service.SideloadAsync(new("chosen", RecoveryMode.Sideload), zip);
+        result.CommandSucceeded.Should().BeTrue();
+        adb.DeviceCalls.Should().ContainSingle(call => call.Arguments[0] == "sideload");
+    }
+
     private string Image()
     {
         var path = Path.Combine(_root, "recovery with spaces.img");
         File.WriteAllBytes(path, "ANDROID!test-image"u8.ToArray());
         return path;
     }
-    private string Zip()
+    private string Zip(string? metadata = null)
     {
-        var path = Path.Combine(_root, "lineage with spaces.zip");
+        var path = Path.Combine(_root, $"lineage with spaces-{Guid.NewGuid():N}.zip");
         using var archive = ZipFile.Open(path, ZipArchiveMode.Create);
-        archive.CreateEntry("META-INF/com/android/metadata");
+        var entry = archive.CreateEntry("META-INF/com/android/metadata");
+        if (!string.IsNullOrEmpty(metadata))
+        {
+            using var writer = new StreamWriter(entry.Open());
+            writer.Write(metadata);
+        }
         return path;
     }
     private sealed class CallbackProgress(Action<string> callback) : IProgress<string>
@@ -175,9 +213,13 @@ public sealed class RecoveryServiceTests : IDisposable
         public List<(string Serial, IReadOnlyList<string> Arguments)> DeviceCalls { get; } = [];
         public Task<AdbCommandResult> RunAsync(IReadOnlyList<string> arguments, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         { Calls++; cancellationToken.ThrowIfCancellationRequested(); return Task.FromResult(new AdbCommandResult("adb.exe", arguments, 0, Listing, "", TimeSpan.Zero)); }
+        public string DeviceProduct { get; init; } = "";
         public Task<AdbCommandResult> RunForDeviceAsync(string serial, IReadOnlyList<string> arguments, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            Calls++; cancellationToken.ThrowIfCancellationRequested(); DeviceCalls.Add((serial, arguments));
+            Calls++; cancellationToken.ThrowIfCancellationRequested();
+            if (arguments.Count >= 3 && arguments[0] == "shell" && arguments[1] == "getprop")
+                return Task.FromResult(new AdbCommandResult("adb.exe", arguments, 0, DeviceProduct, "", TimeSpan.Zero));
+            DeviceCalls.Add((serial, arguments));
             if (arguments[0] == "reboot") Listing = "chosen\tsideload";
             return Task.FromResult(new AdbCommandResult("adb.exe", arguments, Exit, Output, "", TimeSpan.Zero));
         }

@@ -15,12 +15,14 @@ The project follows a beta-first release cycle while real Android TV hardware va
 - Block APK restore unless every `apks/` file listed in `SHA256SUMS.txt` is present with a matching hash and no extra files exist. Failed verification reports zero restored and zero failed packages, and nothing is installed.
 - Restore confirmation copy now states that APK copy does not restore app data, accounts, or settings.
 - Delete downloaded update installers when the checksum is missing, mismatched, or the payload exceeds 200 MB, and do not leave those files in Temp.
+- Sideload refuses a ZIP that declares `pre-device` / updater-script product names when the live `ro.product.device` is missing or does not match. Missing device metadata is reported as unverified, not compatible.
 
 ### Added
 
 - Shared `ISensitiveDataRedactor` for logs, script journals, diagnostic bundles, and ADB argument lists, including IPv6 and local user-path redaction.
 - Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works.
 - Backup manifests now catalog expected package and APK-file counts so restore can compare the on-disk set against what the backup claimed.
+- Recovery ZIP inspection parses `META-INF/com/android/metadata` and updater-script product checks so sideload can fail closed on incompatible or unverifiable device identity.
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
