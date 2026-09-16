@@ -24,6 +24,21 @@ public sealed class InspectionParserTests
     }
 
     [Fact]
+    public void Shield_hardware_codename_is_not_reported_as_a_soc()
+    {
+        var cpu = AdbInspectionParsers.ParseCpu("""
+            processor : 0
+            processor : 1
+            """, "arm64-v8a", "arm64-v8a,armeabi-v7a,armeabi", "darcy", "tegra");
+
+        cpu.Hardware.Should().Be("darcy");
+        cpu.BoardPlatform.Should().Be("tegra");
+        cpu.DetectedSoC.Should().BeNull();
+        cpu.InferredSoC.Should().BeNull();
+        cpu.Architecture.Should().Be("arm64-v8a");
+    }
+
+    [Fact]
     public void Parses_memory_units_as_bytes()
     {
         var memory = AdbInspectionParsers.ParseMemory("""
@@ -119,6 +134,30 @@ public sealed class InspectionParserTests
         display.SupportedModes.Should().Contain("3840x2160 @ 60 Hz");
         display.HdrCapabilities.Should().Equal("HDR10");
         display.Density.Should().Be(320);
+    }
+
+    [Fact]
+    public void Shield_graphics_reads_vulkan_from_features_not_gles_extension_line()
+    {
+        var graphics = AdbInspectionParsers.ParseGraphics(
+            """
+            GLES: NVIDIA Corporation, NVIDIA Tegra X1 (nvgpu)/integrated, OpenGL ES 3.2 NVIDIA 32.0
+            GL_EXT_debug_marker GL_KHR_vulkan_glsl GL_OES_EGL_image
+            GL_EXT_EGL_image_storage_compression
+            Hardware Composer 2
+            """,
+            """
+            feature:android.software.leanback
+            feature:android.hardware.vulkan.version=4198400
+            feature:android.hardware.vulkan.level=1
+            """);
+
+        graphics.Vendor.Should().Be("NVIDIA Corporation");
+        graphics.Renderer.Should().Be("NVIDIA Tegra X1 (nvgpu)/integrated");
+        graphics.OpenGlEsVersion.Should().Contain("OpenGL ES 3.2");
+        graphics.VulkanVersion.Should().Be("1.1");
+        graphics.VulkanVersion.Should().NotContain("GL_KHR_vulkan_glsl");
+        graphics.HardwareComposer.Should().Contain("Hardware Composer 2");
     }
 
     [Fact]

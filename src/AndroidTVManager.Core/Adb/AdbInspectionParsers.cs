@@ -37,7 +37,7 @@ public static class AdbInspectionParsers
             Get(values, "CPU part"),
             hardware,
             board,
-            hardware,
+            LooksLikeSocName(hardware) ? hardware : null,
             null,
             Get(values, "cpu MHz") ?? Get(values, "CPU MHz"),
             Get(values, "scaling governor") ?? Get(values, "governor"));
@@ -192,6 +192,46 @@ public static class AdbInspectionParsers
                 ParseBytes(parts[3], 1024), parts[0]));
         }
         return new(volumes);
+    }
+
+    public static GraphicsInfo ParseGraphics(string surfaceFlinger, string features)
+    {
+        var glesLine = surfaceFlinger.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.StartsWith("GLES:", StringComparison.OrdinalIgnoreCase)
+                || line.StartsWith("GLES ", StringComparison.OrdinalIgnoreCase));
+        var payload = glesLine is null
+            ? null
+            : Regex.Replace(glesLine, @"^GLES:\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
+        var parts = payload?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            ?? [];
+        var vendor = parts.ElementAtOrDefault(0);
+        var renderer = parts.ElementAtOrDefault(1) ?? glesLine;
+        var glVersion = parts.FirstOrDefault(part => part.Contains("OpenGL ES", StringComparison.OrdinalIgnoreCase))
+            ?? MatchValue(surfaceFlinger, @"OpenGL ES\s+(?<value>\d+(?:\.\d+)*)");
+        if (glVersion is not null
+            && !glVersion.Contains("OpenGL ES", StringComparison.OrdinalIgnoreCase))
+            glVersion = $"OpenGL ES {glVersion}";
+        var composer = surfaceFlinger.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .FirstOrDefault(line =>
+                (line.Contains("composer", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("HWC", StringComparison.OrdinalIgnoreCase))
+                && !line.Contains("vulkan", StringComparison.OrdinalIgnoreCase)
+                && !line.Contains("GLES", StringComparison.OrdinalIgnoreCase));
+        return new(renderer, vendor, glVersion, ParseVulkanVersion(features), composer, null);
+    }
+
+    public static string? ParseVulkanVersion(string features)
+    {
+        var encoded = MatchValue(features, @"android\.hardware\.vulkan\.version\s*=\s*(?<value>\d+)");
+        if (encoded is null
+            || !int.TryParse(encoded, NumberStyles.Integer, CultureInfo.InvariantCulture, out var version))
+            return encoded;
+        var major = (version >> 22) & 0x7F;
+        var minor = (version >> 12) & 0x3FF;
+        var patch = version & 0xFFF;
+        return patch == 0 ? $"{major}.{minor}" : $"{major}.{minor}.{patch}";
     }
 
     public static IReadOnlyList<string> ParseFeatures(string output)
@@ -566,6 +606,22 @@ public static class AdbInspectionParsers
     private static string? MatchValue(string value, string pattern)
         => Regex.Match(value, pattern, RegexOptions.IgnoreCase).Groups["value"].Value is { Length: > 0 } result
             ? result.Trim() : null;
+
+    private static bool LooksLikeSocName(string? hardware)
+    {
+        if (string.IsNullOrWhiteSpace(hardware))
+            return false;
+        var value = hardware.Trim();
+        if (value.Contains(' ', StringComparison.Ordinal))
+            return false;
+        return value.Any(char.IsDigit)
+            && !KnownDeviceCodenames.Contains(value);
+    }
+
+    private static readonly HashSet<string> KnownDeviceCodenames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "darcy", "foster", "foster_e", "mdarcy", "sif", "jetson"
+    };
 
     private static string? Get(IReadOnlyDictionary<string, string> values, string key)
         => values.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;

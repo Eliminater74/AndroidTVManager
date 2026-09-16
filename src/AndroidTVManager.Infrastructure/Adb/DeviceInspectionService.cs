@@ -139,14 +139,10 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Section("Overview", results, ["getprop", "device-name", "mac-address"], device),
             Section("CPU", results, ["cpuinfo"], cpu),
             Section("Memory", results, ["meminfo"], AdbInspectionParsers.ParseMemory(Output(results, "meminfo"))),
-            Section("Graphics", results, ["surfaceflinger"],
-                new GraphicsInfo(
-                    FindLine(Output(results, "surfaceflinger"), "GLES"),
-                    FindLine(Output(results, "surfaceflinger"), "vendor"),
-                    FindLine(Output(results, "surfaceflinger"), "OpenGL ES"),
-                    FindLine(Output(results, "surfaceflinger"), "Vulkan"),
-                    FindLine(Output(results, "surfaceflinger"), "composer"),
-                    null)),
+            Section("Graphics", results, ["surfaceflinger", "features"],
+                AdbInspectionParsers.ParseGraphics(
+                    Output(results, "surfaceflinger"),
+                    Output(results, "features"))),
             Section("Display", results, ["wm-size", "wm-density", "display"],
                 AdbInspectionParsers.ParseDisplay(Output(results, "wm-size"), Output(results, "wm-density"),
                     Output(results, "display"))),
@@ -370,10 +366,6 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
 
     private static string? Get(IReadOnlyDictionary<string, string> values, string key)
         => values.TryGetValue(key, out var value) ? value : null;
-
-    private static string? FindLine(string output, string token)
-        => output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault(line => line.Contains(token, StringComparison.OrdinalIgnoreCase))?.Trim();
 
     private static string? Summarize(string output)
         => string.IsNullOrWhiteSpace(output) ? null : output.Trim().Length > 1000 ? output.Trim()[..1000] : output.Trim();
