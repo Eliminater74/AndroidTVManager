@@ -77,6 +77,8 @@ public sealed class InspectionParserTests
         memory.SwapUsedBytes.Should().Be((524284 - 324) * 1024L);
         memory.SwapFreeBytes.Should().NotBe(memory.SwapUsedBytes);
         memory.SwapUsedBytes.Should().Be(536_535_040);
+        memory.TotalSummary.Should().Be("2.9 GiB");
+        memory.SwapUsedSummary.Should().Be("511.7 MiB");
     }
 
     [Fact]

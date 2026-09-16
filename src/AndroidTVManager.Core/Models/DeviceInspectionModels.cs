@@ -87,7 +87,24 @@ public sealed record MemoryInfo(
     long? SwapTotalBytes,
     long? SwapFreeBytes,
     long? SwapUsedBytes,
-    long? ZramTotalBytes);
+    long? ZramTotalBytes)
+{
+    public string? TotalSummary => FormatSize(TotalBytes);
+    public string? AvailableSummary => FormatSize(AvailableBytes);
+    public string? SwapUsedSummary => FormatSize(SwapUsedBytes);
+    public string? SwapFreeSummary => FormatSize(SwapFreeBytes);
+
+    internal static string? FormatSize(long? bytes)
+    {
+        if (bytes is null)
+            return null;
+        var gib = bytes.Value / (1024d * 1024d * 1024d);
+        if (gib >= 1)
+            return $"{gib:0.#} GiB";
+        var mib = bytes.Value / (1024d * 1024d);
+        return $"{mib:0.#} MiB";
+    }
+}
 
 public sealed record GraphicsInfo(
     string? Renderer,
@@ -107,7 +124,11 @@ public sealed record DisplayInfo(
     string? ColorMode,
     string? Orientation,
     string? LogicalResolution = null,
-    string? ActiveMode = null);
+    string? ActiveMode = null)
+{
+    public string HdrSummary => string.Join(", ", HdrCapabilities);
+    public string ModesSummary => string.Join(", ", SupportedModes);
+}
 
 public sealed record StorageVolume(
     string MountPoint,
