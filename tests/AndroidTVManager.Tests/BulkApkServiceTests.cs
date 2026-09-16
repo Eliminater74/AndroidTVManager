@@ -159,6 +159,141 @@ public sealed class BulkApkServiceTests
     }
 
     [Fact]
+    public async Task Prepares_apkcombo_style_xapk_using_manifest_base_id()
+    {
+        var root = CreateDirectory();
+        try
+        {
+            var archivePath = CreateApkComboStyleXapk(root, "game.xapk");
+
+            var packageSet = await CreateService().PrepareAsync([archivePath]);
+            var group = packageSet.Groups.Should().ContainSingle().Subject;
+
+            group.IsSplit.Should().BeTrue();
+            group.ContainerKind.Should().Be(ApkContainerKind.Xapk);
+            group.PackageName.Should().Be("com.example.game");
+            group.Artifacts.Should().HaveCount(3);
+            group.BaseApkName.Should().Be("com.example.game.apk");
+            group.Artifacts.Should().ContainSingle(artifact => artifact.IsBase)
+                .Which.FileName.Should().Be("com.example.game.apk");
+            group.NativeAbis.Should().Contain("arm64-v8a");
+            group.Splits.Should().Contain("config.arm64_v8a");
+            group.Splits.Should().Contain("UnityDataAssetPack");
+            group.Payloads.Should().BeEmpty();
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Installs_apkcombo_style_xapk_with_install_multiple()
+    {
+        var root = CreateDirectory();
+        try
+        {
+            var archivePath = CreateApkComboStyleXapk(root, "game.xapk");
+            var runner = new FakeAdbProcessRunner();
+            var packages = new FakePackageManager();
+            packages.Packages.Add(new("com.example.game", true, false, false));
+            var service = CreateService(runner, packages);
+            var packageSet = await service.PrepareAsync([archivePath]);
+
+            var result = await service.InstallAsync("tv-1", packageSet);
+
+            result.SucceededCount.Should().Be(1);
+            runner.Calls.Should().ContainSingle();
+            runner.Calls[0].Arguments[0].Should().Be("install-multiple");
+            runner.Calls[0].Arguments.Should().Contain("-r");
+            runner.Calls.Should().NotContain(call =>
+                call.Arguments.Count > 0 && string.Equals(call.Arguments[0], "install", StringComparison.Ordinal));
+            var apkArguments = runner.Calls[0].Arguments
+                .Where(argument => argument.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
+                .Select(Path.GetFileName)
+                .ToArray();
+            apkArguments.Should().BeEquivalentTo([
+                "com.example.game.apk",
+                "config.arm64_v8a.apk",
+                "UnityDataAssetPack.apk"
+            ]);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Rejects_xapk_when_manifest_base_file_is_missing()
+    {
+        var root = CreateDirectory();
+        try
+        {
+            var archivePath = Path.Combine(root, "missing-base.xapk");
+            using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+            {
+                AddText(archive, "manifest.json", """
+                    {
+                      "package_name": "com.example.game",
+                      "split_apks": [
+                        { "file": "missing.apk", "id": "base" },
+                        { "file": "config.arm64_v8a.apk", "id": "config.arm64_v8a" }
+                      ]
+                    }
+                    """);
+                AddEntry(archive, "com.example.game.apk");
+                AddEntry(archive, "config.arm64_v8a.apk");
+            }
+
+            var action = () => CreateService().PrepareAsync([archivePath]);
+
+            await action.Should().ThrowAsync<InvalidDataException>()
+                .WithMessage("*identifies 'missing.apk' as the base APK*")
+                .Where(exception => !exception.Message.Contains(Path.GetTempPath(), StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Rejects_xapk_when_manifest_lists_multiple_base_apks()
+    {
+        var root = CreateDirectory();
+        try
+        {
+            var archivePath = Path.Combine(root, "two-bases.xapk");
+            using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+            {
+                AddText(archive, "manifest.json", """
+                    {
+                      "package_name": "com.example.game",
+                      "split_apks": [
+                        { "file": "com.example.game.apk", "id": "base" },
+                        { "file": "other.apk", "id": "base" },
+                        { "file": "config.arm64_v8a.apk", "id": "config.arm64_v8a" }
+                      ]
+                    }
+                    """);
+                AddEntry(archive, "com.example.game.apk");
+                AddEntry(archive, "other.apk");
+                AddEntry(archive, "config.arm64_v8a.apk");
+            }
+
+            var action = () => CreateService().PrepareAsync([archivePath]);
+
+            await action.Should().ThrowAsync<InvalidDataException>()
+                .WithMessage("*multiple base APK*");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Parses_xapk_obb_paths_and_ignores_android_data()
     {
         var root = CreateDirectory();
@@ -584,6 +719,27 @@ public sealed class BulkApkServiceTests
         AddEntry(archive, $"split_config.{abi.Replace('-', '_')}.apk");
         if (includeObb)
             AddEntry(archive, $"Android/obb/{packageName}/main.1.{packageName}.obb");
+        return path;
+    }
+
+    private static string CreateApkComboStyleXapk(string root, string name)
+    {
+        var path = Path.Combine(root, name);
+        using var archive = ZipFile.Open(path, ZipArchiveMode.Create);
+        AddText(archive, "manifest.json", """
+            {
+              "package_name": "com.example.game",
+              "native_code": ["arm64-v8a"],
+              "split_apks": [
+                { "file": "com.example.game.apk", "id": "base" },
+                { "file": "config.arm64_v8a.apk", "id": "config.arm64_v8a" },
+                { "file": "UnityDataAssetPack.apk", "id": "UnityDataAssetPack" }
+              ]
+            }
+            """);
+        AddEntry(archive, "com.example.game.apk");
+        AddEntry(archive, "config.arm64_v8a.apk");
+        AddEntry(archive, "UnityDataAssetPack.apk");
         return path;
     }
 

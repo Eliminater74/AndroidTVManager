@@ -33,6 +33,7 @@ Shipped in 1.0.0-B17. Remaining items are physical confirmation, not extra code.
 - [x] Keep archive extraction limits (2 GB APKS, 8 GB XAPK/APKM), traversal/symlink/duplicate rejection, and temp cleanup on success/failure/cancel.
 - [x] Verify known package identity after ADB success; keep Recovery / Sideload separate.
 - [ ] Sideload a normal APK, a split set, and an XAPK with OBB on the physical Shield; confirm scoped-storage OBB copy honestly if the firmware blocks `Android/obb`.
+- [ ] Analyze an APKCombo-style XAPK whose base APK is named after the package (not `base.apk`) and confirm Install uses `install-multiple` for all APK components.
 
 ### Shield inspection and Debloat correctness
 

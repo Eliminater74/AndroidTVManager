@@ -357,14 +357,19 @@ public sealed class BulkApkService : IBulkApkService
 
         var selected = SelectArchiveApks(kind, apkFiles, deviceAbis, sourceName);
         progress?.Report($"Found {selected.Length} APK component(s)…");
-        if (LooksLikeSplitSet(selected.Select(file => CreateApkArtifact(file, kind, metadata.PackageName)))
-            && !selected.Any(file => IsBaseApk(Path.GetFileName(file))))
+        var explicitBasePath = ResolveExplicitBasePath(temporaryDirectory, selected, metadata.Components);
+        var artifacts = selected
+            .Select(file => CreateApkArtifact(
+                file,
+                kind,
+                metadata.PackageName,
+                AbiFromFileName(Path.GetFileName(file)),
+                explicitBasePath,
+                FindComponent(temporaryDirectory, file, metadata.Components)))
+            .ToArray();
+        if (LooksLikeSplitSet(artifacts) && !artifacts.Any(artifact => artifact.IsBase))
             throw new InvalidDataException(
                 "This package appears to contain Android split APKs, but AndroidTVManager could not identify a base APK. Nothing was installed.");
-
-        var artifacts = selected
-            .Select(file => CreateApkArtifact(file, kind, metadata.PackageName, AbiFromFileName(Path.GetFileName(file))))
-            .ToArray();
         var payloads = kind == ApkContainerKind.Xapk
             ? CollectObbPayloads(temporaryDirectory, metadata.PackageName, metadata.ExpansionFiles)
             : [];
@@ -448,7 +453,7 @@ public sealed class BulkApkService : IBulkApkService
         var container = kind.Length == 1 ? kind[0] : ApkContainerKind.Apk;
         var labels = ordered
             .Where(artifact => !artifact.IsBase)
-            .Select(artifact => SplitLabel(artifact.FileName))
+            .Select(artifact => artifact.SplitId ?? SplitLabel(artifact.FileName))
             .Where(label => !string.IsNullOrWhiteSpace(label))
             .Cast<string>()
             .ToArray();
@@ -614,18 +619,104 @@ public sealed class BulkApkService : IBulkApkService
         string path,
         ApkContainerKind kind,
         string? packageName = null,
-        string? abi = null)
+        string? abi = null,
+        string? explicitBasePath = null,
+        PackageApkComponent? component = null)
     {
         var info = new FileInfo(path);
+        var isBase = explicitBasePath is not null
+            ? string.Equals(info.FullName, Path.GetFullPath(explicitBasePath), StringComparison.OrdinalIgnoreCase)
+            : IsBaseApk(info.Name);
+        var splitId = component is not null && !IsBaseComponentId(component.Id)
+            ? component.Id
+            : null;
         return new(
             info.FullName,
             info.Name,
             info.Length,
             kind,
-            IsBaseApk(info.Name),
+            isBase,
             packageName,
-            Abi: abi ?? AbiFromFileName(info.Name));
+            Abi: abi ?? AbiFromFileName(info.Name),
+            SplitId: splitId);
     }
+
+    private static string? ResolveExplicitBasePath(
+        string extractionRoot,
+        IReadOnlyList<string> selectedApks,
+        IReadOnlyList<PackageApkComponent> components)
+    {
+        var baseFiles = components
+            .Where(component => IsBaseComponentId(component.Id))
+            .Select(component => component.File)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (baseFiles.Length == 0)
+            return null;
+        if (baseFiles.Length > 1)
+            throw new InvalidDataException(
+                "The XAPK manifest contains multiple base APK entries. Nothing was installed.");
+
+        var declared = baseFiles[0];
+        var displayName = Path.GetFileName(declared.Replace('\\', '/').TrimEnd('/'));
+        var resolved = ResolveSafeExtractedPath(extractionRoot, declared);
+        var selected = resolved is null
+            ? null
+            : selectedApks.FirstOrDefault(path =>
+                string.Equals(Path.GetFullPath(path), resolved, StringComparison.OrdinalIgnoreCase));
+        if (selected is null)
+            throw new InvalidDataException(
+                $"The XAPK manifest identifies '{displayName}' as the base APK, but that file was not found in the archive.");
+        return Path.GetFullPath(selected);
+    }
+
+    private static PackageApkComponent? FindComponent(
+        string extractionRoot,
+        string apkPath,
+        IReadOnlyList<PackageApkComponent> components)
+    {
+        var fullPath = Path.GetFullPath(apkPath);
+        foreach (var component in components)
+        {
+            var resolved = ResolveSafeExtractedPath(extractionRoot, component.File);
+            if (resolved is not null
+                && string.Equals(resolved, fullPath, StringComparison.OrdinalIgnoreCase))
+                return component;
+        }
+
+        return null;
+    }
+
+    private static string? ResolveSafeExtractedPath(string extractionRoot, string relativeFile)
+    {
+        if (string.IsNullOrWhiteSpace(relativeFile))
+            return null;
+
+        var normalized = relativeFile.Replace('\\', '/').Trim();
+        if (normalized.Length == 0
+            || Path.IsPathRooted(relativeFile)
+            || Path.IsPathRooted(normalized)
+            || normalized.StartsWith('/')
+            || normalized.Contains(':', StringComparison.Ordinal))
+            return null;
+
+        var segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0 || segments.Any(segment => segment is "." or ".."))
+            return null;
+
+        var root = Path.GetFullPath(extractionRoot);
+        var rootPrefix = root.EndsWith(Path.DirectorySeparatorChar)
+            ? root
+            : root + Path.DirectorySeparatorChar;
+        var target = Path.GetFullPath(Path.Combine(root, Path.Combine(segments)));
+        if (!target.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(target, root, StringComparison.OrdinalIgnoreCase))
+            return null;
+        return File.Exists(target) ? target : null;
+    }
+
+    private static bool IsBaseComponentId(string id)
+        => string.Equals(id, "base", StringComparison.OrdinalIgnoreCase);
 
     private static bool LooksLikeSplitSet(IEnumerable<ApkArtifact> artifacts)
         => artifacts.Any(artifact =>
@@ -734,10 +825,13 @@ public sealed class BulkApkService : IBulkApkService
         }
     }
 
+    private sealed record PackageApkComponent(string File, string Id);
+
     private sealed record PackageMetadata(
         string? PackageName,
         IReadOnlyList<string> NativeAbis,
-        IReadOnlyList<string> ExpansionFiles)
+        IReadOnlyList<string> ExpansionFiles,
+        IReadOnlyList<PackageApkComponent> Components)
     {
         public static PackageMetadata Read(string directory)
         {
@@ -781,15 +875,42 @@ public sealed class BulkApkService : IBulkApkService
                         }
                     }
 
-                    return new(packageName, abis, expansions);
+                    var components = new List<PackageApkComponent>();
+                    if (root.TryGetProperty("split_apks", out var splitApks)
+                        && splitApks.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var item in splitApks.EnumerateArray())
+                        {
+                            if (item.ValueKind != JsonValueKind.Object)
+                                continue;
+                            if (!TryReadString(item, "file", out var componentFile)
+                                || !TryReadString(item, "id", out var componentId))
+                                continue;
+                            components.Add(new(componentFile, componentId));
+                        }
+                    }
+
+                    return new(packageName, abis, expansions, components);
                 }
                 catch (JsonException)
                 {
-                    return new(null, [], []);
+                    return new(null, [], [], []);
                 }
             }
 
-            return new(null, [], []);
+            return new(null, [], [], []);
+        }
+
+        private static bool TryReadString(JsonElement element, string propertyName, out string value)
+        {
+            value = string.Empty;
+            if (!element.TryGetProperty(propertyName, out var node) || node.ValueKind != JsonValueKind.String)
+                return false;
+            var text = node.GetString();
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+            value = text.Trim();
+            return true;
         }
     }
 }

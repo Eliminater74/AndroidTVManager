@@ -43,7 +43,8 @@ public sealed record ApkArtifact(
     string? PackageName = null,
     string? VersionName = null,
     long? VersionCode = null,
-    string? Abi = null);
+    string? Abi = null,
+    string? SplitId = null);
 
 public sealed record ApkAdditionalPayload(
     string LocalPath,

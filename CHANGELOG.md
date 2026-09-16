@@ -9,6 +9,7 @@ The project follows a beta-first release cycle while real Android TV hardware va
 ### Fixed
 
 - Shared `GhostButtonStyle` and `AccentButtonStyle` now use themed control templates with an `IsEnabled=False` trigger, so disabled buttons such as App Installer **Analyze** and **Install** keep Dark / Pure Black / Light colors instead of stock WPF white chrome.
+- Fixed APKCombo-style XAPK archives whose base APK is identified by manifest metadata instead of being named `base.apk`.
 
 Planned follow-up work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
