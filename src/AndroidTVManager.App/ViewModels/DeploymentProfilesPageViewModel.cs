@@ -304,11 +304,22 @@ public sealed partial class DeploymentProfilesPageViewModel : PageViewModel
             return;
         }
         var compatibility = Compatibility!;
-        if (compatibility.State == DeploymentCompatibilityState.Incompatible
-            || (compatibility.State == DeploymentCompatibilityState.Warning
-                && !_confirmation.Confirm(
-                    "Deployment compatibility warning",
-                    string.Join(Environment.NewLine, compatibility.Reasons))))
+        if (compatibility.State == DeploymentCompatibilityState.Incompatible)
+        {
+            Status = string.Join(" ", compatibility.Reasons);
+            return;
+        }
+        if (compatibility.State == DeploymentCompatibilityState.UnknownRequiredEvidence
+            && !_confirmation.Confirm(
+                "Required device evidence is missing",
+                string.Join(Environment.NewLine, compatibility.Reasons)
+                + Environment.NewLine + Environment.NewLine
+                + "A live inspection will run before any mutation. Continue only if you want that preflight to decide."))
+            return;
+        if (compatibility.State == DeploymentCompatibilityState.Warning
+            && !_confirmation.Confirm(
+                "Deployment compatibility warning",
+                string.Join(Environment.NewLine, compatibility.Reasons)))
             return;
         if (!_confirmation.Confirm(
                 $"Deploy {SelectedProfile.Name}",

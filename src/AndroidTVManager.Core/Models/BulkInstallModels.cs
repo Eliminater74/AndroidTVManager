@@ -85,7 +85,8 @@ public enum DeploymentCompatibilityState
     Compatible,
     Warning,
     Incompatible,
-    Unknown
+    Unknown,
+    UnknownRequiredEvidence
 }
 
 public sealed record DeploymentCompatibility(
