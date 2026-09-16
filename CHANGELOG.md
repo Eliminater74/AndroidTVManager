@@ -6,6 +6,12 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 ## Unreleased
 
+Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## [1.0.0-B15] - 2026-09-16
+
+Beta 15 is the hardening and disconnect release. It does not add another large product subsystem.
+
 ### Fixed
 
 - Restore the previous Platform-Tools install if activation fails after the live tools folder has already been moved aside, and verify `adb version` plus `fastboot.exe` from the active directory before discarding the backup.
@@ -24,11 +30,15 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 - Shared `ISensitiveDataRedactor` for logs, script journals, diagnostic bundles, and ADB argument lists, including IPv6 and local user-path redaction.
 - Shared `IPackageSafetyGate` so Applications, Scripts, Deployment Profiles, and Debloat all re-check live User 0 inventory, Automotive/user evidence, active roles, Keep/Critical locks, and build fingerprint before package mutations. Enable/restore remain allowed for locked packages so recovery still works. `PackageManager` now requires the gate, and Applications/Scripts/Deployment pass the prepared build fingerprint so drift is checked on the mutation itself.
-- Shared `IAdbDeviceSession` owns the live ADB list, TARGET selection, preferred-endpoint sticky selection, and Network/Wireless disconnect. The header TARGET command and the Devices page both run that workflow so disconnect logging, preferred-target clearing, and tracker refresh stay in one place.
+- Shared `IAdbDeviceSession` owns the live ADB list, TARGET selection, preferred-endpoint sticky selection, and Network/Wireless disconnect. The header TARGET command and the Devices page both run that workflow so disconnect logging, preferred-target clearing, and tracker refresh stay in one place. Pages still receive the selected device from `MainWindowViewModel`; finishing that subscribe model is Beta 16.
 - Backup manifests now catalog expected package and APK-file counts so restore can compare the on-disk set against what the backup claimed.
 - Recovery ZIP inspection parses `META-INF/com/android/metadata` and updater-script product checks so sideload can fail closed on incompatible or unverifiable device identity.
 
-Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+### Release and validation
+
+- Updated app and installer metadata to 1.0.0-B15 (assembly/file version 1.0.0.15), release documentation, and download links. Package rules remain at the Beta 12 revision.
+- Debug/Release builds and 237 device-independent tests cover Platform-Tools rollback, package safety, backup verification, recovery ZIP identity, SQLite snapshots, shutdown, Network/Wireless disconnect, and the shared ADB session.
+- Physical-device validation remains pending. Smoke Shield network connect/disconnect/reconnect while an emulator stays attached, TARGET fallback, package inventory, one harmless disable/restore, updater check, backup verification, clean exit, and installer upgrade from B14 → B15.
 
 ## [1.0.0-B14] - 2026-09-15
 

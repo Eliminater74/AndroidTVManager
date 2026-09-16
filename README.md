@@ -14,26 +14,32 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B14 — Beta 14
+### 1.0.0-B15 — Beta 15
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 14 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 15 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B14/AndroidTVManager-Setup.exe) — current Beta 14 installer link
-- `AndroidTVManager-1.0.0-B14-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B14-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B15/AndroidTVManager-Setup.exe) — current Beta 15 installer link
+- `AndroidTVManager-1.0.0-B15-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B15-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 14 lets you switch to a newly connected Shield or other network device while an emulator stays attached. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 15 is the hardening and disconnect release: Network and Wireless Debugging targets can leave the TARGET picker, package mutations share a live safety gate, and failed Platform-Tools, backup, updater, recovery, and database paths fail closed. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
-## New in Beta 14
+## New in Beta 15
 
-Connecting a network device such as an NVIDIA Shield now refreshes the live ADB list, selects it as the header **TARGET**, and keeps that selection when the device list rebuilds. Click a connected device on Devices or Dashboard, or use **Use as target**, to inspect that device instead of the emulator. The TARGET picker shows model and USB/network serial so multiple devices are distinguishable.
+Beta 15 does not add another large product subsystem. It hardens the B14 targeting work and the existing package, backup, update, recovery, and shutdown paths.
 
-Beta 13 added **Recovery / Sideload** with native file pickers, guided Lineage Recovery ZIP transfer and guarded Pixel C recovery-image flashing. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) for steps and validation limits.
+**Disconnect.** Network and Wireless Debugging devices can be disconnected from the header TARGET picker and the Devices list. USB stays attached, saved devices remain saved, and the global target falls back to another connected device.
 
-**Device Status → Deep scan** adds 32 read-only hardware/service probes, searchable complete command output, coverage results and JSON export. It can preserve ATOTO/vendor identity properties when exposed, without claiming access to hidden MCU firmware. See [Deep device inspection](docs/DEEP-INSPECTION.md).
+**Package safety.** `IPackageSafetyGate` is required on `PackageManager`. Applications, Scripts, Deployment Profiles, and Debloat re-check live User 0 inventory, Automotive/user evidence, roles, Keep/Critical locks, and build fingerprint immediately before a mutation. Unknown required deployment evidence is no longer a bypassable warning.
+
+**Fail closed.** Failed Platform-Tools activation restores the previous install. APK restore verifies the expected SHA-256 set and installs nothing on mismatch. Untrusted updater downloads are deleted. Recovery ZIPs fail closed when `pre-device` does not match the live product. SQLite upgrades snapshot `.pre-migrate.bak` files. Shutdown stops the tracker, recovers sessions, and flushes logs.
+
+The live ADB list, TARGET selection, and disconnect workflow now sit on `IAdbDeviceSession`. Pages still receive the selected device from the shell; finishing that split is Beta 16.
+
+Beta 14 made a newly connected Shield or other network device selectable while an emulator stays attached. Beta 13 added **Recovery / Sideload** and **Device Status → Deep scan**. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) and [Deep device inspection](docs/DEEP-INSPECTION.md).
 
 ## Highlights
 
@@ -122,7 +128,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B14 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B15 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.
