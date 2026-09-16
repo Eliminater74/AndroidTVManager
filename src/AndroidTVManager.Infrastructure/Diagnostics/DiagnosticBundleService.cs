@@ -1,9 +1,9 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Core.Privacy;
 
 namespace AndroidTVManager.Infrastructure.Diagnostics;
 
@@ -16,6 +16,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
     private readonly IDisplayDiagnosticsService _display;
     private readonly ITransportDoctorService _transport;
     private readonly IDeviceLogcatService _logcat;
+    private readonly ISensitiveDataRedactor _redactor;
 
     public DiagnosticBundleService(
         ILocalAppDataPaths paths,
@@ -24,7 +25,8 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         IConfigurationExplorerService configuration,
         IDisplayDiagnosticsService display,
         ITransportDoctorService transport,
-        IDeviceLogcatService logcat)
+        IDeviceLogcatService logcat,
+        ISensitiveDataRedactor? redactor = null)
     {
         _paths = paths;
         _runner = runner;
@@ -33,6 +35,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         _display = display;
         _transport = transport;
         _logcat = logcat;
+        _redactor = redactor ?? new SensitiveDataRedactor();
     }
 
     public async Task<DiagnosticBundleResult> CreateAsync(
@@ -179,7 +182,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         }
     }
 
-    private static async Task TryWriteAsync<T>(
+    private async Task TryWriteAsync<T>(
         string name,
         Func<Task<T>> operation,
         string staging,
@@ -200,7 +203,7 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         }
     }
 
-    private static async Task WriteJsonAsync<T>(
+    private async Task WriteJsonAsync<T>(
         string name,
         T value,
         DiagnosticBundlePrivacyMode privacyMode,
@@ -238,24 +241,12 @@ public sealed class DiagnosticBundleService : IDiagnosticBundleService
         return Convert.ToHexString(await SHA256.HashDataAsync(stream, cancellationToken)).ToLowerInvariant();
     }
 
-    private static string Redact(string value, DiagnosticBundlePrivacyMode mode, string? sensitiveSerial = null)
-    {
-        value = Regex.Replace(value, @"(?i)(pairing[-_ ]?code|password|token|secret|credential)(\s*[:=]\s*)\S+", "$1$2<redacted>");
-        return mode == DiagnosticBundlePrivacyMode.LocalFull
-            ? value
-            : Regex.Replace(
-                Regex.Replace(
-                    Regex.Replace(
-                        string.IsNullOrWhiteSpace(sensitiveSerial)
-                            ? value
-                            : value.Replace(sensitiveSerial, "<serial-redacted>", StringComparison.OrdinalIgnoreCase),
-                        @"(?i)\b[0-9a-f]{2}([: -][0-9a-f]{2}){5}\b",
-                        "<mac-redacted>"),
-                    @"\b(?:\d{1,3}\.){3}\d{1,3}\b",
-                    "<ip-redacted>"),
-                @"(?i)(ssid|wifi|network)(\s*[:=]\s*)\S+",
-                "$1$2<redacted>");
-    }
+    private string Redact(string value, DiagnosticBundlePrivacyMode mode, string? sensitiveSerial = null)
+        => _redactor.Redact(value, new SensitiveDataRedactionOptions(
+            mode == DiagnosticBundlePrivacyMode.LocalFull
+                ? SensitiveDataRedactionLevel.SecretsOnly
+                : SensitiveDataRedactionLevel.SupportShareable,
+            sensitiveSerial));
 
     private static string SafeName(string value)
     {

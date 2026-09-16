@@ -84,16 +84,7 @@ public sealed class AdbStreamingProcessRunner : IAdbStreamingProcessRunner
         public async Task StopAsync()
         {
             if (Interlocked.Exchange(ref _stopped, 1) == 0)
-            {
-                try
-                {
-                    if (!_process.HasExited)
-                        _process.Kill(entireProcessTree: true);
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
+                AdbProcessLifetime.TryKillClient(_process);
             await Completion.ConfigureAwait(false);
         }
 

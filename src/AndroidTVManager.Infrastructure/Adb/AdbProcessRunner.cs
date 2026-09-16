@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using AndroidTVManager.Core.Abstractions;
 using AndroidTVManager.Core.Models;
+using AndroidTVManager.Core.Privacy;
 
 namespace AndroidTVManager.Infrastructure.Adb;
 
@@ -9,11 +10,16 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
     private readonly IAdbToolsManager _toolsManager;
     private readonly IAppLogger _logger;
+    private readonly ISensitiveDataRedactor _redactor;
 
-    public AdbProcessRunner(IAdbToolsManager toolsManager, IAppLogger logger)
+    public AdbProcessRunner(
+        IAdbToolsManager toolsManager,
+        IAppLogger logger,
+        ISensitiveDataRedactor? redactor = null)
     {
         _toolsManager = toolsManager;
         _logger = logger;
+        _redactor = redactor ?? new SensitiveDataRedactor();
     }
 
     public Task<AdbCommandResult> RunAsync(
@@ -76,15 +82,15 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                TryKill(process);
+                AdbProcessLifetime.TryKillClient(process);
                 await process.WaitForExitAsync(CancellationToken.None);
-            var result = new AdbCommandResult(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
+                var result = new AdbCommandResult(Path.GetFileName(adbPath), _redactor.RedactArguments(arguments), -1,
                     await stdoutTask, await stderrTask, stopwatch.Elapsed, WasTimedOut: true);
                 _logger.Warning("ADB", $"Command timed out: {result.CommandText}");
                 return result;
             }
 
-            var completed = new AdbCommandResult(Path.GetFileName(adbPath), RedactArguments(arguments), process.ExitCode,
+            var completed = new AdbCommandResult(Path.GetFileName(adbPath), _redactor.RedactArguments(arguments), process.ExitCode,
                 await stdoutTask, await stderrTask, stopwatch.Elapsed);
             if (!completed.IsSuccess)
                 _logger.Warning("ADB", $"Command failed ({completed.ExitCode}): {completed.CommandText}");
@@ -94,46 +100,17 @@ public sealed class AdbProcessRunner : IAdbProcessRunner
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            TryKill(process);
-            _logger.Information("ADB", $"Command canceled: {string.Join(' ', RedactArguments(arguments))}");
-            return new(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
+            AdbProcessLifetime.TryKillClient(process);
+            _logger.Information("ADB", $"Command canceled: {string.Join(' ', _redactor.RedactArguments(arguments))}");
+            return new(Path.GetFileName(adbPath), _redactor.RedactArguments(arguments), -1,
                 string.Empty, string.Empty, stopwatch.Elapsed, WasCanceled: true);
         }
         catch (Exception exception)
         {
-            TryKill(process);
+            AdbProcessLifetime.TryKillClient(process);
             _logger.Error("ADB", "Could not start ADB command.", exception);
-            return new(Path.GetFileName(adbPath), RedactArguments(arguments), -1,
+            return new(Path.GetFileName(adbPath), _redactor.RedactArguments(arguments), -1,
                 string.Empty, exception.Message, stopwatch.Elapsed);
-        }
-    }
-
-    private static IReadOnlyList<string> RedactArguments(IReadOnlyList<string> arguments)
-    {
-        var redacted = arguments.ToArray();
-        var pairIndex = Array.FindIndex(redacted, value =>
-            value.Equals("pair", StringComparison.OrdinalIgnoreCase));
-        if (pairIndex >= 0 && pairIndex + 2 < redacted.Length)
-            redacted[pairIndex + 2] = "<pairing-code-redacted>";
-        var pullIndex = Array.FindIndex(redacted, value =>
-            value.Equals("pull", StringComparison.OrdinalIgnoreCase));
-        if (pullIndex >= 0 && pullIndex + 2 < redacted.Length)
-            redacted[pullIndex + 2] = "<local-path-redacted>";
-        var sideloadIndex = Array.FindIndex(redacted, value => value.Equals("sideload", StringComparison.OrdinalIgnoreCase));
-        if (sideloadIndex >= 0 && sideloadIndex + 1 < redacted.Length)
-            redacted[sideloadIndex + 1] = "<sideload-file-redacted>";
-        return redacted;
-    }
-
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
         }
     }
 }

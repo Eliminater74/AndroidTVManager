@@ -118,7 +118,7 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
                 var pollTask = PollDevicesAsync(linked.Token);
                 await Task.WhenAny(watchTask, pollTask);
                 linked.Cancel();
-                TryKill(process);
+                AdbProcessLifetime.TryKillClient(process);
                 await Task.WhenAll(SuppressCancelAsync(watchTask), SuppressCancelAsync(pollTask));
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -309,15 +309,4 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
         }
     }
 
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
-        }
-    }
 }
