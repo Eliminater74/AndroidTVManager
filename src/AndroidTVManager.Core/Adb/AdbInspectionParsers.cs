@@ -63,18 +63,122 @@ public static class AdbInspectionParsers
 
     public static DisplayInfo ParseDisplay(string wmSize, string wmDensity, string displayDump)
     {
-        var physical = MatchValue(wmSize, @"Physical size:\s*(?<value>[^\r\n]+)");
-        var current = MatchValue(wmSize, @"Override size:\s*(?<value>[^\r\n]+)") ?? physical;
-        var density = int.TryParse(MatchValue(wmDensity, @"(?:Override density|Physical density):\s*(?<value>\d+)")
-            ?? string.Empty, out var parsedDensity) ? (int?)parsedDensity : null;
-        var refreshRates = Regex.Matches(displayDump, @"(?<rate>\d+(?:\.\d+)?)\s*Hz", RegexOptions.IgnoreCase)
-            .Select(match => $"{match.Groups["rate"].Value} Hz").Distinct().ToArray();
-        var hdr = Regex.Matches(displayDump, @"HDR10\+?|Dolby Vision|HLG", RegexOptions.IgnoreCase)
-            .Select(match => match.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        return new(current, physical, density, refreshRates.FirstOrDefault(), refreshRates, hdr,
+        var wmPhysical = NormalizeResolution(MatchValue(wmSize, @"Physical size:\s*(?<value>[^\r\n]+)"));
+        var wmOverride = NormalizeResolution(MatchValue(wmSize, @"Override size:\s*(?<value>[^\r\n]+)"));
+        var overrideInfo = NormalizeResolution(MatchValue(displayDump,
+            @"mOverrideDisplayInfo[\s\S]{0,200}?real\s+(?<value>\d+\s*x\s*\d+)"));
+        var baseInfo = NormalizeResolution(MatchValue(displayDump,
+            @"mBaseDisplayInfo[\s\S]{0,200}?real\s+(?<value>\d+\s*x\s*\d+)"));
+        var deviceInfoSize = NormalizeResolution(MatchValue(displayDump,
+            @"DisplayDeviceInfo\{\s*""[^""]+""\s*:\s*(?<value>\d+\s*x\s*\d+)"));
+
+        var modes = ParseDisplayModes(displayDump);
+        var activeModeId = ParseOptionalInt(MatchValue(displayDump, @"mActiveModeId\s*=\s*(?<value>\d+)"))
+            ?? ParseOptionalInt(MatchValue(displayDump, @"\bmodeId\s+(?<value>\d+)"));
+        var active = modes.FirstOrDefault(mode => mode.Id == activeModeId)
+            ?? modes.FirstOrDefault();
+
+        var logical = wmOverride ?? overrideInfo ?? wmPhysical;
+        var physical = active is not null
+            ? $"{active.Width}x{active.Height}"
+            : deviceInfoSize ?? baseInfo ?? wmPhysical;
+        var refresh = active is not null
+            ? FormatHz(active.Fps)
+            : Regex.Matches(displayDump, @"(?<rate>\d+(?:\.\d+)?)\s*Hz", RegexOptions.IgnoreCase)
+                .Select(match => FormatHz(double.Parse(match.Groups["rate"].Value, CultureInfo.InvariantCulture)))
+                .FirstOrDefault();
+        var supported = modes.Count > 0
+            ? modes.Select(mode => $"{mode.Width}x{mode.Height} @ {FormatHz(mode.Fps)}")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+            : Regex.Matches(displayDump, @"(?<rate>\d+(?:\.\d+)?)\s*Hz", RegexOptions.IgnoreCase)
+                .Select(match => FormatHz(double.Parse(match.Groups["rate"].Value, CultureInfo.InvariantCulture)))
+                .Distinct()
+                .ToArray();
+        var hdr = ParseHdrCapabilities(displayDump);
+        var density = ParseOptionalInt(MatchValue(wmDensity, @"(?:Override density|Physical density):\s*(?<value>\d+)"))
+            ?? ParseOptionalInt(MatchValue(displayDump, @"\bdensity\s+(?<value>\d+)"));
+        var activeMode = active is null ? null : $"{active.Width}x{active.Height} @ {FormatHz(active.Fps)}";
+        return new(
+            logical,
+            physical,
+            density,
+            refresh,
+            supported,
+            hdr,
             MatchValue(displayDump, @"colorMode[=:]\s*(?<value>[^\r\n,]+)"),
-            MatchValue(displayDump, @"orientation[=:]\s*(?<value>\d+)"));
+            MatchValue(displayDump, @"orientation[=:]\s*(?<value>\d+)"),
+            logical,
+            activeMode);
     }
+
+    private static IReadOnlyList<DisplayMode> ParseDisplayModes(string displayDump)
+        => Regex.Matches(
+                displayDump,
+                @"\{id=(?<id>\d+),\s*width=(?<width>\d+),\s*height=(?<height>\d+),\s*fps=(?<fps>\d+(?:\.\d+)?)\}",
+                RegexOptions.IgnoreCase)
+            .Select(match => new DisplayMode(
+                int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture),
+                int.Parse(match.Groups["width"].Value, CultureInfo.InvariantCulture),
+                int.Parse(match.Groups["height"].Value, CultureInfo.InvariantCulture),
+                double.Parse(match.Groups["fps"].Value, CultureInfo.InvariantCulture)))
+            .ToArray();
+
+    private static IReadOnlyList<string> ParseHdrCapabilities(string displayDump)
+    {
+        var named = Regex.Matches(displayDump, @"HDR10\+?|Dolby Vision|HLG", RegexOptions.IgnoreCase)
+            .Select(match => NormalizeHdrName(match.Value))
+            .ToList();
+        var types = MatchValue(displayDump, @"mSupportedHdrTypes\s*=\s*\[(?<value>[^\]]*)\]");
+        if (types is not null)
+        {
+            foreach (var token in types.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var type)
+                    && DecodeHdrType(type) is { } name)
+                    named.Add(name);
+            }
+        }
+        return named.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    private static string? DecodeHdrType(int type)
+        => type switch
+        {
+            1 => "Dolby Vision",
+            2 => "HDR10",
+            3 => "HLG",
+            4 => "HDR10+",
+            _ => null
+        };
+
+    private static string NormalizeHdrName(string value)
+        => value.Equals("HDR10+", StringComparison.OrdinalIgnoreCase) ? "HDR10+"
+            : value.Equals("HDR10", StringComparison.OrdinalIgnoreCase) ? "HDR10"
+            : value.Equals("HLG", StringComparison.OrdinalIgnoreCase) ? "HLG"
+            : value.Equals("Dolby Vision", StringComparison.OrdinalIgnoreCase) ? "Dolby Vision"
+            : value;
+
+    private static string FormatHz(double fps)
+    {
+        var rounded = Math.Round(fps, 2, MidpointRounding.AwayFromZero);
+        return Math.Abs(rounded - Math.Round(rounded)) < 0.001
+            ? $"{Math.Round(rounded):0} Hz"
+            : $"{rounded:0.##} Hz";
+    }
+
+    private static string? NormalizeResolution(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        var match = Regex.Match(value, @"(?<width>\d+)\s*x\s*(?<height>\d+)", RegexOptions.IgnoreCase);
+        return match.Success ? $"{match.Groups["width"].Value}x{match.Groups["height"].Value}" : value.Trim();
+    }
+
+    private static int? ParseOptionalInt(string? value)
+        => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
+
+    private sealed record DisplayMode(int Id, int Width, int Height, double Fps);
 
     public static StorageInfo ParseStorage(string output)
     {

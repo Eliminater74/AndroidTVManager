@@ -105,7 +105,9 @@ public sealed record DisplayInfo(
     IReadOnlyList<string> SupportedModes,
     IReadOnlyList<string> HdrCapabilities,
     string? ColorMode,
-    string? Orientation);
+    string? Orientation,
+    string? LogicalResolution = null,
+    string? ActiveMode = null);
 
 public sealed record StorageVolume(
     string MountPoint,

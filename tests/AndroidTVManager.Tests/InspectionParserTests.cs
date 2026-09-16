@@ -73,10 +73,52 @@ public sealed class InspectionParserTests
             "mode 1920x1080 @ 60Hz; HDR10, Dolby Vision");
 
         display.CurrentResolution.Should().Be("1920x1080");
+        display.LogicalResolution.Should().Be("1920x1080");
         display.PhysicalResolution.Should().Be("3840x2160");
         display.Density.Should().Be(320);
         display.SupportedModes.Should().Contain("60 Hz");
         display.HdrCapabilities.Should().Contain("Dolby Vision");
+    }
+
+    [Fact]
+    public void Shield_dumpsys_display_keeps_logical_ui_size_and_physical_output_mode()
+    {
+        var display = AdbInspectionParsers.ParseDisplay(
+            "Physical size: 3840x2160\nOverride size: 1920x1080",
+            "Physical density: 320",
+            """
+            DisplayDeviceInfo{"Built-in Screen":
+            3840 x 2160,
+            modeId 16,
+            defaultModeId 16,
+            supportedModes [
+              {id=1, width=3840, height=2160, fps=59.94006},
+              {id=7, width=1920, height=1080, fps=120.00001},
+              {id=16, width=3840, height=2160, fps=60.000004}
+            ],
+            HdrCapabilities{
+              mSupportedHdrTypes=[2],
+              mMaxLuminance=500.0,
+              mMaxAverageLuminance=500.0,
+              mMinLuminance=0.0
+            },
+            density 320
+            mActiveModeId=16
+            mBaseDisplayInfo name="Built-in Screen", real 3840 x 2160
+            mOverrideDisplayInfo name="Built-in Screen", real 1920 x 1080
+            """);
+
+        display.CurrentResolution.Should().Be("1920x1080");
+        display.LogicalResolution.Should().Be("1920x1080");
+        display.PhysicalResolution.Should().Be("3840x2160");
+        display.PhysicalResolution.Should().NotBe(display.LogicalResolution);
+        display.RefreshRate.Should().Be("60 Hz");
+        display.ActiveMode.Should().Be("3840x2160 @ 60 Hz");
+        display.SupportedModes.Should().Contain("3840x2160 @ 59.94 Hz");
+        display.SupportedModes.Should().Contain("1920x1080 @ 120 Hz");
+        display.SupportedModes.Should().Contain("3840x2160 @ 60 Hz");
+        display.HdrCapabilities.Should().Equal("HDR10");
+        display.Density.Should().Be(320);
     }
 
     [Fact]
