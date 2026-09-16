@@ -14,22 +14,24 @@ This is not adbLink and it is not a Kodi utility. Kodi-specific backup, database
 
 ## Current release
 
-### 1.0.0-B13 — Beta 13
+### 1.0.0-B14 — Beta 14
 
-Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 13 is the current release and is marked as the repository's latest release.
+Download the latest published build from the [GitHub Releases page](https://github.com/Eliminater74/AndroidTVManager/releases). Beta 14 is the current release and is marked as the repository's latest release.
 
 Available assets:
 
-- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B13/AndroidTVManager-Setup.exe) — current Beta 13 installer link
-- `AndroidTVManager-1.0.0-B13-Setup.exe` — versioned self-contained Windows installer
-- `AndroidTVManager-1.0.0-B13-win-x64.zip` — portable self-contained build
+- [Download AndroidTVManager-Setup.exe](https://github.com/Eliminater74/AndroidTVManager/releases/download/v1.0.0-B14/AndroidTVManager-Setup.exe) — current Beta 14 installer link
+- `AndroidTVManager-1.0.0-B14-Setup.exe` — versioned self-contained Windows installer
+- `AndroidTVManager-1.0.0-B14-win-x64.zip` — portable self-contained build
 - `SHA256SUMS.txt` — SHA-256 checksums for the release assets
 
-The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 13 adds guided recovery/sideload and deep device inspection, alongside the Shield debloat and tuning features introduced in Beta 12. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
+The installer is currently unsigned. Windows SmartScreen may display a warning until a code-signing certificate and reputation are available; verify the checksum and download only from this repository. Beta 14 lets you switch to a newly connected Shield or other network device while an emulator stays attached. Physical-device validation and vehicle-specific package support remain limited; see the [device support audit](docs/DEVICE-SUPPORT-AUDIT.md).
 
-## New in Beta 13
+## New in Beta 14
 
-Beta 13 adds **Recovery / Sideload** with native file pickers, guided Lineage Recovery ZIP transfer and guarded Pixel C recovery-image flashing. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) for steps and validation limits.
+Connecting a network device such as an NVIDIA Shield now refreshes the live ADB list, selects it as the header **TARGET**, and keeps that selection when the device list rebuilds. Click a connected device on Devices or Dashboard, or use **Use as target**, to inspect that device instead of the emulator. The TARGET picker shows model and USB/network serial so multiple devices are distinguishable.
+
+Beta 13 added **Recovery / Sideload** with native file pickers, guided Lineage Recovery ZIP transfer and guarded Pixel C recovery-image flashing. See the [recovery workflow](docs/RECOVERY-SIDELOAD.md) for steps and validation limits.
 
 **Device Status → Deep scan** adds 32 read-only hardware/service probes, searchable complete command output, coverage results and JSON export. It can preserve ATOTO/vendor identity properties when exposed, without claiming access to hidden MCU firmware. See [Deep device inspection](docs/DEEP-INSPECTION.md).
 
@@ -120,7 +122,7 @@ dotnet run --project src/AndroidTVManager.App
 Create release artifacts locally:
 
 ```powershell
-.\scripts\package-release.ps1 -Version 1.0.0-B13 -RequireInstaller
+.\scripts\package-release.ps1 -Version 1.0.0-B14 -RequireInstaller
 ```
 
 The script always creates a portable ZIP and checksum file. It creates the installer when `ISCC.exe` is installed; use `-RequireInstaller` to fail if the installer compiler is unavailable.

@@ -1,6 +1,12 @@
 # Roadmap
 
-## Beta 13 — current: device inspection
+## Beta 14 — current: multi-device targeting
+
+- Implemented live-list refresh after network connect/pair/reconnect, serial/endpoint target matching, and a TARGET picker that distinguishes emulator USB from Shield network devices.
+- Connecting a second ADB device now selects it for Device Status, Applications, and the other device pages instead of remaining on the first emulator.
+- Pending physical Shield/TV validation of connect-and-switch while an Android Studio emulator is attached.
+
+## Beta 13 — device inspection
 
 - Implemented Device Status Deep scan with 32 additional read-only probes, full searchable evidence, explicit command coverage and JSON export.
 - Pending physical TV/Shield/tablet/head-unit validation, especially vendor-specific MCU and service visibility.

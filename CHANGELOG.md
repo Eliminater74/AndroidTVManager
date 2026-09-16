@@ -8,6 +8,24 @@ The project follows a beta-first release cycle while real Android TV hardware va
 
 Planned work is tracked in [TODO.md](TODO.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.0.0-B14] - 2026-09-15
+
+Beta 14 makes a newly connected network device, such as an NVIDIA Shield, selectable while an emulator is already attached.
+
+### Fixed
+
+- Refresh the live ADB device list after a successful network connect, pair, or reconnect, and select that endpoint as the active TARGET.
+- Keep the chosen device across list rebuilds by matching serial or endpoint, instead of snapping back to the first connected emulator.
+- Publish newly connected devices from `track-devices` by refreshing `adb devices -l` on tracker output and a short poll, so a Shield appears without a manual Refresh.
+- Sync the header TARGET across Devices, Device Status, Applications, Install APK, and the other device pages. Clicking a live device or **Use as target** switches the rest of the app.
+- Show model and transport/serial in the TARGET picker so an emulator and a Shield are easy to tell apart.
+
+### Release and validation
+
+- Updated app and installer metadata to 1.0.0-B14 (assembly/file version 1.0.0.14), release documentation, and download links. Package rules remain at the Beta 12 revision.
+- Debug/Release builds and device-independent tests cover serial/endpoint target matching and connect-and-select behavior.
+- Physical-device validation remains pending. Connecting a Shield still requires Network debugging enabled and this PC authorized on the TV.
+
 ## [1.0.0-B13] - 2026-09-08
 
 Beta 13 adds guided recovery/sideload and deeper device inspection for ADB-capable TVs, tablets and head units.
