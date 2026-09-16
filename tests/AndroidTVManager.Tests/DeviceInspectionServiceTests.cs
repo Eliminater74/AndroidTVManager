@@ -34,7 +34,10 @@ public sealed class DeviceInspectionServiceTests
         deep.Commands.Single(c => c.Command == "media-codecs").State.Should().Be(InspectionSectionState.Unavailable);
         runner.Calls.Should().OnlyContain(call => call.Serial == "unit-1");
         runner.Calls.Should().NotContain(call => call.Arguments.Contains("reboot") || call.Arguments.Contains("setprop")
-            || call.Arguments.Contains("put") || call.Arguments.Contains("su") || call.Arguments.Contains("install"));
+            || call.Arguments.Contains("put") || call.Arguments.Contains("install")
+            || IsEscalatingSu(call.Arguments));
+        runner.Calls.Select(call => string.Join(" ", call.Arguments))
+            .Should().NotContain(command => command.Contains("sh -c", StringComparison.Ordinal));
         DeepInspectionCatalog.Describe(deep).Should().Contain("need review");
         var json = System.Text.Json.JsonSerializer.Serialize(deep);
         var restored = System.Text.Json.JsonSerializer.Deserialize<DeviceInspectionResult>(json)!;
@@ -117,14 +120,18 @@ public sealed class DeviceInspectionServiceTests
         snapshots.Latest.Should().BeSameAs(inspection);
         runner.Calls.Should().NotBeEmpty();
         runner.Calls.Should().OnlyContain(call => call.Serial == "192.168.1.10:5555");
-        runner.Calls.Select(call => string.Join(" ", call.Arguments))
-            .Should().NotContain(command => Regex.IsMatch(command, @"(^| )root( |$)", RegexOptions.IgnoreCase)
+        var commands = runner.Calls.Select(call => string.Join(" ", call.Arguments)).ToArray();
+        commands.Should().Contain("shell id");
+        commands.Should().Contain("shell which su");
+        commands.Should().Contain("shell gsi_tool status");
+        commands.Should().NotContain(command => command.Contains("sh -c", StringComparison.Ordinal));
+        commands.Should().NotContain(command => Regex.IsMatch(command, @"(^| )root( |$)", RegexOptions.IgnoreCase)
                 || command.Contains("fastboot", StringComparison.OrdinalIgnoreCase)
                 || command.Contains("oem unlock", StringComparison.OrdinalIgnoreCase)
                 || command.Contains("reboot", StringComparison.OrdinalIgnoreCase)
                 || command.Contains("su -c", StringComparison.OrdinalIgnoreCase));
-        runner.Calls.Select(call => string.Join(" ", call.Arguments))
-            .Should().Contain("shell pm list packages -u");
+        commands.Should().Contain("shell pm list packages -u");
+        runner.Calls.Should().NotContain(call => IsEscalatingSu(call.Arguments));
     }
 
     [Fact]
@@ -139,6 +146,16 @@ public sealed class DeviceInspectionServiceTests
             service.InspectAsync("tv-1", cancellationToken: cancellation.Token));
         runner.Calls.Should().BeEmpty();
     }
+
+    [Fact]
+    public void Deep_inspection_probes_do_not_use_compound_sh_c_scripts()
+        => DeepInspectionCatalog.Probes.Should().OnlyContain(probe =>
+            !probe.Arguments.Contains("sh") && !probe.Arguments.Contains("-c"));
+
+    private static bool IsEscalatingSu(IReadOnlyList<string> arguments)
+        => arguments.Count >= 2
+            && arguments[0].Equals("shell", StringComparison.OrdinalIgnoreCase)
+            && arguments[1].Equals("su", StringComparison.OrdinalIgnoreCase);
 
     private static AndroidTVManager.Core.Models.AdbCommandResult Result(
         string output,

@@ -23,7 +23,7 @@ public sealed class ConfigurationExplorerServiceTests
             """);
         runner.Responses[FileCommand("/system/build.prop")] = Result("ro.product.model=System TV\n");
         runner.Responses[FileCommand("/vendor/build.prop")] = Result("ro.build.version.security_patch=2026-06-05\n");
-        runner.Responses[FileCommand("/product/build.prop")] = Result(ConfigurationPropertyParser.UnavailableMarker);
+        runner.Responses[FileCommand("/product/build.prop")] = Result(string.Empty, "cat: /product/build.prop: No such file or directory", 1);
 
         var service = new ConfigurationExplorerService(
             runner,
@@ -99,10 +99,10 @@ public sealed class ConfigurationExplorerServiceTests
     }
 
     private static string FileCommand(string path)
-        => $"shell sh -c if [ -r '{path}' ]; then cat '{path}'; else echo '{ConfigurationPropertyParser.UnavailableMarker}'; fi";
+        => $"shell cat {path}";
 
-    private static AdbCommandResult Result(string output)
-        => new("adb.exe", [], 0, output, string.Empty, TimeSpan.Zero);
+    private static AdbCommandResult Result(string output, string error = "", int exitCode = 0)
+        => new("adb.exe", [], exitCode, output, error, TimeSpan.Zero);
 
     private static ConfigurationSnapshot Snapshot(DateTimeOffset captured)
         => new(

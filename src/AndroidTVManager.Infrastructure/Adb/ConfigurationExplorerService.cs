@@ -130,8 +130,7 @@ public sealed class ConfigurationExplorerService : IConfigurationExplorerService
         tasks.AddRange(PropertyFiles.Select(file => CollectAsync(
             serial,
             file.Source,
-            ["shell", "sh", "-c",
-                $"if [ -r '{file.Path}' ]; then cat '{file.Path}'; else echo '{ConfigurationPropertyParser.UnavailableMarker}'; fi"],
+            ["shell", "cat", file.Path],
             file.Path,
             false)));
 
@@ -147,7 +146,11 @@ public sealed class ConfigurationExplorerService : IConfigurationExplorerService
             {
                 var result = await _runner.RunForDeviceAsync(target, arguments, ReadTimeout, cancellationToken);
                 var output = result.StandardOutput ?? string.Empty;
-                var unavailable = !runtime && ConfigurationPropertyParser.IsUnavailableFile(output);
+                var combined = $"{output}\n{result.StandardError}";
+                var unavailable = !runtime && (
+                    !result.IsSuccess
+                    || ConfigurationPropertyParser.IsUnavailableFile(combined)
+                    || combined.Contains("No such file", StringComparison.OrdinalIgnoreCase));
                 var state = result.IsSuccess && !unavailable
                     ? InspectionSectionState.Completed
                     : InspectionSectionState.Partial;

@@ -46,7 +46,8 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             ["storage"] = (["shell", "df", "-k"], ReadTimeout),
             ["features"] = (["shell", "pm", "list", "features"], ReadTimeout),
             ["selinux"] = (["shell", "getenforce"], ReadTimeout),
-            ["root"] = (["shell", "sh", "-c", "id; which su"], ReadTimeout),
+            ["id"] = (["shell", "id"], ReadTimeout),
+            ["which-su"] = (["shell", "which", "su"], ReadTimeout),
             ["network"] = (["shell", "ip", "addr"], ReadTimeout),
             ["routes"] = (["shell", "ip", "route"], ReadTimeout),
             ["device-name"] = (["shell", "settings", "get", "global", "device_name"], ReadTimeout),
@@ -60,7 +61,7 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             ["drm"] = (["shell", "dumpsys", "media.drm"], ReadTimeout),
             ["verifier"] = (["shell", "pm", "list", "packages", "com.google.android.verifier"], ReadTimeout),
             ["verifier-details"] = (["shell", "dumpsys", "package", "com.google.android.verifier"], ReadTimeout),
-            ["gsi-tool"] = (["shell", "sh", "-c", "which gsi_tool && gsi_tool status"], ReadTimeout),
+            ["gsi-tool"] = (["shell", "gsi_tool", "status"], ReadTimeout),
             ["packages"] = (["shell", "pm", "list", "packages", "-f"], ReadTimeout),
             ["packages-system"] = (["shell", "pm", "list", "packages", "-s"], ReadTimeout),
             ["packages-user"] = (["shell", "pm", "list", "packages", "-3"], ReadTimeout),
@@ -116,9 +117,10 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Get(props, "ro.product.cpu.abilist"),
             Get(props, "ro.hardware"),
             Get(props, "ro.board.platform"));
-        var security = AdbInspectionParsers.ParseSecurity(props, Output(results, "selinux"), Output(results, "root"));
+        var rootCheck = CombinedOutput(results, "id", "which-su");
+        var security = AdbInspectionParsers.ParseSecurity(props, Output(results, "selinux"), rootCheck);
         var oemUnlock = AdbInspectionParsers.ParseOemUnlock(props, Output(results, "oem-unlock-setting"));
-        var root = AdbInspectionParsers.ParseRoot(props, Output(results, "root"));
+        var root = AdbInspectionParsers.ParseRoot(props, rootCheck);
         root = root with { Guidance = _rootGuidance.GetGuidance(device, oemUnlock, security, root) };
         var boot = AdbInspectionParsers.ParseBoot(props);
         var bluetooth = AdbInspectionParsers.ParseBluetooth(
@@ -147,7 +149,7 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 AdbInspectionParsers.ParseDisplay(Output(results, "wm-size"), Output(results, "wm-density"),
                     Output(results, "display"))),
             Section("Storage", results, ["storage"], AdbInspectionParsers.ParseStorage(Output(results, "storage"))),
-            Section("Security", results, ["getprop", "selinux", "root"], security),
+            Section("Security", results, ["getprop", "selinux", "id", "which-su"], security),
             Section("Boot", results, ["getprop"], boot),
             Section("Treble / GSI", results, ["getprop", "gsi-tool", "packages"], gsi),
             Section("Network", results, ["network", "routes", "hostname", "mac-address"],
@@ -173,7 +175,7 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 bluetooth, hdmi, drm, Output(results, "features")),
             results.Values.SelectMany(value => value).ToArray(),
             Section("OEM Unlock", results, ["getprop", "oem-unlock-setting"], oemUnlock),
-            Section("Root Feasibility", results, ["getprop", "root"], root),
+            Section("Root Feasibility", results, ["getprop", "id", "which-su"], root),
             Section("Bluetooth", results, ["features", "bluetooth-on", "bluetooth"], bluetooth),
             Section("HDMI / CEC", results, ["hdmi", "audio"], hdmi),
             Section("DRM", results, ["drm"], drm), deepScan);
@@ -358,6 +360,11 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         => results.GetValueOrDefault(key)?.All(item => item.State == InspectionSectionState.Completed) == true
             ? count
             : null;
+
+    private static string CombinedOutput(
+        IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
+        params string[] keys)
+        => string.Join(Environment.NewLine, keys.Select(key => Output(results, key)));
 
     private static string Output(
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
