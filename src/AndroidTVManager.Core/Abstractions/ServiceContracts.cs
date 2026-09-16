@@ -209,6 +209,8 @@ public interface IBulkApkService
 {
     Task<BulkInstallPackageSet> PrepareAsync(
         IReadOnlyList<string> paths,
+        IReadOnlyList<string>? deviceAbis = null,
+        IProgress<string>? progress = null,
         CancellationToken cancellationToken = default);
 
     Task<BulkInstallResult> InstallAsync(

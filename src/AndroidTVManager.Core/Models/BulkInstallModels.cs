@@ -13,9 +13,18 @@ public enum BulkInstallItemStatus
     Pending,
     Installing,
     Succeeded,
+    PartialSuccess,
     Failed,
     Skipped,
     Canceled
+}
+
+public enum BulkInstallVerificationState
+{
+    NotAttempted,
+    Verified,
+    IdentityUnavailable,
+    Missing
 }
 
 public enum BulkInstallReconciliationState
@@ -33,7 +42,19 @@ public sealed record ApkArtifact(
     bool IsBase,
     string? PackageName = null,
     string? VersionName = null,
-    long? VersionCode = null);
+    long? VersionCode = null,
+    string? Abi = null);
+
+public sealed record ApkAdditionalPayload(
+    string LocalPath,
+    string FileName,
+    long SizeBytes,
+    string PackageName,
+    string RemoteDirectory,
+    string RemoteFileName)
+{
+    public string RemotePath => $"{RemoteDirectory.TrimEnd('/')}/{RemoteFileName}";
+}
 
 public sealed record ApkInstallGroup(
     string Key,
@@ -41,25 +62,51 @@ public sealed record ApkInstallGroup(
     IReadOnlyList<ApkArtifact> Artifacts,
     string? PackageName = null,
     string? VersionName = null,
-    long? VersionCode = null)
+    long? VersionCode = null,
+    ApkContainerKind ContainerKind = ApkContainerKind.Apk,
+    string? SourceName = null,
+    IReadOnlyList<string>? SplitLabels = null,
+    IReadOnlyList<ApkAdditionalPayload>? AdditionalPayloads = null,
+    IReadOnlyList<string>? NativeAbis = null)
 {
     public bool IsSplit => Artifacts.Count > 1;
+    public string ContainerLabel
+        => ContainerKind switch
+        {
+            ApkContainerKind.Apks => "APKS",
+            ApkContainerKind.Apkm => "APKM",
+            ApkContainerKind.Xapk => "XAPK",
+            _ when IsSplit => "Split APK",
+            _ => "APK"
+        };
+    public string? BaseApkName
+        => Artifacts.FirstOrDefault(artifact => artifact.IsBase)?.FileName
+            ?? Artifacts.FirstOrDefault()?.FileName;
+    public long TotalApkBytes => Artifacts.Sum(artifact => artifact.SizeBytes);
+    public long TotalAdditionalBytes => (AdditionalPayloads ?? []).Sum(payload => payload.SizeBytes);
+    public IReadOnlyList<ApkAdditionalPayload> Payloads => AdditionalPayloads ?? [];
+    public IReadOnlyList<string> Splits => SplitLabels ?? [];
 }
 
 public sealed record BulkInstallItem(
     ApkInstallGroup Group,
     BulkInstallItemStatus Status = BulkInstallItemStatus.Pending,
-    AdbCommandResult? Result = null);
+    AdbCommandResult? Result = null,
+    BulkInstallVerificationState Verification = BulkInstallVerificationState.NotAttempted,
+    string? Message = null,
+    AdbCommandResult? AdditionalDataResult = null);
 
 public sealed record BulkInstallPackageSet(
     IReadOnlyList<ApkInstallGroup> Groups,
-    IReadOnlyList<string> TemporaryDirectories);
+    IReadOnlyList<string> TemporaryDirectories,
+    IReadOnlyList<string>? SourcePaths = null);
 
 public sealed record BulkInstallProgress(
     int Completed,
     int Total,
     string CurrentItem,
-    BulkInstallItemStatus Status);
+    BulkInstallItemStatus Status,
+    string? Stage = null);
 
 public sealed record BulkInstallResult(
     IReadOnlyList<BulkInstallItem> Items,
@@ -68,6 +115,7 @@ public sealed record BulkInstallResult(
     string? ReconciliationMessage = null)
 {
     public int SucceededCount => Items.Count(item => item.Status == BulkInstallItemStatus.Succeeded);
+    public int PartialSuccessCount => Items.Count(item => item.Status == BulkInstallItemStatus.PartialSuccess);
     public int FailedCount => Items.Count(item => item.Status == BulkInstallItemStatus.Failed);
     public int SkippedCount => Items.Count(item => item.Status == BulkInstallItemStatus.Skipped);
 }
