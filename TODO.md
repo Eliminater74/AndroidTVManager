@@ -11,7 +11,6 @@ This file tracks concrete work items. Larger product direction belongs in [docs/
 - [ ] Validate the [recovery hardware checklist](docs/RECOVERY-SIDELOAD.md#hardware-acceptance) with the exact Pixel C ROM/recovery build.
 - [ ] Test USB discovery with a physical Android TV device.
 - [ ] Test traditional TCP/IP ADB and saved-device reconnect.
-- [ ] Close other ADB consumers (Android Studio, Meta Quest / SideQuest tools) while validating connections; they share port 5037 and can drop Android TV Manager sessions.
 - [ ] Test Android Wireless Debugging pairing on supported Android versions.
 - [ ] Verify Device Status values against at least one Google TV and one manufacturer TV.
 - [ ] Exercise package inventory and read-only package details before package mutations.

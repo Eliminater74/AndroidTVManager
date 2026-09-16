@@ -9,7 +9,7 @@ The project follows a beta-first release cycle while real Android TV hardware va
 ### Fixed
 
 - Restore the previous Platform-Tools install if activation fails after the live tools folder has already been moved aside, and verify `adb version` plus `fastboot.exe` from the active directory before discarding the backup.
-- Kill timed-out or canceled ADB client processes without tearing down the shared ADB server process tree. Another ADB consumer on the same PC (for example Meta Quest tools) can still restart `adb` and drop this app's sessions; keep those tools closed while using Android TV Manager.
+- Kill timed-out or canceled ADB client processes without tearing down the shared ADB server process tree.
 - Redact pairing codes, credentials, local user paths, and APK/sideload/push/pull file arguments in command logs and script journals. `RedactOutput()` now uses the shared redactor instead of concatenating raw stdout/stderr.
 - Block deployment when a profile's mandatory ABI or Android TV/Google TV requirements cannot be verified. Unknown required evidence is no longer treated as a bypassable warning.
 

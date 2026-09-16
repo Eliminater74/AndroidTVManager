@@ -10,7 +10,7 @@ The shell is a single WPF window with a left navigation rail and a status bar. P
 
 ## ADB process architecture
 
-`IAdbProcessRunner` is the only path to `adb.exe`. It uses `ProcessStartInfo.ArgumentList`, redirected output, cancellation, timeouts, and a structured result. Pairing codes and local payload paths are redacted from diagnostics. Timed-out clients are killed without `entireProcessTree`, so the shared ADB server stays up. Other ADB tools on the same PC can still restart the server and drop sessions. Command-specific services capture the target serial before starting work.
+`IAdbProcessRunner` is the only path to `adb.exe`. It uses `ProcessStartInfo.ArgumentList`, redirected output, cancellation, timeouts, and a structured result. Pairing codes and local payload paths are redacted from diagnostics. Timed-out clients are killed without `entireProcessTree`, so the shared ADB server stays up. Command-specific services capture the target serial before starting work.
 
 ## Device tracker
 
