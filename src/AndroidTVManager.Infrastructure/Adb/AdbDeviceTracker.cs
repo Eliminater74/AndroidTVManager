@@ -13,6 +13,7 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
     private readonly IAdbProcessRunner _runner;
     private readonly IAppLogger _logger;
     private readonly object _sync = new();
+    private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private readonly ConcurrentDictionary<string, byte> _enrichmentInFlight = new();
     private readonly ConcurrentDictionary<string, EnrichedMetadata> _metadataCache = new();
     private CancellationTokenSource? _stopSource;
@@ -44,18 +45,26 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        var adbPath = _toolsManager.AdbPath;
-        if (adbPath is null)
+        await _refreshLock.WaitAsync(cancellationToken);
+        try
         {
-            Publish([]);
-            return;
-        }
+            var adbPath = _toolsManager.AdbPath;
+            if (adbPath is null)
+            {
+                Publish([]);
+                return;
+            }
 
-        var result = await _runner.RunAsync(["devices", "-l"], TimeSpan.FromSeconds(20), cancellationToken);
-        if (result.IsSuccess)
-            Publish(AdbParsers.ParseTrackedDevices(result.StandardOutput));
-        else
-            _logger.Warning("Tracker", $"Could not refresh the ADB device list: {result.StandardError.Trim()}");
+            var result = await _runner.RunAsync(["devices", "-l"], TimeSpan.FromSeconds(20), cancellationToken);
+            if (result.IsSuccess)
+                Publish(AdbParsers.ParseTrackedDevices(result.StandardOutput));
+            else
+                _logger.Warning("Tracker", $"Could not refresh the ADB device list: {result.StandardError.Trim()}");
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
@@ -102,24 +111,15 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
                 _logger.Information("Tracker", "Starting adb track-devices -l.");
                 using var process = StartTracker(adbPath);
                 retryDelay = TimeSpan.FromMilliseconds(500);
-                var snapshot = new List<string>();
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
-                    if (line is null)
-                        break;
-                    if (string.IsNullOrWhiteSpace(line))
-                    {
-                        Publish(AdbParsers.ParseTrackedDevices(string.Join(Environment.NewLine, snapshot)));
-                        snapshot.Clear();
-                    }
-                    else
-                    {
-                        snapshot.Add(line);
-                    }
-                }
+                await RefreshAsync(cancellationToken);
 
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var watchTask = WatchTrackerAsync(process, linked.Token);
+                var pollTask = PollDevicesAsync(linked.Token);
+                await Task.WhenAny(watchTask, pollTask);
+                linked.Cancel();
                 TryKill(process);
+                await Task.WhenAll(SuppressCancelAsync(watchTask), SuppressCancelAsync(pollTask));
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -131,6 +131,38 @@ public sealed class AdbDeviceTracker : IAdbDeviceTracker
                 await DelayAsync(retryDelay, cancellationToken);
                 retryDelay = TimeSpan.FromSeconds(Math.Min(retryDelay.TotalSeconds * 2, 30));
             }
+        }
+    }
+
+    private async Task WatchTrackerAsync(Process process, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
+            if (line is null)
+                break;
+            await RefreshAsync(cancellationToken);
+        }
+    }
+
+    private async Task PollDevicesAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            await DelayAsync(TimeSpan.FromSeconds(2), cancellationToken);
+            if (!cancellationToken.IsCancellationRequested)
+                await RefreshAsync(cancellationToken);
+        }
+    }
+
+    private static async Task SuppressCancelAsync(Task task)
+    {
+        try
+        {
+            await task;
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 
