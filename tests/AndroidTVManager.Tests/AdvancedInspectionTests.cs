@@ -75,8 +75,10 @@ public sealed class AdvancedInspectionTests
         bluetooth.Support.Should().Be(CapabilityState.Supported);
         bluetooth.IsEnabled.Should().BeTrue();
         bluetooth.ConnectedDevices.Should().ContainSingle();
+        hdmi.Support.Should().Be(CapabilityState.Partial);
         hdmi.ActiveInput.Should().Be("HDMI1");
         hdmi.AudioRoute.Should().Be("HDMI");
+        drm.Availability.Should().Be(CapabilityState.Partial);
         drm.Schemes.Should().Contain("Widevine");
         drm.SecurityLevels.Should().Be("L1");
         services.Should().ContainSingle(item => item.PackageName == "com.example.tv");

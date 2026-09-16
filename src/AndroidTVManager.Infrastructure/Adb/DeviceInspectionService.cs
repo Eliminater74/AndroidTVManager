@@ -127,12 +127,15 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
             Output(results, "features"),
             Output(results, "bluetooth-on"),
             Output(results, "bluetooth"));
-        var hdmi = AdbInspectionParsers.ParseHdmi(Output(results, "hdmi"), Output(results, "audio"));
-        var drm = AdbInspectionParsers.ParseDrm(Output(results, "drm"));
+        var hdmi = AdbInspectionParsers.ParseHdmi(
+            OutputWithError(results, "hdmi"),
+            Output(results, "audio"),
+            Output(results, "features"));
+        var drm = AdbInspectionParsers.ParseDrm(OutputWithError(results, "drm"));
         var verifier = AdbInspectionParsers.ParseDeveloperVerification(
             Output(results, "verifier"), Output(results, "verifier-details"), props,
             results["verifier"].FirstOrDefault()?.State == InspectionSectionState.Completed);
-        var gsi = AdbInspectionParsers.ParseGsi(props, Output(results, "gsi-tool"),
+        var gsi = AdbInspectionParsers.ParseGsi(props, OutputWithError(results, "gsi-tool"),
             Output(results, "packages").Contains("dynamic.system", StringComparison.OrdinalIgnoreCase));
 
         var inspection = new DeviceInspectionResult(
@@ -149,9 +152,9 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 AdbInspectionParsers.ParseDisplay(Output(results, "wm-size"), Output(results, "wm-density"),
                     Output(results, "display"))),
             Section("Storage", results, ["storage"], AdbInspectionParsers.ParseStorage(Output(results, "storage"))),
-            Section("Security", results, ["getprop", "selinux", "id", "which-su"], security),
+            Section("Security", results, ["getprop", "selinux", "id", "which-su"], security, ["which-su"]),
             Section("Boot", results, ["getprop"], boot),
-            Section("Treble / GSI", results, ["getprop", "gsi-tool", "packages"], gsi),
+            Section("Treble / GSI", results, ["getprop", "gsi-tool", "packages"], gsi, ["gsi-tool"]),
             Section("Network", results, ["network", "routes", "hostname", "mac-address"],
                 AdbInspectionParsers.ParseNetwork(Output(results, "network"), Output(results, "hostname"),
                     Output(results, "routes"), props)),
@@ -175,9 +178,9 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 bluetooth, hdmi, drm, Output(results, "features")),
             results.Values.SelectMany(value => value).ToArray(),
             Section("OEM Unlock", results, ["getprop", "oem-unlock-setting"], oemUnlock),
-            Section("Root Feasibility", results, ["getprop", "id", "which-su"], root),
+            Section("Root Feasibility", results, ["getprop", "id", "which-su"], root, ["which-su"]),
             Section("Bluetooth", results, ["features", "bluetooth-on", "bluetooth"], bluetooth),
-            Section("HDMI / CEC", results, ["hdmi", "audio"], hdmi),
+            Section("HDMI / CEC", results, ["hdmi", "audio"], hdmi, ["audio"]),
             Section("DRM", results, ["drm"], drm), deepScan);
 
         try
@@ -230,12 +233,17 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
         string name,
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
         IReadOnlyList<string> keys,
-        T value)
+        T value,
+        IReadOnlyList<string>? optionalKeys = null)
     {
         var evidence = keys.SelectMany(key => results.GetValueOrDefault(key) ?? []).ToArray();
-        var failed = evidence.Any(item => item.State != InspectionSectionState.Completed);
-        return new(name, failed ? InspectionSectionState.Partial : InspectionSectionState.Completed,
-            value, evidence, failed ? "One or more diagnostic commands were unavailable." : null);
+        var state = DeepInspectionCatalog.CombineSection(evidence, optionalKeys);
+        return new(name, state, value, evidence, state switch
+        {
+            InspectionSectionState.Completed => null,
+            InspectionSectionState.Unavailable => "This diagnostic is not exposed on the device.",
+            _ => "One or more diagnostic commands were unavailable."
+        });
     }
 
     private static IReadOnlyList<DeviceCapability> BuildCapabilities(
@@ -292,9 +300,16 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
                 bluetooth.IsEnabled is true ? "Bluetooth is enabled." : "Bluetooth state is device-dependent.",
                 bluetooth.Evidence),
             new("HDMI / CEC", hdmi.Support,
-                "HDMI and CEC support is vendor/API dependent.", hdmi.Evidence),
+                hdmi.Support == CapabilityState.Supported
+                    ? "HDMI/CEC feature and hdmi_control evidence were present."
+                    : hdmi.Support == CapabilityState.Unavailable
+                        ? "HDMI control is not exposed on this device."
+                        : "HDMI and CEC support is vendor/API dependent.",
+                hdmi.Evidence),
             new("DRM", drm.Availability,
-                "DRM service evidence is available where the device exposes it.", drm.Evidence),
+                drm.Availability == CapabilityState.Unavailable
+                    ? "The DRM service is not exposed on this device."
+                    : "DRM service evidence is available where the device exposes it.", drm.Evidence),
             new("Android Developer Verifier", verifier.VerifierPresent is true ? CapabilityState.Supported
                 : CapabilityState.Unknown,
                 verifier.VerifierPresent is true ? "Verifier evidence detected" : "Verifier state is not proven",
@@ -364,7 +379,14 @@ public sealed class DeviceInspectionService : IDeviceInspectionService
     private static string CombinedOutput(
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
         params string[] keys)
-        => string.Join(Environment.NewLine, keys.Select(key => Output(results, key)));
+        => string.Join(Environment.NewLine, keys.Select(key => OutputWithError(results, key)));
+
+    private static string OutputWithError(
+        IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,
+        string key)
+        => string.Join(Environment.NewLine, results.GetValueOrDefault(key)?.Select(item =>
+            string.Join(Environment.NewLine, new[] { item.StandardOutput, item.StandardError }
+                .Where(value => !string.IsNullOrWhiteSpace(value)))) ?? []);
 
     private static string Output(
         IReadOnlyDictionary<string, IReadOnlyList<InspectionCommandEvidence>> results,

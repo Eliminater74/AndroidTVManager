@@ -293,6 +293,8 @@ public static class AdbInspectionParsers
         var su = rootCheck.Contains("permission denied", StringComparison.OrdinalIgnoreCase)
             ? CapabilityState.PermissionDenied
             : rootCheck.Contains("not found", StringComparison.OrdinalIgnoreCase)
+                || (rootCheck.Contains("uid=", StringComparison.OrdinalIgnoreCase)
+                    && !rootCheck.Contains("/su", StringComparison.OrdinalIgnoreCase))
                 ? CapabilityState.Unsupported
                 : rootCheck.Contains("/su", StringComparison.OrdinalIgnoreCase)
                     ? CapabilityState.Partial
@@ -353,12 +355,13 @@ public static class AdbInspectionParsers
             ]);
     }
 
-    public static HdmiInfo ParseHdmi(string hdmiDump, string audioDump)
+    public static HdmiInfo ParseHdmi(string hdmiDump, string audioDump, string? features = null)
     {
-        var unavailable = string.IsNullOrWhiteSpace(hdmiDump)
-            || hdmiDump.Contains("not found", StringComparison.OrdinalIgnoreCase)
-            || hdmiDump.Contains("unknown service", StringComparison.OrdinalIgnoreCase);
-        var cec = MatchValue(hdmiDump, @"(?im)(?:cec|hdmi)[^\r\n]*(?:state|enabled)\s*[:=]\s*(?<value>[^\r\n, ]+)");
+        var unavailable = LooksLikeMissingServiceOrCommand(hdmiDump);
+        var hasFeature = HasHdmiOrCecFeature(features);
+        var cec = MatchValue(hdmiDump, @"(?im)(?:cec|hdmi)[^\r\n]*(?:state|enabled)\s*[:=]\s*(?<value>[^\r\n, ]+)")
+            ?? MatchValue(hdmiDump, @"(?im)mHdmiCecEnabled\s*[:=]\s*(?<value>\S+)")
+            ?? MatchValue(hdmiDump, @"(?im)mIsCecAvailable\s*[:=]\s*(?<value>\S+)");
         var activeInput = MatchValue(hdmiDump, @"(?im)active\s+input\s*[:=]\s*(?<value>[^\r\n]+)");
         var displays = hdmiDump.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.Trim())
@@ -366,13 +369,20 @@ public static class AdbInspectionParsers
                 || line.Contains("port", StringComparison.OrdinalIgnoreCase))
             .Take(20)
             .ToArray();
+        var support = unavailable ? CapabilityState.Unavailable
+            : hasFeature && !string.IsNullOrWhiteSpace(hdmiDump) ? CapabilityState.Supported
+            : !string.IsNullOrWhiteSpace(hdmiDump) ? CapabilityState.Partial
+            : hasFeature ? CapabilityState.Partial
+            : CapabilityState.Unknown;
         return new(
-            unavailable ? CapabilityState.Unknown : CapabilityState.Partial,
+            support,
             cec,
             activeInput,
             MatchValue(audioDump, @"(?im)(?:current|active|device)\s+(?:audio\s+)?(?:route|output)\s*[:=]\s*(?<value>[^\r\n]+)"),
             displays,
             [
+                Evidence("pm list features", hasFeature ? "HDMI/CEC feature detected" : "HDMI/CEC feature not detected",
+                    "HDMI and CEC hardware feature evidence."),
                 Evidence("dumpsys hdmi_control", hdmiDump, "Vendor/API-dependent HDMI and CEC evidence."),
                 Evidence("dumpsys audio", audioDump, "Current audio route evidence.", EvidenceConfidence.Medium)
             ]);
@@ -380,9 +390,7 @@ public static class AdbInspectionParsers
 
     public static DrmInfo ParseDrm(string output)
     {
-        var unavailable = string.IsNullOrWhiteSpace(output)
-            || output.Contains("not found", StringComparison.OrdinalIgnoreCase)
-            || output.Contains("unknown service", StringComparison.OrdinalIgnoreCase);
+        var unavailable = LooksLikeMissingServiceOrCommand(output);
         var schemes = Regex.Matches(output, @"(?i)\b(?:Widevine|ClearKey|PlayReady)\b")
             .Select(match => match.Value)
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -392,11 +400,14 @@ public static class AdbInspectionParsers
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         return new(
-            unavailable ? CapabilityState.Unknown : CapabilityState.Partial,
+            unavailable ? CapabilityState.Unavailable : CapabilityState.Partial,
             schemes.Length == 0 ? null : string.Join(", ", schemes),
             levels.Length == 0 ? null : string.Join(", ", levels),
             MatchValue(output, @"(?im)HDCP[^\r\n]*[:=]\s*(?<value>[^\r\n]+)"),
-            [Evidence("dumpsys media.drm", output, "DRM service output is device/API dependent; identifiers are not extracted.")]);
+            [Evidence("dumpsys media.drm", output,
+                unavailable
+                    ? "The DRM service is not exposed on this device."
+                    : "DRM service output is device/API dependent; identifiers are not extracted.")]);
     }
 
     public static IReadOnlyList<ServiceInfo> ParseServices(string output)
@@ -434,7 +445,8 @@ public static class AdbInspectionParsers
     {
         var root = rootCheck.Contains("uid=0", StringComparison.OrdinalIgnoreCase)
             ? CapabilityState.Supported
-            : rootCheck.Contains("not found", StringComparison.OrdinalIgnoreCase)
+            : rootCheck.Contains("uid=", StringComparison.OrdinalIgnoreCase)
+                || rootCheck.Contains("not found", StringComparison.OrdinalIgnoreCase)
                 ? CapabilityState.Unsupported
                 : CapabilityState.Unknown;
         var adbRoot = properties.TryGetValue("ro.debuggable", out var debug) && debug == "1"
@@ -484,9 +496,9 @@ public static class AdbInspectionParsers
             ? CapabilityState.Supported
             : CapabilityState.Unknown;
         var virtualAb = BoolCapability(properties, "ro.virtual_ab.enabled");
-        var gsiTool = gsiToolOutput.Contains("not found", StringComparison.OrdinalIgnoreCase)
+        var gsiTool = LooksLikeMissingServiceOrCommand(gsiToolOutput)
             ? CapabilityState.Unsupported
-            : string.IsNullOrWhiteSpace(gsiToolOutput) ? CapabilityState.Unknown : CapabilityState.Supported;
+            : CapabilityState.Supported;
         var dsu = dsuServicePresent ? CapabilityState.Supported : CapabilityState.Unknown;
         var assessment = treble == CapabilityState.Supported && dynamic == CapabilityState.Supported
             && (virtualAb == CapabilityState.Supported || gsiTool == CapabilityState.Supported || dsu == CapabilityState.Supported)
@@ -606,6 +618,19 @@ public static class AdbInspectionParsers
     private static string? MatchValue(string value, string pattern)
         => Regex.Match(value, pattern, RegexOptions.IgnoreCase).Groups["value"].Value is { Length: > 0 } result
             ? result.Trim() : null;
+
+    private static bool LooksLikeMissingServiceOrCommand(string output)
+        => string.IsNullOrWhiteSpace(output)
+            || output.Contains("Can't find service", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("unknown service", StringComparison.OrdinalIgnoreCase)
+            || output.Contains(": not found", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("No such file", StringComparison.OrdinalIgnoreCase);
+
+    private static bool HasHdmiOrCecFeature(string? features)
+        => !string.IsNullOrWhiteSpace(features)
+            && (features.Contains("android.hardware.hdmi", StringComparison.OrdinalIgnoreCase)
+                || features.Contains("hdmi.cec", StringComparison.OrdinalIgnoreCase)
+                || features.Contains("android.software.hdmi", StringComparison.OrdinalIgnoreCase));
 
     private static bool LooksLikeSocName(string? hardware)
     {

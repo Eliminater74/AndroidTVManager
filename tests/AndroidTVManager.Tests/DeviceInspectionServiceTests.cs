@@ -135,6 +135,64 @@ public sealed class DeviceInspectionServiceTests
     }
 
     [Fact]
+    public void Optional_unavailable_commands_do_not_partial_a_completed_section()
+    {
+        var evidence = new InspectionCommandEvidence[]
+        {
+            new("id", InspectionSectionState.Completed, "uid=2000(shell)", "", 0, TimeSpan.Zero),
+            new("which-su", InspectionSectionState.Unavailable, "", "which: su: not found", 1, TimeSpan.Zero)
+        };
+
+        DeepInspectionCatalog.CombineSection(evidence, ["which-su"]).Should().Be(InspectionSectionState.Completed);
+        DeepInspectionCatalog.CombineSection(
+            [new("drm", InspectionSectionState.Unavailable, "", "Can't find service: media.drm", 0, TimeSpan.Zero)])
+            .Should().Be(InspectionSectionState.Unavailable);
+    }
+
+    [Fact]
+    public async Task Stock_shield_does_not_treat_missing_optional_tools_as_partial_security()
+    {
+        var runner = new FakeAdbProcessRunner();
+        runner.Responses["shell getprop"] = Result("""
+            [ro.product.manufacturer]: [NVIDIA]
+            [ro.product.model]: [SHIELD Android TV]
+            [ro.product.device]: [darcy]
+            [ro.hardware]: [darcy]
+            [ro.board.platform]: [tegra]
+            [ro.build.type]: [user]
+            [ro.debuggable]: [0]
+            [ro.treble.enabled]: [true]
+            """);
+        runner.Responses["shell id"] = Result("uid=2000(shell) gid=2000(shell)");
+        runner.Responses["shell which su"] = Result("", "which: su: not found", 1);
+        runner.Responses["shell gsi_tool status"] = Result("", "gsi_tool: not found", 1);
+        runner.Responses["shell getenforce"] = Result("Enforcing");
+        runner.Responses["shell pm list features"] = Result("""
+            feature:android.software.leanback
+            feature:android.hardware.hdmi.cec
+            feature:android.hardware.vulkan.version=4198400
+            """);
+        runner.Responses["shell dumpsys hdmi_control"] = Result("mHdmiCecEnabled: true\nactive input: HDMI1");
+        runner.Responses["shell dumpsys media.drm"] = Result("", "Can't find service: media.drm");
+        runner.Responses["shell pm list packages -f"] = Result("package:/system/app/Settings.apk=com.android.settings");
+        var service = new DeviceInspectionService(runner, new FakeDeviceSnapshotRepository(), new FakeAppLogger());
+
+        var inspection = await service.InspectAsync("192.168.1.64:5555");
+
+        inspection.Security.State.Should().Be(InspectionSectionState.Completed);
+        inspection.Root!.State.Should().Be(InspectionSectionState.Completed);
+        inspection.Root.Value!.CurrentShellRoot.Should().Be(CapabilityState.Unsupported);
+        inspection.Root.Value.SuAvailability.Should().Be(CapabilityState.Unsupported);
+        inspection.Gsi.State.Should().Be(InspectionSectionState.Completed);
+        inspection.Gsi.Value!.GsiTool.Should().Be(CapabilityState.Unsupported);
+        inspection.Hdmi!.Value!.Support.Should().Be(CapabilityState.Supported);
+        inspection.Drm!.State.Should().Be(InspectionSectionState.Unavailable);
+        inspection.Drm.Value!.Availability.Should().Be(CapabilityState.Unavailable);
+        inspection.Cpu.Value!.DetectedSoC.Should().BeNull();
+        inspection.Cpu.Value.Hardware.Should().Be("darcy");
+    }
+
+    [Fact]
     public async Task Inspection_honors_cancellation_before_running_commands()
     {
         var runner = new FakeAdbProcessRunner();

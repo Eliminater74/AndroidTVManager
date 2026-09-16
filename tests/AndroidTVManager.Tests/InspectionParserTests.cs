@@ -196,6 +196,49 @@ public sealed class InspectionParserTests
     }
 
     [Fact]
+    public void Shield_stock_shell_is_non_root_without_a_su_binary()
+    {
+        var properties = new Dictionary<string, string>
+        {
+            ["ro.debuggable"] = "0",
+            ["ro.build.type"] = "user",
+            ["ro.boot.verifiedbootstate"] = "green"
+        };
+        var rootCheck = "uid=2000(shell) gid=2000(shell)\nwhich: su: not found";
+
+        var security = AdbInspectionParsers.ParseSecurity(properties, "Enforcing", rootCheck);
+        var root = AdbInspectionParsers.ParseRoot(properties, rootCheck);
+
+        security.RootAvailability.Should().Be(CapabilityState.Unsupported);
+        security.AdbRoot.Should().Be(CapabilityState.Unsupported);
+        root.CurrentShellRoot.Should().Be(CapabilityState.Unsupported);
+        root.SuAvailability.Should().Be(CapabilityState.Unsupported);
+        root.AdbRootFeasibility.Should().Be(CapabilityState.Unsupported);
+    }
+
+    [Fact]
+    public void Shield_hdmi_cec_is_supported_when_feature_and_hdmi_control_agree()
+    {
+        var hdmi = AdbInspectionParsers.ParseHdmi(
+            "mHdmiCecEnabled: true\nactive input: HDMI1",
+            "current audio route: HDMI",
+            "feature:android.software.leanback\nfeature:android.hardware.hdmi.cec");
+
+        hdmi.Support.Should().Be(CapabilityState.Supported);
+        hdmi.CecState.Should().Be("true");
+        hdmi.ActiveInput.Should().Be("HDMI1");
+    }
+
+    [Fact]
+    public void Missing_drm_service_is_unavailable_not_a_mysterious_failure()
+    {
+        var drm = AdbInspectionParsers.ParseDrm("Can't find service: media.drm");
+
+        drm.Availability.Should().Be(CapabilityState.Unavailable);
+        drm.Schemes.Should().BeNull();
+    }
+
+    [Fact]
     public void Gsi_assessment_is_possible_not_absolute_when_treble_is_present()
     {
         var result = AdbInspectionParsers.ParseGsi(
@@ -222,6 +265,7 @@ public sealed class InspectionParserTests
 
         result.Assessment.Should().Be(GsiAssessment.Unknown);
         result.Treble.Should().Be(CapabilityState.Unknown);
+        result.GsiTool.Should().Be(CapabilityState.Unsupported);
     }
 
     [Fact]

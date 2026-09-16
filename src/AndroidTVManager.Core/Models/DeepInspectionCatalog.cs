@@ -66,4 +66,20 @@ public static class DeepInspectionCatalog
         return !result.IsSuccess ? InspectionSectionState.Failed
             : string.IsNullOrWhiteSpace(result.StandardOutput) ? InspectionSectionState.Partial : InspectionSectionState.Completed;
     }
+
+    public static InspectionSectionState CombineSection(
+        IEnumerable<InspectionCommandEvidence> evidence,
+        IEnumerable<string>? optionalCommands = null)
+    {
+        var items = evidence as IReadOnlyList<InspectionCommandEvidence> ?? evidence.ToArray();
+        var optional = new HashSet<string>(optionalCommands ?? [], StringComparer.OrdinalIgnoreCase);
+        var required = items.Where(item => !optional.Contains(item.Command)).ToArray();
+        var considered = required.Length > 0 ? required : items;
+        if (considered.Count == 0
+            || considered.All(item => item.State == InspectionSectionState.Unavailable))
+            return InspectionSectionState.Unavailable;
+        if (considered.Any(item => item.State != InspectionSectionState.Completed))
+            return InspectionSectionState.Partial;
+        return InspectionSectionState.Completed;
+    }
 }
