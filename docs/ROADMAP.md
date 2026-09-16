@@ -1,6 +1,33 @@
 # Roadmap
 
-## Beta 14 — current: multi-device targeting
+## Beta 15 — current: safety hardening and disconnect
+
+- Platform-Tools rollback, shared secret redaction, live package safety gate, and fail-closed deployment compatibility.
+- APK restore verifies the expected SHA-256 set; untrusted updater payloads are deleted; recovery ZIPs fail closed on product mismatch.
+- SQLite pre-migration snapshots, deterministic shutdown, and Network/Wireless Debugging disconnect from the TARGET header and Devices list.
+- `IAdbDeviceSession` owns the live list, TARGET, preferred endpoint, and disconnect workflow. Pages still receive the selected device from `MainWindowViewModel`.
+- Pending physical smoke: Shield connect/disconnect/reconnect beside an emulator, TARGET fallback, inventory, one harmless disable/restore, updater check, backup verification, clean exit, and B14 → B15 installer upgrade.
+
+Do not add another large subsystem to this release.
+
+## Beta 16 — next: device session and shell
+
+- Extract remaining `MainWindowViewModel` page construction behind `IAdbDeviceSession` and typed navigation.
+- Pages subscribe to the shared session instead of the shell pushing `SelectedDevice` into each page VM.
+- Immediately after that context exists, add capability and user-scope header badges.
+
+## After B16
+
+- Restore points and Fully / Partially / Not reversible classifications before batch mutations.
+- Feature-aware debloat protection (Plex, casting, voice, game streaming, accessibility).
+- A small WPF smoke set, keyboard focus, Narrator, and DPI checks — not a giant UI suite.
+- CI: vulnerability scan, analyzers, coverage, CodeQL, and SHA-pinned Actions.
+- Pin Inno Setup; Authenticode-sign the app and installer; updater publisher/certificate check.
+- Finish the physical hardware acceptance matrix before stable 1.0.
+
+See [Device support audit](DEVICE-SUPPORT-AUDIT.md) for closed B15 findings and remaining hardware limits.
+
+## Beta 14 — multi-device targeting
 
 - Implemented live-list refresh after network connect/pair/reconnect, serial/endpoint target matching, and a TARGET picker that distinguishes emulator USB from Shield network devices.
 - Connecting a second ADB device now selects it for Device Status, Applications, and the other device pages instead of remaining on the first emulator.
@@ -27,7 +54,6 @@ See [Recovery / Sideload](RECOVERY-SIDELOAD.md). These additions are included in
 - Verified animation timing controls, exact-value undo and Shield settings guidance
 - Honest ADB connection acknowledgements, User 0 inventory and conservative Automotive gates
 - Exact package-state journaling and consistent User 0 enable/restore commands
-- Next priorities: capability/user badges, shared live package policy, feature-based cleanup protection and touch remote controls
 
 See [Device support audit](DEVICE-SUPPORT-AUDIT.md) for evidence, limitations and the full prioritized backlog. These improvements are included in 1.0.0-B12; hardware acceptance work remains open.
 
@@ -60,20 +86,16 @@ See [Device support audit](DEVICE-SUPPORT-AUDIT.md) for evidence, limitations an
 - Privacy-redacted support bundles, isolated backups, reviewed script execution, and safer process lifecycle handling
 - Restored separate page bodies and closed native WPF control theme gaps for Dark, Pure Black, and White
 
-## Next
-
-- Profile export/import (`.atmprofile`) with optional APK assets
-- More hardware fixtures and physical-device validation
-- Explicit reversibility states, restore points, and package-data limitations for recommendation scoring
-
 ## Later
 
+- Profile export/import (`.atmprofile`) with optional APK assets
+- Touch/gesture remote once the shell split is in place
+- QR Wireless Debugging pairing and automatic LAN discovery
+- Richer backup history, file browsing, and APK icon extraction
 - scrcpy integration
-- QR Wireless Debugging pairing
-- automatic LAN discovery
 - multi-device operations with explicit per-device confirmation
 - script packs and a safe import library
-- code-signed installer and update notifications
+- code-signed installer and update publisher verification
 
 Android TV Manager will not promise a full device image when standard ADB cannot provide one. Root- or recovery-dependent operations will remain explicitly labeled and opt-in.
 

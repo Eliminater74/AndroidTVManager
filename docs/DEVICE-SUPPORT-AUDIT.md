@@ -4,6 +4,26 @@ This audit adds Shield TV debloat coverage, a Tweaks page, and fixes in connecti
 
 This is a source, automated-test and WPF-render audit, not a hardware certification. No ADB commands were sent to a physical device, and no installed packages or device settings were changed during validation. Firmware-specific behavior still requires the hardware checks below.
 
+## Follow-up status — 1.0.0-B15
+
+Several original findings are closed in Beta 15 and should not be treated as open work:
+
+| Original finding | Status |
+|---|---|
+| Platform-Tools activation does not restore the previous tools directory after a failed swap | **Closed.** Failed activation restores the previous install and verifies `adb version` plus `fastboot.exe` before discarding the backup. |
+| Debloat safety is not a universal policy for Applications, Scripts, and Deployment Profiles | **Closed.** `IPackageSafetyGate` is a required `PackageManager` dependency. Applications, Scripts, and Deployment pass the prepared build fingerprint so live User 0 inventory, Automotive/user evidence, roles, Keep/Critical locks, and fingerprint drift are re-checked immediately before a mutation. |
+| Deployment ABI/TV-feature requirements can warn instead of blocking | **Closed.** Unknown required evidence is no longer a bypassable warning; incompatible mandatory steps fail closed. |
+| Shutdown flush of the tracker, sessions, and logger is unproven from static inspection | **Closed in code.** `ApplicationShutdownCoordinator` stops the tracker, recovers open sessions, and flushes the file logger. Unknown UI exceptions are logged and then terminate the process. Physical exit still needs a B15 smoke check. |
+| APK restore does not verify the expected on-disk set | **Closed.** Restore compares `SHA256SUMS.txt` plus the backup catalog, installs nothing on mismatch, and copy is not presented as app-data restore. |
+| Updater can leave untrusted installers in Temp | **Closed.** Missing/mismatched checksums and payloads over 200 MB are deleted. |
+| Sideload can treat missing live product evidence as compatible | **Closed.** ZIP `pre-device` / updater-script names are compared to live `ro.product.device` and fail closed when unverified. |
+| SQLite schema upgrades have no pre-migration snapshot | **Closed.** `.pre-migrate.bak` copies are kept (two newest), WAL/SHM sidecars are pruned, and `PRAGMA integrity_check` must return `ok`. |
+| Network/Wireless devices cannot be disconnected from the TARGET header | **Closed.** Network and Wireless Debugging targets disconnect from the header and Devices list without deleting saved devices. USB stays attached. |
+
+Beta 15 also introduces `IAdbDeviceSession` for the live list, TARGET selection, sticky preferred endpoint, and the shared disconnect workflow. Pages still receive the selected device from `MainWindowViewModel`; finishing that subscribe model is Beta 16, not more B15 feature work.
+
+Physical-device certification remains open. Automated tests and WPF rendering are not a substitute for the [hardware acceptance checklist](#hardware-acceptance-checklist).
+
 ## Support matrix
 
 | Device | Connection | Cleanup and tweaks | Limits |
@@ -61,32 +81,35 @@ An existing substring comparison could mistake a similarly prefixed disabled pac
 |---|---|
 | Architecture and responsiveness | WPF/MVVM, DI and service boundaries retained. Tracker result reads occur after `Task.WhenAll`. This was not a profiler-based responsiveness audit of every page. |
 | ADB execution | Device commands use the central runner with argument lists, timeouts and cancellation. Tracker and Platform-Tools version probing own specialized process paths. Raw shell remains an explicitly advanced feature. |
-| Applications / Scripts / Deployment Profiles | Debloat safety is not a universal policy for every mutation path. Applications uses its selected assessment; arbitrary scripts and deployment steps do not share all live debloat checks. Add a common live package-policy service before claiming fleet-wide or vehicle-safe cleanup. |
+| Applications / Scripts / Deployment Profiles | Closed in B15. Debloat safety is no longer Debloat-only: `IPackageSafetyGate` is required on `PackageManager`, and Applications/Scripts/Deployment pass the live build fingerprint. A complete user selector (inventory, roles, history, restore, UI) is still missing. |
 | User profiles | Debloat and journaled package state now consistently target User 0. Other commands and detail parsing still have single-user assumptions. A complete user selector must carry the user ID through inventory, roles, actions, history, restore and UI; merely changing a command to `--user current` is insufficient. |
-| Restore | Package reinstallation is not a guarantee of restoring app data. Scripts are sequential, not atomic; a later failure can leave earlier actions applied. Review the journal and undo. |
+| Restore | Package reinstallation is not a guarantee of restoring app data. Scripts are sequential, not atomic; a later failure can leave earlier actions applied. Review the journal and undo. B15 restore confirmation copy states that APK copy does not restore app data, accounts, or settings. |
 | Device identity | Shield matching excludes editable aliases. Some older generic reference families still permit manufacturer fallback and friendly-name matching. Audit these before introducing more consequential profiles. |
-| Deployment compatibility | ABI and TV-feature requirements can currently produce warnings rather than full capability validation. Add live feature/ABI checks and block incompatible mandatory steps. |
-| Backups | Existing APK/split/shared-storage/report support remains. Modern app-private data and complete device images are not generally provided by ordinary ADB. |
+| Deployment compatibility | Closed in B15. Mandatory ABI and Android TV/Google TV requirements fail closed when live evidence is missing or incompatible. |
+| Backups | Existing APK/split/shared-storage/report support remains. Modern app-private data and complete device images are not generally provided by ordinary ADB. B15 APK restore verifies the expected SHA-256 set and catalog. |
 | Remote | Existing D-pad/media/text controls suit Shield. Touch coordinates, gestures, rotation and multi-display targeting would materially improve tablet/head-unit usefulness. |
 | Display and media | Existing HDMI/HDR/CEC evidence, codecs and network diagnostics are reusable on Shield. OEM dumps can be incomplete; returned commands are not proof of real playback quality or negotiated output. |
-| Platform-Tools activation | Download uses Google's official endpoint and validates the staged executable's version. The failure path does not explicitly restore the previous tools directory after every possible activation failure. Add fault-injection coverage and rollback. |
-| Updates | Installer SHA-256 validation exists. Signing, release-asset delivery and actual installation were not exercised. |
-| Database / privacy | Parameterized repository SQL and existing redaction tests retained. No production database was inspected. Full diagnostic exports and advanced shell output can contain sensitive device information; these are not a universal redaction guarantee. |
-| Dependencies | NuGet vulnerability scan including transitive packages reported none from the configured feeds on this date. This is not proof of absence of all security defects. |
-| Shutdown | Async `OnExit` and logger disposal deserve a separate process-exit test; static inspection alone cannot prove journal/log flush completion. |
+| Platform-Tools activation | Closed in B15. Failed activation restores the previous tools directory and verifies the active `adb`/`fastboot` before discarding the backup. |
+| Updates | Installer SHA-256 validation exists, oversized or untrusted downloads are deleted, and signing/publisher checks are still open before stable 1.0. |
+| Database / privacy | Parameterized repository SQL and shared redaction remain. No production database was inspected. Full diagnostic exports and advanced shell output can contain sensitive device information; these are not a universal redaction guarantee. Schema upgrades now snapshot `.pre-migrate.bak` files. |
+| Dependencies | NuGet vulnerability scan including transitive packages reported none from the configured feeds on this date. This is not proof of absence of all security defects. CI still does not run that scan on every build. |
+| Shutdown | Closed in code in B15 (`ApplicationShutdownCoordinator`). Confirm tracker stop, session recovery, and log flush on a real application exit during hardware smoke. |
 
-## Most useful next improvements
+## Remaining work after B15
 
-1. **Capability and user summary in the header.** Show TV/tablet/Automotive evidence, transport, authorization, foreground user and unsupported operations. Separate detected facts from saved labels.
-2. **Feature-based cleanup choices.** Let users declare “I use Plex hosting / casting / voice / game streaming / accessibility,” then protect the corresponding dependencies even in Aggressive mode.
-3. **One package-policy service for every structured action.** Recheck live roles, user scope, build identity and reviewed dependencies for Applications, Scripts and Deployment Profiles, not just Debloat.
-4. **Touch remote with screenshot mapping.** Tap/swipe on a current screenshot, account for rotation and display ID, and refresh coordinates after resolution changes. Keep TV D-pad controls available.
-5. **Connection doctor with device-specific instructions.** Add mDNS discovery, explain unauthorized/offline states and detect likely pairing-versus-debug-port mistakes. Avoid automatic changes to network security.
-6. **Before/after health comparisons.** Compare measured free space, memory, thermal readings and frame/transport evidence. Label unavailable sensors and avoid invented performance percentages.
-7. **Reviewed device contributions.** Accept redacted inventory snapshots with exact model/build, tested feature impacts and recovery results. Keep suggested rules separate from hardware-validated rules.
-8. **Recoverable operation queue.** Show captured target, user, expected changes and available recovery before execution. Support cancellation, partial completion and resumable failed undo.
+Do not add another large subsystem to Beta 15. Smoke the hardening release on hardware, then continue in this order:
 
-These are design recommendations, not features represented as already implemented.
+1. **B16 shell architecture.** Pages should subscribe to `IAdbDeviceSession` instead of `MainWindowViewModel` pushing `SelectedDevice` into twenty page VMs. Typed navigation belongs with that split. Capability badges come immediately after the shared session exists.
+2. **Capability and user summary in the header.** Show facts such as `SHIELD Android TV · Network · User 0 · Android TV · Authorized`, with warning badges for `Secondary user`, `Automotive`, `Offline`, `Unauthorized`, and `Unknown capability`. Separate detected facts from saved labels.
+3. **Restore points and reversibility.** Tell the user whether an operation is Fully reversible, Partially reversible, or Not reversible, and capture package state, runtime roles, relevant settings, fingerprint, and ruleset before a batch mutation.
+4. **Feature-based cleanup choices.** Let users declare “I use Plex hosting / casting / voice / game streaming / accessibility,” then protect the corresponding dependencies even in Aggressive mode.
+5. **Targeted WPF quality pass.** Automate a small smoke set (startup, navigation render, theme switch, device selection, tracker rebuild, disconnect fallback, saved-device reconnect, close-to-tray, settings persistence, clean shutdown). Add visible keyboard focus, useful `AutomationProperties`, keyboard-only navigation, Narrator checks, and 125–200% DPI testing.
+6. **CI before stable.** Add `dotnet list package --vulnerable --include-transitive`, analyzers, coverage for safety-sensitive projects, and CodeQL. Pin important GitHub Actions by commit SHA.
+7. **Release pipeline.** Pin the Inno Setup Chocolatey version. Before stable 1.0, Authenticode-sign the application and installer, and have the updater verify the expected publisher/certificate. SHA-256 proves the download matches the release; signing is a separate authenticity layer.
+8. **Hardware acceptance matrix.** Physical Shield/TV deep inspection, USB Android TV, TCP/IP ADB, Wireless Debugging, Device Status values, package inventory, debloat restore, Pixel C recovery, and installer upgrade/uninstall.
+9. **Later product expansion.** `.atmprofile` export/import, richer backup history, better APK icons, richer file browsing, QR pairing, touch/gesture remote, LAN discovery, scrcpy, and multi-device operations. Touch remote is high once the shell is cleaner.
+
+These are design recommendations, not features represented as already implemented. Item 3 from the original B12 list (one package-policy service) shipped in B15.
 
 ## Validation
 
