@@ -39,6 +39,81 @@ public sealed class DebloatPlannerTests
         plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
     }
 
+    [Fact]
+    public async Task Shield_profile_matches_darcy_without_using_friendly_name()
+    {
+        var planner = CreatePlanner([Package("com.nvidia.stats", isSystem: true)]);
+        var plan = await planner.CreatePlanAsync("tv-1", DebloatPreset.Medium, new AndroidDevice
+        {
+            Serial = "tv-1",
+            Manufacturer = "NVIDIA",
+            Brand = "NVIDIA",
+            Model = "SHIELD Android TV",
+            Product = "darcy",
+            DeviceName = "darcy",
+            AndroidVersion = "11",
+            ApiLevel = 30,
+            State = DeviceState.Device,
+            ConnectionType = ConnectionType.Network
+        });
+
+        plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
+        plan.Items.Single(i => i.Package.PackageName == "com.nvidia.stats").Selected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Darcy_codename_matches_shield_profile_when_model_is_absent()
+    {
+        var plan = await CreatePlanner([Package("com.nvidia.stats")]).CreatePlanAsync(
+            "tv-1",
+            DebloatPreset.Aggressive,
+            new AndroidDevice
+            {
+                Serial = "tv-1",
+                Manufacturer = "NVIDIA",
+                Product = "darcy",
+                DeviceName = "darcy",
+                FriendlyName = "Living Room",
+                State = DeviceState.Device,
+                ConnectionType = ConnectionType.Network
+            });
+
+        plan.ReferenceSummary!.ProfileMatches.Should().Contain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
+        plan.Items.Single().Selected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Friendly_name_alone_does_not_unlock_the_shield_profile()
+    {
+        var plan = await CreatePlanner([Package("com.nvidia.stats")]).CreatePlanAsync(
+            "tv-1",
+            DebloatPreset.Aggressive,
+            new AndroidDevice
+            {
+                Serial = "tv-1",
+                FriendlyName = "NVIDIA SHIELD Android TV darcy",
+                State = DeviceState.Device,
+                ConnectionType = ConnectionType.Network
+            });
+
+        plan.Items.Single().Selected.Should().BeFalse();
+        plan.ReferenceSummary!.ProfileMatches.Should().NotContain(p => p.BaselineId == "nvidia-shield-tv-reviewed");
+    }
+
+    [Fact]
+    public async Task Simple_shield_plan_explains_an_empty_selection()
+    {
+        var plan = await CreatePlanner([
+            Package("com.android.tv.settings", isSystem: true),
+            Package("com.nvidia.ota", isSystem: true)
+        ]).CreatePlanAsync("tv-1", DebloatPreset.Simple, Device("NVIDIA", "SHIELD Android TV", "11"));
+
+        plan.Items.Should().OnlyContain(item => !item.Selected);
+        plan.Warnings.Should().Contain(warning => warning.Contains("Simple selected 0 packages", StringComparison.Ordinal));
+        plan.Items.Should().Contain(item => item.SelectionBlockReason != null
+            && item.SelectionBlockReason.Contains("Locked", StringComparison.OrdinalIgnoreCase));
+    }
+
     [Theory]
     [InlineData("NVIDIA", "SHIELD Tablet")]
     [InlineData("Samsung", "SHIELD Android TV")]

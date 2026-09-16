@@ -68,7 +68,9 @@ public sealed class DebloatPlanner : IDebloatPlanner
         if (inventory.ErrorMessage is not null)
             warnings.Add($"Inventory is incomplete: {inventory.ErrorMessage}");
         if (selected == 0)
-            warnings.Add("No trusted packages matched this preset on the current device.");
+            warnings.Add(preset == DebloatPreset.Simple
+                ? "Simple selected 0 packages. That is expected when this device has no Simple-tier catalog candidates; Keep and Critical packages stay locked. Medium or Aggressive may select reviewed telemetry."
+                : "No trusted packages matched this preset on the current device.");
 
         var baseline = JsonSerializer.Serialize(inventory.Packages.Select(package =>
             new { package.PackageName, package.IsEnabled, package.IsInstalled }));
