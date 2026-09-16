@@ -11,7 +11,7 @@ namespace AndroidTVManager.App.Services;
 
 public interface IConfirmationService
 {
-    bool Confirm(string title, string message);
+    bool Confirm(string title, string message, string confirmLabel = "Continue");
 }
 
 public sealed class WpfConfirmationService : IConfirmationService
@@ -21,10 +21,10 @@ public sealed class WpfConfirmationService : IConfirmationService
     public static double MessageViewportHeight(double workAreaHeight)
         => Math.Clamp(workAreaHeight * 0.55, 180, 420);
 
-    public bool Confirm(string title, string message)
-        => CreateDialog(title, message).ShowDialog() == true;
+    public bool Confirm(string title, string message, string confirmLabel = "Continue")
+        => CreateDialog(title, message, confirmLabel).ShowDialog() == true;
 
-    internal static Window CreateDialog(string title, string message)
+    internal static Window CreateDialog(string title, string message, string confirmLabel = "Continue")
     {
         var workAreaHeight = SystemParameters.WorkArea.Height;
         if (workAreaHeight <= 0)
@@ -79,7 +79,7 @@ public sealed class WpfConfirmationService : IConfirmationService
         cancel.Click += (_, _) => window.DialogResult = false;
         var confirm = new WpfButton
         {
-            Content = "Continue",
+            Content = string.IsNullOrWhiteSpace(confirmLabel) ? "Continue" : confirmLabel,
             Style = ButtonStyle("AccentButtonStyle"),
             Margin = new Thickness(8, 0, 0, 0),
             IsDefault = true

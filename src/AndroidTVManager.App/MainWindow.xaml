@@ -1210,33 +1210,271 @@
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DebloatPageViewModel}">
-            <Grid Margin="34,26,34,28">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <StackPanel>
-                    <TextBlock Text="DEBLOAT" Style="{StaticResource SectionLabelStyle}"/>
-                    <TextBlock Text="Guided package cleanup" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                    <TextBlock Text="Preview every device-specific change. Unknown and critical packages stay protected."
-                               Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0"/>
-                </StackPanel>
-                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,24,0,18">
+            <StackPanel Margin="34,26,34,28">
+                <TextBlock Text="DEBLOAT" Style="{StaticResource SectionLabelStyle}"/>
+                <TextBlock Text="Device-specific one-click cleanup" FontSize="34" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                <TextBlock Text="Safe, Recommended, and Deep run automatically from reviewed device profiles. Custom keeps the package-by-package checklist."
+                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                <Border Style="{StaticResource CardStyle}" Margin="0,24,0,16">
                     <DockPanel>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Button Content="Create preview" Style="{StaticResource AccentButtonStyle}"
-                                    Command="{Binding CreatePlanCommand}" Margin="8,0,0,0"/>
-                            <Button Content="Run selected" Style="{StaticResource DangerButtonStyle}"
-                                    Command="{Binding ExecutePlanCommand}" Margin="8,0,0,0"/>
-                            <Button Content="Restore last" Style="{StaticResource GhostButtonStyle}"
-                                    Command="{Binding RestoreLastCommand}" Margin="8,0,0,0"/>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <Button Content="Refresh profiles" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding RefreshOverviewCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Restore Last Cleanup" Style="{StaticResource CleanupProfileButtonStyle}"
+                                    Command="{Binding RestoreLastCommand}" Margin="8,0,0,0"
+                                    IsEnabled="{Binding CanRestoreLast}"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel>
+                            <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
+                            <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                      ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="280" Margin="0,8,16,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCustomMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="DETECTED PROFILE" Style="{StaticResource SectionLabelStyle}"/>
+                            <TextBlock Text="{Binding DeviceHeading}" FontSize="22" FontWeight="SemiBold" Margin="0,8,0,0"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding DetectedProfileText}" Foreground="{StaticResource CyanAccent}"
+                                       FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding ProfileDetailText}" Foreground="{StaticResource TextSecondary}"
+                                       TextWrapping="Wrap" Margin="0,6,0,0"/>
+                            <TextBlock Text="{Binding ScanSummary}" Foreground="{StaticResource TextSecondary}"
+                                       Margin="0,10,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Text="Protected" Style="{StaticResource SectionLabelStyle}" Margin="0,14,0,0"/>
+                            <ItemsControl ItemsSource="{Binding Overview.ProtectedHighlights}" Margin="0,8,0,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="6"
+                                                Padding="8,4" Margin="0,0,8,6">
+                                            <TextBlock Text="{Binding}" Foreground="{StaticResource TextSecondary}" FontSize="12"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,0,0,16">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasLastResult}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <TextBlock Text="CLEANUP STATUS" Style="{StaticResource SectionLabelStyle}"/>
+                            <TextBlock Text="{Binding LastResult.Summary}" Foreground="{StaticResource GreenAccent}"
+                                       TextWrapping="Wrap" Margin="0,8,0,0"/>
+                            <TextBlock Text="{Binding LastCleanupSummary}" Foreground="{StaticResource TextSecondary}"
+                                       TextWrapping="Wrap" Margin="0,8,0,0"/>
+                            <Button Content="Restore Last Cleanup" Style="{StaticResource CleanupProfileButtonStyle}"
+                                    Command="{Binding RestoreLastCommand}" Margin="0,14,0,0"
+                                    IsEnabled="{Binding CanRestoreLast}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <UniformGrid Columns="2" Margin="0,0,0,8">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,8,8">
                             <StackPanel>
-                                <TextBlock Text="TARGET DEVICE" Style="{StaticResource SectionLabelStyle}"/>
-                                <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                          ItemTemplate="{StaticResource DeviceSelectorTemplate}" Width="250" Margin="0,8,16,0"/>
+                                <TextBlock Text="SAFE CLEANUP" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock Text="{Binding SafeProfile.Description}" FontSize="16" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SafeProfile.StatusText}" Foreground="{StaticResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Foreground="{StaticResource CyanAccent}" Margin="0,8,0,0">
+                                    <Run Text="{Binding SafeProfile.ActionCount, Mode=OneWay}"/>
+                                    <Run Text=" packages"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding SafeProfile.ReversibilityLabel}"
+                                           Foreground="{StaticResource GreenAccent}" Margin="0,4,0,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                    <Button Content="{Binding SafeActionLabel}"
+                                            Style="{StaticResource CleanupProfileButtonStyle}"
+                                            Command="{Binding RunCleanupCommand}"
+                                            CommandParameter="{x:Static models:DebloatCleanupKind.Safe}"
+                                            IsEnabled="{Binding CanRunSafe}"/>
+                                    <Button Content="View packages" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding ViewProfilePackagesCommand}"
+                                            CommandParameter="{x:Static models:DebloatCleanupKind.Safe}"
+                                            Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardStyle}" Margin="8,0,0,8"
+                                BorderBrush="{StaticResource CyanAccent}" BorderThickness="2">
+                            <StackPanel>
+                                <TextBlock Text="RECOMMENDED CLEANUP" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock Text="{Binding RecommendedProfile.Description}" FontSize="16" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding RecommendedProfile.StatusText}" Foreground="{StaticResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Foreground="{StaticResource CyanAccent}" Margin="0,8,0,0">
+                                    <Run Text="{Binding RecommendedProfile.ActionCount, Mode=OneWay}"/>
+                                    <Run Text=" packages"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding RecommendedProfile.ReversibilityLabel}"
+                                           Foreground="{StaticResource GreenAccent}" Margin="0,4,0,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                    <Button Content="{Binding RecommendedActionLabel}"
+                                            Style="{StaticResource CleanupProfileButtonStyle}"
+                                            Command="{Binding RunCleanupCommand}"
+                                            CommandParameter="{x:Static models:DebloatCleanupKind.Recommended}"
+                                            IsEnabled="{Binding CanRunRecommended}"/>
+                                    <Button Content="View packages" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding ViewProfilePackagesCommand}"
+                                            CommandParameter="{x:Static models:DebloatCleanupKind.Recommended}"
+                                            Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardStyle}" Margin="0,8,8,0">
+                            <StackPanel>
+                                <TextBlock Text="DEEP CLEANUP" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock Text="{Binding DeepProfile.Description}" FontSize="16" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding DeepProfile.StatusText}" Foreground="{StaticResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Foreground="{StaticResource AmberAccent}" Margin="0,8,0,0">
+                                    <Run Text="{Binding DeepProfile.AdditionalActionCount, Mode=OneWay}"/>
+                                    <Run Text=" additional packages"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding DeepProfile.ReversibilityLabel}"
+                                           Foreground="{StaticResource AmberAccent}" Margin="0,4,0,0"/>
+                                <ItemsControl ItemsSource="{Binding DeepProfile.FeatureImpacts}" Margin="0,8,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Foreground="{StaticResource TextMuted}"
+                                                       TextWrapping="Wrap" Margin="0,0,0,3"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                    <Button Content="{Binding DeepActionLabel}"
+                                            Style="{StaticResource CleanupProfileButtonStyle}"
+                                            Command="{Binding RunCleanupCommand}"
+                                            CommandParameter="{x:Static models:DebloatCleanupKind.Deep}"
+                                            IsEnabled="{Binding CanRunDeep}"/>
+                                    <Button Content="View packages" Style="{StaticResource GhostButtonStyle}"
+                                            Command="{Binding ViewProfilePackagesCommand}"
+                                            CommandParameter="{x:Static models:DebloatCleanupKind.Deep}"
+                                            Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardStyle}" Margin="8,8,0,0">
+                            <StackPanel>
+                                <TextBlock Text="CUSTOM" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock Text="Choose individual packages and actions." FontSize="16" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <TextBlock Text="Inspect risk, reference profile, impact, and current state. Simple / Medium / Aggressive remain available here."
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                <Button Content="Open Custom Cleanup" Style="{StaticResource CleanupProfileButtonStyle}"
+                                        Command="{Binding OpenCustomCommand}" Margin="0,14,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Border Margin="0,8,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowProfileDetails}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Close" Style="{StaticResource GhostButtonStyle}"
+                                        Command="{Binding CloseProfileDetailsCommand}"/>
+                                <TextBlock Text="SELECTED PACKAGES" Style="{StaticResource SectionLabelStyle}"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
+                            <TextBlock Text="Inspection is optional. Safe and Recommended do not require checking boxes."
+                                       Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            <ItemsControl ItemsSource="{Binding ProfileDetailItems}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
+                                                Padding="12" Margin="0,0,0,6">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Package.PackageName}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding WhySelected}" Foreground="{StaticResource CyanAccent}"
+                                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                <TextBlock Text="{Binding ActionSummary}" Foreground="{StaticResource TextSecondary}"
+                                                           Margin="0,4,0,0"/>
+                                                <TextBlock Text="{Binding Assessment.Risk, StringFormat=Risk: {0}}"
+                                                           Foreground="{StaticResource AmberAccent}" Margin="0,4,0,0"/>
+                                                <TextBlock Text="{Binding ImpactSummary}" Foreground="{StaticResource TextMuted}"
+                                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCustomMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Back to profiles" Style="{StaticResource GhostButtonStyle}"
+                                    Command="{Binding CloseCustomCommand}"/>
+                            <StackPanel>
+                                <TextBlock Text="CUSTOM CLEANUP" Style="{StaticResource SectionLabelStyle}"/>
+                                <TextBlock Text="Inspect packages, change selections, then run. Create preview remains part of this advanced path."
+                                           Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                <Button Content="Create preview" Style="{StaticResource AccentButtonStyle}"
+                                        Command="{Binding CreatePlanCommand}" Margin="8,0,0,0"/>
+                                <Button Content="Run selected" Style="{StaticResource DangerButtonStyle}"
+                                        Command="{Binding ExecutePlanCommand}" Margin="8,0,0,0"/>
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="PRESET" Style="{StaticResource SectionLabelStyle}"/>
@@ -1254,158 +1492,159 @@
                                                  CommandParameter="{x:Static models:DebloatPreset.Aggressive}"/>
                                 </StackPanel>
                             </StackPanel>
-                        </StackPanel>
-                    </DockPanel>
-                </Border>
-                <StackPanel Grid.Row="2">
-                    <StackPanel>
-                        <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
-                        <TextBlock Text="{Binding PlanProfileSummary}" Foreground="{StaticResource CyanAccent}"
-                                   FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Text="{Binding IconStatus}" Foreground="{StaticResource TextMuted}"
-                                   FontSize="11" Margin="0,0,0,8"/>
-                        <ItemsControl ItemsSource="{Binding Plan.Warnings}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="7" Padding="10" Margin="0,0,0,5">
-                                        <TextBlock Text="{Binding}" Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
-                            <StackPanel>
-                                <TextBlock Text="ACTIVE REFERENCE PROFILES" Style="{StaticResource SectionLabelStyle}"/>
-                                <TextBlock Text="{Binding AvailableProfileSummary}"
-                                           Foreground="{StaticResource TextSecondary}"
-                                           Margin="0,6,0,0"/>
-                                <ItemsControl ItemsSource="{Binding ReferenceProfiles}" Margin="0,10,0,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,6">
+                        </DockPanel>
+                    </Border>
+                    <TextBlock Text="{Binding PlanProfileSummary}" Foreground="{StaticResource CyanAccent}"
+                               FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding IconStatus}" Foreground="{StaticResource TextMuted}"
+                               FontSize="11" Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding Plan.Warnings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceSecondaryBrush}" CornerRadius="7" Padding="10" Margin="0,0,0,5">
+                                    <TextBlock Text="{Binding}" Foreground="{StaticResource AmberAccent}" TextWrapping="Wrap"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+                        <StackPanel>
+                            <TextBlock Text="PLAN ITEMS" Style="{StaticResource SectionLabelStyle}"/>
+                            <ItemsControl ItemsSource="{Binding PlanItems}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
+                                                Padding="12" Margin="0,0,0,6">
+                                            <Grid>
                                                 <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="32"/>
+                                                    <ColumnDefinition Width="38"/>
+                                                    <ColumnDefinition Width="212"/>
+                                                    <ColumnDefinition Width="100"/>
                                                     <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="110"/>
-                                                    <ColumnDefinition Width="95"/>
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding BaselineName}" FontWeight="SemiBold"
-                                                               TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding Generation}"
-                                                               Foreground="{StaticResource TextMuted}"
-                                                               FontSize="11" TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding Origin}"
-                                                           Foreground="{StaticResource CyanAccent}"/>
-                                                <TextBlock Grid.Column="2"
-                                                           Foreground="{StaticResource TextSecondary}">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}/{1} matched">
-                                                            <Binding Path="MatchedPackages"/>
-                                                            <Binding Path="PackageRecords"/>
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <TextBlock Text="PROFILE CATALOG" Style="{StaticResource SectionLabelStyle}"
-                                           Margin="0,12,0,0"/>
-                                <ItemsControl ItemsSource="{Binding AvailableReferenceProfiles}" Margin="0,10,0,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,5">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="110"/>
-                                                    <ColumnDefinition Width="80"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding BaselineName}" TextWrapping="Wrap"/>
-                                                <TextBlock Grid.Column="1" Text="{Binding Origin}"
-                                                           Foreground="{StaticResource TextMuted}"/>
-                                                <TextBlock Grid.Column="2"
-                                                           Text="{Binding PackageRecords, StringFormat={}{0} records}"
-                                                           Foreground="{StaticResource TextSecondary}"/>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
-                            <StackPanel>
-                                <TextBlock Text="PLAN ITEMS" Style="{StaticResource SectionLabelStyle}"/>
-                                <ItemsControl ItemsSource="{Binding PlanItems}" Margin="0,12,0,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource PanelRaisedBackground}" CornerRadius="8"
-                                                    Padding="12" Margin="0,0,0,6">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="32"/>
-                                                        <ColumnDefinition Width="38"/>
-                                                        <ColumnDefinition Width="212"/>
-                                                        <ColumnDefinition Width="100"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                              IsEnabled="{Binding CanSelect}"
-                                                              VerticalAlignment="Top"
-                                                              ToolTip="{Binding SelectionLabel}"/>
-                                                    <Border Width="30" Height="30" CornerRadius="6"
-                                                            Grid.Column="1"
-                                                            Background="{StaticResource SurfaceSecondaryBrush}">
-                                                        <Grid>
-                                                            <TextBlock Text="▦" FontSize="17"
-                                                                       Foreground="{StaticResource TextSecondary}"
-                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                            <Image Source="{Binding Package.IconPath}" Width="28" Height="28"
-                                                                   Stretch="Uniform"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <StackPanel Grid.Column="2">
-                                                        <TextBlock Text="{Binding Package.PackageName}"
+                                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          IsEnabled="{Binding CanSelect}"
+                                                          VerticalAlignment="Top"
+                                                          ToolTip="{Binding SelectionLabel}"/>
+                                                <Border Width="30" Height="30" CornerRadius="6"
+                                                        Grid.Column="1"
+                                                        Background="{StaticResource SurfaceSecondaryBrush}">
+                                                    <Grid>
+                                                        <TextBlock Text="▦" FontSize="17"
+                                                                   Foreground="{StaticResource TextSecondary}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Image Source="{Binding Package.IconPath}" Width="28" Height="28"
+                                                               Stretch="Uniform"/>
+                                                    </Grid>
+                                                </Border>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="{Binding Package.PackageName}"
                                                                FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding ProfileSummary}"
-                                                                   Foreground="{StaticResource CyanAccent}"
-                                                                   FontSize="11" TextWrapping="Wrap"
-                                                                   Margin="0,3,0,0"/>
-                                                        <TextBlock Text="{Binding Assessment.Description}"
-                                                                   Foreground="{StaticResource TextSecondary}"
-                                                                   TextWrapping="Wrap" Margin="0,3,0,0"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="3">
-                                                        <TextBlock Text="{Binding Assessment.Risk}"
-                                                                   Foreground="{StaticResource AmberAccent}"/>
-                                                        <TextBlock Text="{Binding Assessment.Confidence}"
-                                                                   Foreground="{StaticResource TextMuted}"
-                                                                   FontSize="11" Margin="0,3,0,0"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="4">
-                                                        <TextBlock Text="{Binding SelectionLabel}"
-                                                                   Foreground="{StaticResource TextSecondary}"
-                                                                   TextWrapping="Wrap"/>
-                                                        <TextBlock Text="{Binding ActionSummary}"
-                                                                   Foreground="{StaticResource CyanAccent}"
-                                                                   TextWrapping="Wrap" Margin="0,3,0,0"/>
-                                                        <TextBlock Text="{Binding ImpactSummary}"
+                                                    <TextBlock Text="{Binding ProfileSummary}"
+                                                               Foreground="{StaticResource CyanAccent}"
+                                                               FontSize="11" TextWrapping="Wrap"
+                                                               Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding WhySelected}"
+                                                               Foreground="{StaticResource TextSecondary}"
+                                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding Assessment.Description}"
+                                                               Foreground="{StaticResource TextSecondary}"
+                                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="3">
+                                                    <TextBlock Text="{Binding Assessment.Risk}"
+                                                               Foreground="{StaticResource AmberAccent}"/>
+                                                    <TextBlock Text="{Binding Assessment.Confidence}"
+                                                               Foreground="{StaticResource TextMuted}"
+                                                               FontSize="11" Margin="0,3,0,0"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="4">
+                                                    <TextBlock Text="{Binding SelectionLabel}"
+                                                               Foreground="{StaticResource TextSecondary}"
+                                                               TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding ActionSummary}"
+                                                               Foreground="{StaticResource CyanAccent}"
+                                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding ImpactSummary}"
                                                                Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
-                                                        <TextBlock Text="{Binding EvidenceSummary}"
+                                                    <TextBlock Text="{Binding EvidenceSummary}"
                                                                Foreground="{StaticResource TextMuted}" TextWrapping="Wrap"
                                                                Margin="0,3,0,0"/>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </Grid>
+
+                <Expander Header="ADVANCED DETAILS — WHY THIS PROFILE WAS SELECTED" IsExpanded="False" Margin="0,16,0,0">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="ACTIVE REFERENCE PROFILES" Style="{StaticResource SectionLabelStyle}"/>
+                            <TextBlock Text="{Binding AvailableProfileSummary}"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       Margin="0,6,0,0"/>
+                            <ItemsControl ItemsSource="{Binding ReferenceProfiles}" Margin="0,10,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="95"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding BaselineName}" FontWeight="SemiBold"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Generation}"
+                                                           Foreground="{StaticResource TextMuted}"
+                                                           FontSize="11" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Origin}"
+                                                       Foreground="{StaticResource CyanAccent}"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Foreground="{StaticResource TextSecondary}">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}/{1} matched">
+                                                        <Binding Path="MatchedPackages"/>
+                                                        <Binding Path="PackageRecords"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="PROFILE CATALOG" Style="{StaticResource SectionLabelStyle}"
+                                       Margin="0,12,0,0"/>
+                            <ItemsControl ItemsSource="{Binding AvailableReferenceProfiles}" Margin="0,10,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="80"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding BaselineName}" TextWrapping="Wrap"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Origin}"
+                                                       Foreground="{StaticResource TextMuted}"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding PackageRecords, StringFormat={}{0} records}"
+                                                       Foreground="{StaticResource TextSecondary}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+            </StackPanel>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:BackupPageViewModel}">
             <Grid Margin="34,26,34,28">

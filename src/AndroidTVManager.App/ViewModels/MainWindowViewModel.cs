@@ -39,6 +39,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IConfigurationExplorerService _configurationService;
     private readonly IConfigurationSnapshotStore _configurationSnapshots;
     private readonly IDebloatPlanner _debloatPlanner;
+    private readonly IDebloatCleanupService _debloatCleanup;
     private readonly IDebloatExecutionService _debloatExecutionService;
     private readonly IAdbCommandService _commandService;
     private readonly IPackageInventoryService _packageInventoryService;
@@ -95,6 +96,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IConfigurationExplorerService configurationService,
         IConfigurationSnapshotStore configurationSnapshots,
         IDebloatPlanner debloatPlanner,
+        IDebloatCleanupService debloatCleanup,
         IDebloatExecutionService debloatExecutionService,
         IAdbCommandService commandService,
         IPackageInventoryService packageInventoryService,
@@ -143,6 +145,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _configurationService = configurationService;
         _configurationSnapshots = configurationSnapshots;
         _debloatPlanner = debloatPlanner;
+        _debloatCleanup = debloatCleanup;
         _debloatExecutionService = debloatExecutionService;
         _commandService = commandService;
         _packageInventoryService = packageInventoryService;
@@ -281,8 +284,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Applications" => new ApplicationsPageViewModel(_packageManager, _packageInventoryService, _packageIconService,
             _packagePreferences, _packageClassifier, _packageReferenceCatalog, _referencePackageDumpService,
             _confirmation, _settingsStore, Devices),
-        "Debloat" => new DebloatPageViewModel(_debloatPlanner, _debloatExecutionService, _confirmation,
-            _packageIconService, _settingsStore, _packageReferenceCatalog, Devices),
+        "Debloat" => new DebloatPageViewModel(
+            _debloatPlanner,
+            _debloatCleanup,
+            _debloatExecutionService,
+            _confirmation,
+            _packageIconService,
+            _settingsStore,
+            _packageReferenceCatalog,
+            Devices),
         "Backup / Restore" => new BackupPageViewModel(_backupService, _paths, Devices),
         "Scripts" => new ScriptsPageViewModel(_scriptExecutionService, _confirmation, Devices),
         "Tools" => new ToolsPageViewModel(_toolsService, _commandService, Devices),
@@ -433,7 +443,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         "Advanced Diagnostics" => "Inspect network, media codecs, boot state, and shared device storage.",
         "Device Comparison" => "Compare two connected devices across build, package, display, security, and capability evidence.",
         "Applications" => "Inspect and manage installed packages.",
-        "Debloat" => "Preview conservative, device-specific package changes.",
+        "Debloat" => "Device-specific one-click cleanup profiles, with Custom for package-by-package review.",
         "Tweaks" => "Verified animation timing controls and NVIDIA Shield settings guidance.",
         "Recovery / Sideload" => "Guided recovery preparation and file-based Android update sideloading.",
         "Backup / Restore" => "Create safe device backups and restore APKs.",
@@ -768,6 +778,7 @@ public sealed partial class DeviceStatusPageViewModel : PageViewModel
 public sealed partial class DebloatPageViewModel : PageViewModel
 {
     private readonly IDebloatPlanner _planner;
+    private readonly IDebloatCleanupService _cleanup;
     private readonly IDebloatExecutionService _execution;
     private readonly IConfirmationService _confirmation;
     private readonly IPackageIconService _iconService;
@@ -776,10 +787,11 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     private readonly Task _settingsLoaded;
     private readonly SemaphoreSlim _iconThrottle = new(4, 4);
     private CancellationTokenSource? _iconSource;
-    private long? _lastExecutionId;
+    private CancellationTokenSource? _scanSource;
 
     public DebloatPageViewModel(
         IDebloatPlanner planner,
+        IDebloatCleanupService cleanup,
         IDebloatExecutionService execution,
         IConfirmationService confirmation,
         IPackageIconService iconService,
@@ -788,6 +800,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         ObservableCollection<AndroidDevice> devices) : base("Debloat")
     {
         _planner = planner;
+        _cleanup = cleanup;
         _execution = execution;
         _confirmation = confirmation;
         _iconService = iconService;
@@ -801,6 +814,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     public ObservableCollection<AndroidDevice> Devices { get; }
     public IReadOnlyList<DebloatPreset> Presets { get; } = Enum.GetValues<DebloatPreset>();
     public ObservableCollection<DebloatPlanItemViewModel> PlanItems { get; } = [];
+    public ObservableCollection<DebloatPlanItemViewModel> ProfileDetailItems { get; } = [];
     public ObservableCollection<PackageReferenceProfileMatch> ReferenceProfiles { get; } = [];
     public IReadOnlyList<PackageReferenceProfileMatch> AvailableReferenceProfiles { get; }
     public string AvailableProfileSummary => $"{AvailableReferenceProfiles.Count} reference profile(s) loaded";
@@ -809,19 +823,40 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     private AndroidDevice? _selectedDevice;
 
     [ObservableProperty]
-    private DebloatPreset _selectedPreset = DebloatPreset.Simple;
+    private DebloatPreset _selectedPreset = DebloatPreset.Medium;
 
     [ObservableProperty]
     private DebloatPlan? _plan;
 
     [ObservableProperty]
-    private string _status = "Generate a preview before changing anything.";
+    private DebloatCleanupOverview? _overview;
+
+    [ObservableProperty]
+    private DebloatCleanupResult? _lastResult;
+
+    [ObservableProperty]
+    private string _status = "Connect a device to load cleanup profiles.";
 
     [ObservableProperty]
     private string _iconStatus = string.Empty;
 
     [ObservableProperty]
     private bool _showPackageIcons;
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    [ObservableProperty]
+    private bool _isCustomMode;
+
+    [ObservableProperty]
+    private bool _showProfileDetails;
+
+    [ObservableProperty]
+    private DebloatCleanupKind _inspectedKind = DebloatCleanupKind.Recommended;
+
+    public bool HasAuthorizedTarget
+        => SelectedDevice is { State: DeviceState.Device };
 
     public bool IsSimplePreset => SelectedPreset == DebloatPreset.Simple;
     public bool IsMediumPreset => SelectedPreset == DebloatPreset.Medium;
@@ -832,14 +867,54 @@ public sealed partial class DebloatPageViewModel : PageViewModel
           $"{summary.UnknownPackages} unknown"
         : "No device profile analysis has been generated yet.";
 
+    public string DeviceHeading
+        => SelectedDevice?.DisplayLabel ?? "No device selected";
+
+    public string DetectedProfileText
+        => Overview?.DetectedProfileLabel
+            ?? (HasAuthorizedTarget ? "Scanning device profile…" : "Connect a device");
+
+    public string ProfileDetailText => Overview?.ProfileDetail ?? string.Empty;
+
+    public string ScanSummary
+        => Overview is null
+            ? HasAuthorizedTarget ? "Waiting for a live package scan." : "No authorized target is selected."
+            : $"{Overview.PackagesScanned} packages scanned"
+              + (Overview.UnknownLeftUntouched > 0
+                  ? $" · {Overview.UnknownLeftUntouched} unknown packages were left untouched."
+                  : string.Empty);
+
+    public string ProtectedSummary
+        => Overview is null ? string.Empty : string.Join(Environment.NewLine, Overview.ProtectedHighlights);
+
+    public DebloatCleanupProfileState? SafeProfile => Overview?.Profile(DebloatCleanupKind.Safe);
+    public DebloatCleanupProfileState? RecommendedProfile => Overview?.Profile(DebloatCleanupKind.Recommended);
+    public DebloatCleanupProfileState? DeepProfile => Overview?.Profile(DebloatCleanupKind.Deep);
+
+    public string LastCleanupSummary
+        => LastResult is null
+            ? string.Empty
+            : $"Last cleanup:{Environment.NewLine}{LastResult.ProfileName}{Environment.NewLine}{LastResult.DeviceLabel}{Environment.NewLine}{LastResult.Succeeded + LastResult.Failed} changes · {LastResult.CompletedUtc.ToLocalTime():g}";
+
+    public bool HasLastResult => LastResult is not null;
+    public bool CanRestoreLast => LastResult is { CanRestore: true, ExecutionId: not null };
+
+    public string SafeActionLabel => ProfileActionLabel(SafeProfile, "Run Safe Cleanup");
+    public string RecommendedActionLabel => ProfileActionLabel(RecommendedProfile, "Run Recommended Cleanup");
+    public string DeepActionLabel => ProfileActionLabel(DeepProfile, "Review / Run Deep Cleanup");
+    public bool CanRunSafe => CanRun(SafeProfile);
+    public bool CanRunRecommended => CanRun(RecommendedProfile);
+    public bool CanRunDeep => CanRun(DeepProfile);
+
     partial void OnSelectedDeviceChanged(AndroidDevice? value)
     {
         _iconSource?.Cancel();
-        Plan = null;
-        PlanItems.Clear();
-        ReferenceProfiles.Clear();
-        Status = value is null ? "Select a connected device." : $"Ready to analyze {value.Serial}.";
-        IconStatus = string.Empty;
+        ResetWorkspace(value is null
+            ? "Connect a device to load cleanup profiles."
+            : $"Loading cleanup profiles for {value.DisplayLabel}…");
+        NotifyProfileState();
+        if (value is { State: DeviceState.Device })
+            _ = RefreshOverviewAsync();
     }
 
     partial void OnSelectedPresetChanged(DebloatPreset value)
@@ -847,24 +922,210 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         OnPropertyChanged(nameof(IsSimplePreset));
         OnPropertyChanged(nameof(IsMediumPreset));
         OnPropertyChanged(nameof(IsAggressivePreset));
-        Plan = null;
-        PlanItems.Clear();
-        ReferenceProfiles.Clear();
-        Status = $"Preset set to {value}. Create a new preview to apply its defaults.";
+        if (IsCustomMode)
+        {
+            Plan = null;
+            PlanItems.Clear();
+            Status = $"Custom preset set to {value}. Create a preview to inspect packages.";
+        }
     }
 
     partial void OnPlanChanged(DebloatPlan? value)
     {
         ReferenceProfiles.Clear();
-        foreach (var profile in value?.ReferenceSummary?.ProfileMatches ?? [])
+        foreach (var profile in value?.ReferenceSummary?.ProfileMatches ?? Overview?.ActiveProfiles ?? [])
             ReferenceProfiles.Add(profile);
         OnPropertyChanged(nameof(PlanProfileSummary));
     }
 
+    partial void OnOverviewChanged(DebloatCleanupOverview? value)
+    {
+        if (Plan is null)
+        {
+            ReferenceProfiles.Clear();
+            foreach (var profile in value?.ActiveProfiles ?? [])
+                ReferenceProfiles.Add(profile);
+        }
+        NotifyProfileState();
+    }
+
+    partial void OnLastResultChanged(DebloatCleanupResult? value)
+    {
+        OnPropertyChanged(nameof(LastCleanupSummary));
+        OnPropertyChanged(nameof(HasLastResult));
+        OnPropertyChanged(nameof(CanRestoreLast));
+    }
+
+    partial void OnIsBusyChanged(bool value)
+        => NotifyProfileState();
+
     [RelayCommand]
     private void SelectPreset(DebloatPreset preset)
+        => SelectedPreset = preset;
+
+    [RelayCommand]
+    private void OpenCustom()
     {
-        SelectedPreset = preset;
+        IsCustomMode = true;
+        Status = "Custom cleanup: inspect packages, or create a preview with Simple / Medium / Aggressive.";
+        if (PlanItems.Count == 0 && HasAuthorizedTarget)
+            _ = CreatePlanAsync();
+    }
+
+    [RelayCommand]
+    private void CloseCustom()
+    {
+        IsCustomMode = false;
+        Status = Overview is null ? "Connect a device to load cleanup profiles." : "Choose a cleanup profile.";
+    }
+
+    [RelayCommand]
+    private void ViewProfilePackages(DebloatCleanupKind kind)
+    {
+        if (Overview is null)
+            return;
+        InspectedKind = kind;
+        var plan = _cleanup.CreateProfilePlan(Overview, kind);
+        ProfileDetailItems.Clear();
+        foreach (var item in plan.Items.Where(item => item.Selected))
+            ProfileDetailItems.Add(new DebloatPlanItemViewModel(item));
+        ShowProfileDetails = true;
+        Status = ProfileDetailItems.Count == 0
+            ? $"{kind} has no packages to inspect."
+            : $"{ProfileDetailItems.Count} package(s) selected by {kind}. Inspection is optional.";
+    }
+
+    [RelayCommand]
+    private void CloseProfileDetails()
+    {
+        ShowProfileDetails = false;
+        ProfileDetailItems.Clear();
+    }
+
+    [RelayCommand]
+    private async Task RefreshOverviewAsync()
+    {
+        if (!HasAuthorizedTarget)
+        {
+            Status = "Connect a device to load cleanup profiles.";
+            return;
+        }
+
+        _scanSource?.Cancel();
+        _scanSource = new CancellationTokenSource();
+        var token = _scanSource.Token;
+        var target = SelectedDevice!;
+        IsBusy = true;
+        try
+        {
+            await _settingsLoaded;
+            Status = $"Scanning packages on {target.DisplayLabel}…";
+            var overview = await _cleanup.CreateOverviewAsync(target.Serial, target, token);
+            if (token.IsCancellationRequested || SelectedDevice?.Serial != target.Serial)
+                return;
+            Overview = overview;
+            Status = overview.UnknownLeftUntouched > 0
+                ? $"{overview.UnknownLeftUntouched} unknown packages were left untouched."
+                : "Cleanup profiles are ready.";
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            Status = $"Profile scan failed: {exception.Message}";
+        }
+        finally
+        {
+            if (!token.IsCancellationRequested)
+                IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RunCleanupAsync(DebloatCleanupKind kind)
+    {
+        if (!HasAuthorizedTarget)
+        {
+            Status = "Connect a device before running cleanup.";
+            return;
+        }
+        if (kind == DebloatCleanupKind.Custom)
+        {
+            OpenCustom();
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var target = SelectedDevice!;
+            var overview = await _cleanup.CreateOverviewAsync(target.Serial, target);
+            if (SelectedDevice?.Serial != target.Serial)
+            {
+                Status = "The selected device changed. Cleanup was not started.";
+                Overview = overview;
+                return;
+            }
+            Overview = overview;
+            var profile = overview.Profile(kind);
+            if (profile is null || !profile.HasActions)
+            {
+                Status = profile?.StatusText ?? "Nothing to clean.";
+                return;
+            }
+
+            var plan = _cleanup.CreateProfilePlan(overview, kind);
+            if (!_confirmation.Confirm(
+                    profile.DisplayName,
+                    BuildConfirmation(target, profile, plan),
+                    "Run Cleanup"))
+            {
+                Status = $"{profile.DisplayName} canceled.";
+                return;
+            }
+
+            var live = await _cleanup.CreateOverviewAsync(target.Serial, SelectedDevice);
+            if (SelectedDevice?.Serial != target.Serial
+                || !string.Equals(live.BuildFingerprint, overview.BuildFingerprint, StringComparison.Ordinal)
+                || !SameActions(plan, _cleanup.CreateProfilePlan(live, kind)))
+            {
+                Overview = live;
+                Status = "The device state changed since this cleanup was prepared. AndroidTVManager rebuilt the cleanup plan. Review the updated result.";
+                return;
+            }
+
+            var result = await _execution.ExecuteAsync(_cleanup.CreateProfilePlan(live, kind));
+            LastResult = new(
+                kind,
+                profile.DisplayName,
+                target.DisplayLabel,
+                target.Serial,
+                DateTimeOffset.UtcNow,
+                result.SuccessfulActions,
+                result.FailedActions,
+                profile.AlreadyCleanedCount,
+                result.CanUndo,
+                result.ExecutionId,
+                FormatExecution(profile.DisplayName, result, profile.AlreadyCleanedCount));
+            Overview = await _cleanup.CreateOverviewAsync(target.Serial, SelectedDevice);
+            Status = LastResult.Summary;
+        }
+        catch (Exception exception)
+        {
+            Status = exception.Message.Contains("device state changed", StringComparison.OrdinalIgnoreCase)
+                ? exception.Message
+                : $"Cleanup failed: {exception.Message}";
+            if (HasAuthorizedTarget)
+            {
+                try { Overview = await _cleanup.CreateOverviewAsync(SelectedDevice!.Serial, SelectedDevice); }
+                catch { /* keep the failure message */ }
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -877,6 +1138,7 @@ public sealed partial class DebloatPageViewModel : PageViewModel
         }
         try
         {
+            IsCustomMode = true;
             Status = $"Analyzing packages on {SelectedDevice.Serial}…";
             var target = SelectedDevice;
             Plan = null;
@@ -969,12 +1231,18 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             Status = "Create a plan and select its target first.";
             return;
         }
+        if (SelectedDevice.Serial != Plan.Serial)
+        {
+            Status = "The selected device changed. Create a new Custom preview.";
+            return;
+        }
         var selected = SelectedCount;
         if (!_confirmation.Confirm(
-                $"Run {Plan.Preset} debloat",
-                $"This will disable {selected} package(s) on target:\n{Plan.Serial}\n\nCritical packages remain locked. Manually selected Unknown packages require your review. Continue?"))
+                $"Run {Plan.Preset} custom cleanup",
+                $"This will change {selected} package(s) on target:{Environment.NewLine}{Plan.Serial}{Environment.NewLine}{Environment.NewLine}Critical packages remain locked. Manually selected Unknown packages require your review.",
+                "Run Cleanup"))
         {
-            Status = "Debloat canceled.";
+            Status = "Custom cleanup canceled.";
             return;
         }
         try
@@ -988,9 +1256,22 @@ public sealed partial class DebloatPageViewModel : PageViewModel
                         : []).ToArray()
             };
             var result = await _execution.ExecuteAsync(executionPlan);
-            _lastExecutionId = result.ExecutionId;
-            var summary = $"Debloat {result.Status.ToLowerInvariant()}: {result.SuccessfulActions} succeeded, {result.FailedActions} failed.";
+            LastResult = new(
+                DebloatCleanupKind.Custom,
+                $"Custom {Plan.Preset}",
+                SelectedDevice.DisplayLabel,
+                Plan.Serial,
+                DateTimeOffset.UtcNow,
+                result.SuccessfulActions,
+                result.FailedActions,
+                0,
+                result.CanUndo,
+                result.ExecutionId,
+                FormatExecution($"Custom {Plan.Preset}", result, 0));
+            var summary = LastResult.Summary;
             await RefreshPlanAfterMutationAsync(summary);
+            if (HasAuthorizedTarget)
+                Overview = await _cleanup.CreateOverviewAsync(SelectedDevice.Serial, SelectedDevice);
         }
         catch (Exception exception)
         {
@@ -1001,16 +1282,39 @@ public sealed partial class DebloatPageViewModel : PageViewModel
     [RelayCommand]
     private async Task RestoreLastAsync()
     {
-        if (_lastExecutionId is not { } executionId || SelectedDevice is null)
+        if (LastResult is not { ExecutionId: { } executionId, CanRestore: true } last || SelectedDevice is null)
         {
-            Status = "No debloat execution is available to restore.";
+            Status = "No cleanup execution is available to restore.";
+            return;
+        }
+        if (SelectedDevice.Serial != last.Serial)
+        {
+            Status = "Restore Last Cleanup is locked to the original device.";
+            return;
+        }
+        if (!_confirmation.Confirm(
+                $"Restore {last.ProfileName}?",
+                $"{last.Succeeded + last.Failed} previous package changes will be reversed where Android permits it.",
+                "Restore"))
+        {
+            Status = "Restore canceled.";
             return;
         }
         try
         {
             var result = await _execution.RestoreAsync(executionId, SelectedDevice.Serial);
             var summary = $"Restore {result.Status.ToLowerInvariant()}: {result.RestoredActions} restored, {result.FailedActions} failed.";
-            await RefreshPlanAfterMutationAsync(summary);
+            if (IsCustomMode)
+                await RefreshPlanAfterMutationAsync(summary);
+            if (HasAuthorizedTarget)
+                Overview = await _cleanup.CreateOverviewAsync(SelectedDevice.Serial, SelectedDevice);
+            Status = summary;
+            LastResult = last with
+            {
+                CanRestore = false,
+                Summary = summary,
+                CompletedUtc = DateTimeOffset.UtcNow
+            };
         }
         catch (Exception exception)
         {
@@ -1054,6 +1358,100 @@ public sealed partial class DebloatPageViewModel : PageViewModel
             PlanItems.Add(itemViewModel);
         }
         OnPropertyChanged(nameof(SelectedCount));
+    }
+
+    private void ResetWorkspace(string status)
+    {
+        Plan = null;
+        PlanItems.Clear();
+        ProfileDetailItems.Clear();
+        ReferenceProfiles.Clear();
+        Overview = null;
+        ShowProfileDetails = false;
+        IconStatus = string.Empty;
+        Status = status;
+    }
+
+    private void NotifyProfileState()
+    {
+        OnPropertyChanged(nameof(HasAuthorizedTarget));
+        OnPropertyChanged(nameof(DeviceHeading));
+        OnPropertyChanged(nameof(DetectedProfileText));
+        OnPropertyChanged(nameof(ProfileDetailText));
+        OnPropertyChanged(nameof(ScanSummary));
+        OnPropertyChanged(nameof(ProtectedSummary));
+        OnPropertyChanged(nameof(SafeProfile));
+        OnPropertyChanged(nameof(RecommendedProfile));
+        OnPropertyChanged(nameof(DeepProfile));
+        OnPropertyChanged(nameof(SafeActionLabel));
+        OnPropertyChanged(nameof(RecommendedActionLabel));
+        OnPropertyChanged(nameof(DeepActionLabel));
+        OnPropertyChanged(nameof(CanRunSafe));
+        OnPropertyChanged(nameof(CanRunRecommended));
+        OnPropertyChanged(nameof(CanRunDeep));
+    }
+
+    private bool CanRun(DebloatCleanupProfileState? profile)
+        => HasAuthorizedTarget && !IsBusy && profile is { HasActions: true };
+
+    private string ProfileActionLabel(DebloatCleanupProfileState? profile, string runLabel)
+    {
+        if (!HasAuthorizedTarget)
+            return "Connect a device";
+        if (profile is null)
+            return IsBusy ? "Scanning…" : "Unavailable";
+        return string.IsNullOrWhiteSpace(profile.ActionLabel) ? runLabel : profile.ActionLabel;
+    }
+
+    private static string BuildConfirmation(
+        AndroidDevice target,
+        DebloatCleanupProfileState profile,
+        DebloatPlan plan)
+    {
+        var lines = new List<string>
+        {
+            "Target:",
+            $"{target.DisplayLabel} · {target.Serial}",
+            string.Empty,
+            $"{profile.ActionCount} packages will be changed.",
+            string.Empty,
+            $"{profile.DisableCount} Disable",
+            $"{profile.UninstallCount} Uninstall for User 0",
+            string.Empty,
+            "Protected packages will remain untouched."
+        };
+        if (profile.FeatureImpacts.Count > 0)
+        {
+            lines.Add(string.Empty);
+            lines.Add("Possible impact:");
+            lines.AddRange(profile.FeatureImpacts.Take(4));
+        }
+        var names = plan.Items.Where(item => item.Selected).Select(item => item.Package.PackageName).Take(8).ToArray();
+        if (names.Length > 0)
+        {
+            lines.Add(string.Empty);
+            lines.Add("Packages:");
+            lines.AddRange(names);
+            if (profile.ActionCount > names.Length)
+                lines.Add($"… and {profile.ActionCount - names.Length} more");
+        }
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static bool SameActions(DebloatPlan left, DebloatPlan right)
+    {
+        static string Key(DebloatPlanItem item)
+            => $"{item.Package.PackageName}|{item.Action}|{item.Package.IsEnabled}|{item.Package.IsInstalled}";
+        var first = left.Items.Where(item => item.Selected).Select(Key).OrderBy(value => value, StringComparer.OrdinalIgnoreCase);
+        var second = right.Items.Where(item => item.Selected).Select(Key).OrderBy(value => value, StringComparer.OrdinalIgnoreCase);
+        return first.SequenceEqual(second, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string FormatExecution(string profileName, ScriptExecutionResult result, int alreadyCleaned)
+    {
+        if (result.FailedActions == 0)
+            return $"✓ {profileName} completed{Environment.NewLine}{Environment.NewLine}{result.SuccessfulActions} succeeded{Environment.NewLine}{alreadyCleaned} already cleaned{Environment.NewLine}0 failed{Environment.NewLine}0 verification failures{Environment.NewLine}No unverified change is counted as successful.";
+        return $"{profileName} partially completed{Environment.NewLine}{Environment.NewLine}{result.SuccessfulActions} succeeded{Environment.NewLine}{result.FailedActions} failed{Environment.NewLine}No unverified change is counted as successful.";
     }
 }
 

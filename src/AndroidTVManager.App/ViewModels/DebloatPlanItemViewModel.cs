@@ -59,6 +59,20 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
         }
     }
 
+    public string WhySelected
+    {
+        get
+        {
+            var source = Reference?.Matches.FirstOrDefault()?.BaselineName;
+            if (string.IsNullOrWhiteSpace(source))
+                source = string.IsNullOrWhiteSpace(Assessment.Category) ? "Reviewed catalog" : Assessment.Category;
+            var reason = string.IsNullOrWhiteSpace(Assessment.Description)
+                ? "Reviewed optional component"
+                : Assessment.Description;
+            return $"Selected by: {source}{Environment.NewLine}Reason: {reason}";
+        }
+    }
+
     public string EvidenceSummary
     {
         get
@@ -96,6 +110,7 @@ public sealed partial class DebloatPlanItemViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectionLabel));
         OnPropertyChanged(nameof(ProfileSummary));
         OnPropertyChanged(nameof(EvidenceSummary));
+        OnPropertyChanged(nameof(WhySelected));
     }
 
     public DebloatPlanItem ToModel()

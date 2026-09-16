@@ -183,6 +183,6 @@ public sealed class DevicesPageViewModelTests
 
     private sealed class FakeConfirmation : IConfirmationService
     {
-        public bool Confirm(string title, string message) => true;
+        public bool Confirm(string title, string message, string confirmLabel = "Continue") => true;
     }
 }
